@@ -129,6 +129,33 @@ function generateInsights(data, scope, range) {
     }
   }
 
+  // 6. Products sold below announced price (rate per 50 kg)
+  const rateService = require('./rateService');
+  const rateByProduct = new Map();
+  const rateSum = new Map();
+  for (const o of full.orders) {
+    if (o.rate50 == null) continue;
+    const k = o.product || o.item;
+    rateByProduct.set(k, (rateByProduct.get(k) || 0) + num(o.rate50));
+    rateSum.set(k, (rateSum.get(k) || 0) + 1);
+  }
+  for (const [product, count] of rateSum.entries()) {
+    const announced = rateService.priceFor(product);
+    if (!announced) continue;
+    const avg = rateByProduct.get(product) / count;
+    const below = (announced - avg) / announced * 100;
+    if (below > 2) {
+      insights.push({
+        title: `${product} selling below announced price`,
+        description: `${product} average rate is ${money(avg)} per 50kg vs announced ${money(announced)} (${round1(below)}% below).`,
+        metric: `${money(avg)}/50kg`,
+        severity: below > 5 ? 'WARNING' : 'INFO',
+        dimension: product,
+        action: 'Review pricing/authorization for below-rate sales.',
+      });
+    }
+  }
+
   return insights;
 }
 

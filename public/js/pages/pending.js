@@ -21,7 +21,7 @@ export async function renderPending(container, state) {
       const kpiBox = document.getElementById('pend-kpis');
       kpiBox.innerHTML = '';
       kpiBox.appendChild(kpiGrid([
-        { label: 'Pending Quantity', value: fmt(m.pendingQty) },
+        { label: 'Pending Quantity (MT)', value: fmt(m.pendingMt, 1) },
         { label: 'Pending Value', value: compactMoney(m.pendingValue) },
         { label: 'Pending Orders', value: fmt(m.pendingOrders) },
         { label: 'Pending Customers', value: fmt(m.pendingCustomers) },
@@ -45,10 +45,10 @@ export async function renderPending(container, state) {
         { label: 'Order Date', key: 'orderDate' },
         { label: 'Customer', key: 'customer' },
         { label: 'Territory', key: 'territory' },
-        { label: 'Product', key: 'item' },
-        { label: 'Order Qty', key: 'orderQty' },
-        { label: 'Delivered Qty', key: 'deliveredQty' },
-        { label: 'Pending Qty', key: 'pendingQty' },
+        { label: 'Product', key: 'product' },
+        { label: 'Order MT', key: 'orderMt', format: (v) => fmt(v, 2) },
+        { label: 'Delivered MT', key: 'deliveredMt', format: (v) => fmt(v, 2) },
+        { label: 'Pending MT', key: 'pendingMt', format: (v) => fmt(v, 2) },
         { label: 'Pending Value', key: 'pendingValue', money: true },
         { label: 'Days', key: 'pendingDays' },
         { label: 'Priority', key: 'priority', badge: true },

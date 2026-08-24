@@ -22,7 +22,7 @@ export async function renderDelivery(container, state) {
       kpiBox.innerHTML = '';
       kpiBox.appendChild(kpiGrid([
         { label: 'Delivery Value', value: compactMoney(m.deliveryValue) },
-        { label: 'Delivery Quantity', value: fmt(m.deliveryQty) },
+        { label: 'Delivery Quantity (MT)', value: fmt(m.deliveryMt, 1) },
         { label: 'Delivered Customers', value: fmt(m.deliveredCustomers) },
         { label: 'Delivery Achievement %', value: pct(m.deliveryAchievementPct) },
         { label: 'Deliveries', value: fmt(m.deliveryCount) },
@@ -52,8 +52,8 @@ export async function renderDelivery(container, state) {
         { label: 'Date', key: 'date' },
         { label: 'Customer', key: 'customer' },
         { label: 'Territory', key: 'territory' },
-        { label: 'Product', key: 'item' },
-        { label: 'Qty', key: 'quantity' },
+        { label: 'Product', key: 'product' },
+        { label: 'MT', key: 'mt', format: (v) => fmt(v, 2) },
         { label: 'Value', key: 'value', money: true },
         { label: 'Status', key: 'status', badge: true },
       ],

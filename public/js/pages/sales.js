@@ -22,7 +22,7 @@ export async function renderSales(container, state) {
       kpiBox.appendChild(kpiGrid([
         { label: 'Total Orders', value: fmt(m.totalOrders) },
         { label: 'Order Value', value: compactMoney(m.orderValue) },
-        { label: 'Order Quantity', value: fmt(m.orderQty) },
+        { label: 'Order Quantity (MT)', value: fmt(m.orderMt, 1) },
         { label: 'Customers', value: fmt(m.customers) },
         { label: 'Avg Order Value', value: compactMoney(m.avgOrderValue) },
       ]));
@@ -52,8 +52,9 @@ export async function renderSales(container, state) {
         { label: 'Order No', key: 'orderNo' },
         { label: 'Customer', key: 'customer' },
         { label: 'Territory', key: 'territory' },
-        { label: 'Product', key: 'item' },
-        { label: 'Qty', key: 'quantity' },
+        { label: 'Product', key: 'product' },
+        { label: 'MT', key: 'mt', format: (v) => fmt(v, 2) },
+        { label: 'Rate/50kg', key: 'rate50', format: (v) => v == null ? '—' : fmt(v, 0) },
         { label: 'Value', key: 'value', money: true },
         { label: 'Status', key: 'status', badge: true },
       ],

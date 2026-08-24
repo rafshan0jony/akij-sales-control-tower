@@ -83,10 +83,14 @@ function computePending(orders, deliveries, uptoStr = dates.todayStr()) {
         customer: customerName(o),
         territory: territoryName(o),
         item: itemName(o),
+        product: productName(o),
         uom: o.uom,
         orderQty: num(o.quantity),
+        orderMt: num(o.mt),
         deliveredQty: num(o.deliveredQty),
+        deliveredMt: o.weight > 0 ? (num(o.deliveredQty) * o.weight) / 1000 : 0,
         pendingQty: num(o.undeliveredQty),
+        pendingMt: o.weight > 0 ? (num(o.undeliveredQty) * o.weight) / 1000 : 0,
         pendingValue: num(o.undeliveredValue),
         pendingDays: Math.max(dates.diffDays(o.date, uptoStr), 0),
       }));
@@ -163,7 +167,8 @@ function computePending(orders, deliveries, uptoStr = dates.todayStr()) {
 
   const totalQty = rows.reduce((s, r) => s + r.pendingQty, 0);
   const totalValue = rows.reduce((s, r) => s + r.pendingValue, 0);
-  return { rows, totalQty, totalValue, orderCount: rows.length };
+  const totalMt = rows.reduce((s, r) => s + (r.pendingMt || 0), 0);
+  return { rows, totalQty, totalValue, totalMt, orderCount: rows.length };
 }
 
 function agingBucket(days, buckets = configRepo.get('pendingAgingBuckets')) {
@@ -356,9 +361,12 @@ function salesOrders(data, scope, range, opts = {}) {
     customer: customerName(o),
     territory: territoryName(o),
     item: itemName(o),
+    product: productName(o),
     uom: o.uom,
     quantity: num(o.quantity),
+    mt: num(o.mt),
     value: num(o.value),
+    rate50: o.rate50 == null ? null : num(o.rate50),
     status: o.status || 'Open',
   }));
 
@@ -368,6 +376,7 @@ function salesOrders(data, scope, range, opts = {}) {
       totalOrders: t.orderCount,
       orderValue: t.salesValue,
       orderQty: t.salesQty,
+      orderMt: round1(t.salesMt),
       customers: new Set(orders.map(customerName)).size,
       avgOrderValue,
     },
@@ -394,8 +403,10 @@ function deliveryModule(data, scope, range, opts = {}) {
     customer: customerName(d),
     territory: territoryName(d),
     item: itemName(d),
+    product: productName(d),
     uom: d.uom,
     quantity: num(d.quantity),
+    mt: num(d.mt),
     value: num(d.value),
     status: d.status || 'Delivered',
   }));
@@ -405,6 +416,7 @@ function deliveryModule(data, scope, range, opts = {}) {
     metrics: {
       deliveryValue: t.deliveryValue,
       deliveryQty: t.deliveryQty,
+      deliveryMt: round1(t.deliveryMt),
       deliveredCustomers: new Set(deliveries.map(customerName)).size,
       deliveryAchievementPct: round1(achievementPct),
       deliveryCount: t.deliveryCount,
@@ -443,6 +455,7 @@ function pendingModule(data, scope, range, opts = {}) {
   return {
     metrics: {
       pendingQty: pending.totalQty,
+      pendingMt: round1(pending.totalMt),
       pendingValue: pending.totalValue,
       pendingOrders: pending.orderCount,
       pendingCustomers: new Set(pending.rows.map((r) => r.customer)).size,
