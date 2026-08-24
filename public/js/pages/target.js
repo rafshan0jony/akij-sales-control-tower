@@ -8,11 +8,13 @@ export async function renderTarget(container, state) {
   const data = await api.get('/target-achievement?' + qs(state.query()));
   const m = data.metrics || {};
 
+  const achPct = m.achievementMtPct != null ? m.achievementMtPct : m.achievementPct;
+
   container.appendChild(kpiGrid([
-    { label: 'Target', value: compactMoney(m.target) },
-    { label: 'Achievement', value: compactMoney(m.achievement) },
-    { label: 'Achievement %', value: pct(m.achievementPct), opts: { color: achColor(m.achievementPct) } },
-    { label: 'Gap', value: compactMoney(m.gap) },
+    { label: 'Target', value: fmt(m.targetMt, 0) + ' MT', opts: { sub: compactMoney(m.target) } },
+    { label: 'Achievement', value: fmt(m.achievementMt, 0) + ' MT', opts: { sub: compactMoney(m.achievement) } },
+    { label: 'Achievement %', value: pct(achPct), opts: { color: achColor(achPct) } },
+    { label: 'Pending Target', value: fmt(m.pendingTargetMt, 0) + ' MT' },
     { label: 'Required Daily', value: compactMoney(m.requiredDaily) },
     { label: 'Required Weekly', value: compactMoney(m.requiredWeekly) },
     { label: 'Forecast', value: compactMoney(m.forecast) },
@@ -23,9 +25,9 @@ export async function renderTarget(container, state) {
   container.appendChild(el('div', { class: 'grid-2', style: 'margin-top:18px;' }, [
     card('Performance Status', el('div', { style: 'display:flex;gap:10px;align-items:center;' }, [
       statusBadge(m.status || 'Behind'),
-      el('span', { class: 'muted', text: `Achievement ${pct(m.achievementPct)} vs month progress ${pct(m.monthProgressPct)}` }),
+      el('span', { class: 'muted', text: `Achievement ${pct(achPct)} vs month progress ${pct(m.monthProgressPct)}` }),
     ])),
-    card('Target vs Achievement', el('div', { class: 'chart-box', style: 'height:140px;' }, [el('canvas', { id: 'ta-bar' })])),
+    card('Target vs Achievement (MT)', el('div', { class: 'chart-box', style: 'height:140px;' }, [el('canvas', { id: 'ta-bar' })])),
   ]));
 
   const cumulative = data.cumulative || [];
@@ -33,7 +35,20 @@ export async function renderTarget(container, state) {
   lineChart('ta-cum', cumulative.map((c) => c.date.slice(5)), [
     { label: 'Cumulative Achievement', data: cumulative.map((c) => c.achievement), color: '#0f766e' },
   ]);
-  barChart('ta-bar', ['Target', 'Achievement'], [{ label: 'Value', data: [m.target, m.achievement], color: '#2563eb' }], { stacked: false });
+  barChart('ta-bar', ['Target (MT)', 'Achievement (MT)'], [{ label: 'MT', data: [m.targetMt, m.achievementMt], color: '#2563eb' }], { stacked: false });
+
+  // Product-wise target vs achievement (MT)
+  const products = data.byProduct || [];
+  container.appendChild(card('Product-wise Target vs Achievement (MT)', dataTable({
+    columns: [
+      { label: 'Product', key: 'product' },
+      { label: 'Target (MT)', key: 'targetMt' },
+      { label: 'Sales (MT)', key: 'salesMt' },
+      { label: 'Achievement %', key: 'achievementPct', pct: true },
+      { label: 'Sales Value', key: 'salesValue', money: true },
+    ],
+    rows: products,
+  })));
 
   // Territory comparison table
   const territories = data.byTerritory || [];

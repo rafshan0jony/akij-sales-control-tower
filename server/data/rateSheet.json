@@ -1,0 +1,77 @@
+﻿{
+    "updatedAt":  "2026-08-24T17:40:19.4908042+06:00",
+    "rows":  [
+                 {
+                     "date":  "19-Aug-2026",
+                     "product":  "Chinigura",
+                     "forecastMt":  "50",
+                     "price":  "10000"
+                 },
+                 {
+                     "date":  "19-Aug-2026",
+                     "product":  "Atash",
+                     "forecastMt":  "21",
+                     "price":  "2700"
+                 },
+                 {
+                     "date":  "19-Aug-2026",
+                     "product":  "Essential Atop Rice",
+                     "forecastMt":  "60",
+                     "price":  "2700"
+                 },
+                 {
+                     "date":  "19-Aug-2026",
+                     "product":  "Paijam",
+                     "forecastMt":  "1280",
+                     "price":  "2480"
+                 },
+                 {
+                     "date":  "19-Aug-2026",
+                     "product":  "Katari Najir",
+                     "forecastMt":  "350",
+                     "price":  "3900"
+                 },
+                 {
+                     "date":  "19-Aug-2026",
+                     "product":  "Katari Shiddho",
+                     "forecastMt":  "0",
+                     "price":  "3850"
+                 },
+                 {
+                     "date":  "19-Aug-2026",
+                     "product":  "Katari Atop",
+                     "forecastMt":  "200",
+                     "price":  "4100"
+                 },
+                 {
+                     "date":  "19-Aug-2026",
+                     "product":  "katari Ghee Bhog",
+                     "forecastMt":  "600",
+                     "price":  "4400"
+                 },
+                 {
+                     "date":  "19-Aug-2026",
+                     "product":  "Special Jirashail",
+                     "forecastMt":  "50",
+                     "price":  "3250"
+                 },
+                 {
+                     "date":  "19-Aug-2026",
+                     "product":  "Bashmoti",
+                     "forecastMt":  "25",
+                     "price":  "4350"
+                 },
+                 {
+                     "date":  "19-Aug-2026",
+                     "product":  "Miniket",
+                     "forecastMt":  "901",
+                     "price":  "3250"
+                 },
+                 {
+                     "date":  "19-Aug-2026",
+                     "product":  "Najirshail",
+                     "forecastMt":  "200",
+                     "price":  "2800"
+                 }
+             ]
+}

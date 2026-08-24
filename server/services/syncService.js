@@ -40,6 +40,7 @@ function normalizeOrders(rows) {
       product: pm.product,
       uom: r.uom == null ? null : String(r.uom),
       quantity: num(r.quantity),
+      mt: num(r.quantity) * pm.weight / 1000,
       value: num(r.value),
       price: num(r.price),
       deliveredQty: r.deliveredQty == null ? null : num(r.deliveredQty),
@@ -69,6 +70,7 @@ function normalizeDeliveries(rows) {
       product: pm.product,
       uom: r.uom == null ? null : String(r.uom),
       quantity: num(r.quantity),
+      mt: num(r.quantity) * pm.weight / 1000,
       value: num(r.value),
     });
   }

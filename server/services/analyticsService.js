@@ -6,6 +6,7 @@ const targetsRepo = require('../repos/targets');
 const territoriesRepo = require('../repos/territories');
 const permissionService = require('./permissionService');
 const monthProgress = require('./monthProgressService');
+const rateService = require('./rateService');
 
 const num = (v) => {
   const n = Number(v);
@@ -245,10 +246,12 @@ function weeklySeries(daily) {
 function totals(orders, deliveries) {
   const o = orders.reduce((a, r) => a + num(r.value), 0);
   const oq = orders.reduce((a, r) => a + num(r.quantity), 0);
+  const omt = orders.reduce((a, r) => a + num(r.mt), 0);
   const d = deliveries.reduce((a, r) => a + num(r.value), 0);
   const dq = deliveries.reduce((a, r) => a + num(r.quantity), 0);
+  const dmt = deliveries.reduce((a, r) => a + num(r.mt), 0);
   const customers = new Set(orders.map(customerName).concat(deliveries.map(customerName)));
-  return { salesValue: o, salesQty: oq, deliveryValue: d, deliveryQty: dq, orderCount: orders.length, deliveryCount: deliveries.length, customerCount: customers.size };
+  return { salesValue: o, salesQty: oq, salesMt: omt, deliveryValue: d, deliveryQty: dq, deliveryMt: dmt, orderCount: orders.length, deliveryCount: deliveries.length, customerCount: customers.size };
 }
 
 /**
@@ -267,10 +270,12 @@ function dashboardSummary(data, scope, range, opts = {}) {
   const prog = monthProgress.computeMonthProgress(year, month, now);
   const targetRows = resolveTargets(scope, monthKey(now));
   const target = sumTargets(targetRows);
+  const targetMt = rateService.totalTargetMt();
 
   const basis = (configRepo.get('targetBasis') || 'sales').toLowerCase();
   const achievement = basis === 'delivery' ? mtdTotals.deliveryValue : mtdTotals.salesValue;
   const achievementPct = target > 0 ? (achievement / target) * 100 : 0;
+  const achievementMtPct = targetMt > 0 ? (mtdTotals.salesMt / targetMt) * 100 : 0;
   const pending = computePending(mtd.orders, mtd.deliveries, now);
   const pacing = monthProgress.computePacing(target, achievement, prog);
   const status = monthProgress.performanceStatus(achievementPct, prog.monthProgressPct);
@@ -283,12 +288,17 @@ function dashboardSummary(data, scope, range, opts = {}) {
       salesValue: t.salesValue,
       salesQty: t.salesQty,
       mtdSalesValue: mtdTotals.salesValue,
+      mtdSalesMt: round1(mtdTotals.salesMt),
       mtdTarget: target,
+      mtdTargetMt: targetMt,
       achievement,
       achievementPct: round1(achievementPct),
+      achievementMtPct: round1(achievementMtPct),
       pendingTarget: Math.max(target - achievement, 0),
+      pendingTargetMt: Math.max(targetMt - mtdTotals.salesMt, 0),
       deliveryValue: mtdTotals.deliveryValue,
       deliveryQty: mtdTotals.deliveryQty,
+      deliveryMt: round1(mtdTotals.deliveryMt),
       pendingOrderValue: pending.totalValue,
       pendingOrderQty: pending.totalQty,
       pendingOrders: pending.orderCount,
@@ -455,6 +465,8 @@ function targetAchievement(data, scope, range, opts = {}) {
   const prog = monthProgress.computeMonthProgress(year, month, now);
   const targetRows = resolveTargets(scope, monthKey(now));
   const target = sumTargets(targetRows);
+  const targetMt = rateService.totalTargetMt();
+  const achievementMt = t.salesMt;
   const basis = (configRepo.get('targetBasis') || 'sales').toLowerCase();
   const achievement = basis === 'delivery' ? t.deliveryValue : t.salesValue;
   const pacing = monthProgress.computePacing(target, achievement, prog);
@@ -473,6 +485,10 @@ function targetAchievement(data, scope, range, opts = {}) {
       target,
       achievement,
       achievementPct: round1(pacing.achievementPct),
+      targetMt,
+      achievementMt: round1(achievementMt),
+      achievementMtPct: targetMt > 0 ? round1((achievementMt / targetMt) * 100) : 0,
+      pendingTargetMt: round1(Math.max(targetMt - achievementMt, 0)),
       gap: Math.max(target - achievement, 0),
       requiredDaily: pacing.requiredDaily,
       requiredWeekly: pacing.requiredDaily * 7,
@@ -483,8 +499,34 @@ function targetAchievement(data, scope, range, opts = {}) {
     },
     cumulative,
     monthlyTrend: [],
+    byProduct: productTargetAchievement(data, scope, range),
     byTerritory: territoryPerformance(data, scope, range),
   };
+}
+
+/** Product-wise target (MT) vs achievement (MT). */
+function productTargetAchievement(data, scope, range) {
+  const { orders } = scopedFacts(data, scope, range.from, range.to);
+  const mtByProduct = new Map();
+  const valueByProduct = new Map();
+  for (const x of orders) {
+    const k = productName(x);
+    mtByProduct.set(k, (mtByProduct.get(k) || 0) + num(x.mt));
+    valueByProduct.set(k, (valueByProduct.get(k) || 0) + num(x.value));
+  }
+  const rows = [];
+  for (const e of rateService.list()) {
+    const salesMt = mtByProduct.get(e.product) || 0;
+    rows.push({
+      product: e.product,
+      targetMt: e.forecastMt,
+      salesMt: round1(salesMt),
+      achievementPct: e.forecastMt > 0 ? round1((salesMt / e.forecastMt) * 100) : 0,
+      salesValue: valueByProduct.get(e.product) || 0,
+    });
+  }
+  rows.sort((a, b) => b.targetMt - a.targetMt);
+  return rows;
 }
 
 function territoryPerformance(data, scope, range) {
@@ -543,13 +585,25 @@ function productSummary(data, scope, range) {
   const { orders, deliveries } = scopedFacts(data, scope, range.from, range.to);
   const o = groupSum(orders, (x) => productName(x), (x) => x.value, (x) => x.quantity);
   const d = groupSum(deliveries, (x) => productName(x), (x) => x.value, (x) => x.quantity);
-  return [...o.entries()].map(([k, v]) => ({
-    product: k,
-    salesValue: v.value,
-    quantity: v.qty,
-    orderCount: v.count,
-    deliveryValue: d.get(k) ? d.get(k).value : 0,
-  })).sort((a, b) => b.salesValue - a.salesValue);
+  const mtByProduct = new Map();
+  for (const x of orders) {
+    const k = productName(x);
+    mtByProduct.set(k, (mtByProduct.get(k) || 0) + num(x.mt));
+  }
+  return [...o.entries()].map(([k, v]) => {
+    const salesMt = mtByProduct.get(k) || 0;
+    const targetMt = rateService.forecastMt(k);
+    return {
+      product: k,
+      salesValue: v.value,
+      quantity: v.qty,
+      orderCount: v.count,
+      deliveryValue: d.get(k) ? d.get(k).value : 0,
+      salesMt: round1(salesMt),
+      targetMt,
+      achievementPct: targetMt > 0 ? round1((salesMt / targetMt) * 100) : 0,
+    };
+  }).sort((a, b) => b.salesValue - a.salesValue);
 }
 
 function paginate(rows, opts = {}, sortable = ['date', 'value', 'quantity']) {

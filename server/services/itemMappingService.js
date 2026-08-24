@@ -36,7 +36,8 @@ function resolveProduct(itemName) {
   const m = lookup(itemName);
   if (!m) return null;
   const product = (m.variant && String(m.variant).trim()) || String(itemName).trim();
-  return { product, weight: m.weight, raw: String(itemName).trim() };
+  const weight = Number(m.weight);
+  return { product, weight: Number.isFinite(weight) ? weight : 0, raw: String(itemName).trim() };
 }
 
 module.exports = { lookup, resolveProduct };

@@ -7,16 +7,16 @@ export async function renderDashboard(container, state) {
   const data = await api.get('/dashboard/summary?' + qs(state.query()));
 
   const k = data.kpis || {};
-  const achPct = k.achievementPct || 0;
+  const achPct = k.achievementMtPct != null ? k.achievementMtPct : (k.achievementPct || 0);
   const achColor = achPct >= 100 ? 'var(--success)' : achPct >= k.monthProgressPct ? 'var(--primary)' : achPct >= k.monthProgressPct - 10 ? 'var(--warning)' : 'var(--danger)';
 
   container.appendChild(el('div', {}, [
     kpiGrid([
-      { label: 'MTD Target', value: compactMoney(k.mtdTarget) },
-      { label: 'MTD Sales', value: compactMoney(k.mtdSalesValue), opts: { sub: `Achievement ${money(k.achievement)}` } },
+      { label: 'MTD Target', value: fmt(k.mtdTargetMt, 0) + ' MT', opts: { sub: compactMoney(k.mtdTarget) } },
+      { label: 'MTD Sales', value: fmt(k.mtdSalesMt, 0) + ' MT', opts: { sub: compactMoney(k.mtdSalesValue) } },
       { label: 'Achievement %', value: pct(achPct), opts: { color: achColor } },
-      { label: 'Pending Target', value: compactMoney(k.pendingTarget) },
-      { label: 'Delivery', value: compactMoney(k.deliveryValue) },
+      { label: 'Pending Target', value: fmt(k.pendingTargetMt, 0) + ' MT', opts: { sub: compactMoney(k.pendingTarget) } },
+      { label: 'Delivery', value: fmt(k.deliveryMt, 0) + ' MT', opts: { sub: compactMoney(k.deliveryValue) } },
       { label: 'Pending Order', value: compactMoney(k.pendingOrderValue), opts: { sub: `${k.pendingOrders} orders` } },
       { label: 'Active Customers', value: fmt(k.activeCustomers) },
       { label: 'Run Rate', value: pct(k.runRatePct) },
