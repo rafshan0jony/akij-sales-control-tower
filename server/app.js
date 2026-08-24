@@ -27,7 +27,7 @@ function createApp() {
   });
 
   app.use(globalLimiter);
-  app.use(express.json({ limit: '2mb' }));
+  app.use(express.json({ limit: '50mb' }));
 
   app.get('/api/health', (req, res) => res.json({ status: 'ok', time: new Date().toISOString() }));
 
