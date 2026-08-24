@@ -17,6 +17,18 @@ router.get('/analytics/territories', requirePermission('VIEW_ANALYTICS'), asyncH
   res.json({ territories: analytics.territoryPerformance(data, req.scope, range), ...freshness() });
 }));
 
+router.get('/analytics/areas', requirePermission('VIEW_ANALYTICS'), asyncHandler(async (req, res) => {
+  const { range } = parseRange(req);
+  const data = syncService.getData();
+  res.json({ areas: analytics.areaPerformance(data, req.scope, range), ...freshness() });
+}));
+
+router.get('/analytics/regions', requirePermission('VIEW_ANALYTICS'), asyncHandler(async (req, res) => {
+  const { range } = parseRange(req);
+  const data = syncService.getData();
+  res.json({ regions: analytics.regionPerformance(data, req.scope, range), ...freshness() });
+}));
+
 router.get('/analytics/customers', requirePermission('VIEW_CUSTOMER'), asyncHandler(async (req, res) => {
   const { range } = parseRange(req);
   const data = syncService.getData();

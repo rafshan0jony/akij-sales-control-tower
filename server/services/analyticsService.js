@@ -305,17 +305,24 @@ function dashboardSummary(data, scope, range, opts = {}) {
 
 function orderBreakdown(orders, dim) {
   const fn = {
-    territory: territoryName,
-    product: itemName,
-    customer: customerName,
-    region: territoryName,
-  }[dim] || territoryName;
+    territory: (o) => territoryName(o),
+    product: (o) => itemName(o),
+    customer: (o) => customerName(o),
+    region: (o) => o.region || 'Unassigned',
+    area: (o) => o.area || 'Unassigned',
+  }[dim] || ((o) => territoryName(o));
   const m = groupSum(orders, (o) => fn(o), (o) => o.value, (o) => o.quantity);
   return sortedEntries(m).map((e) => ({ name: e.key, value: e.value, quantity: e.qty, count: e.count }));
 }
 
 function deliveryBreakdown(deliveries, dim) {
-  const fn = { territory: territoryName, product: itemName, customer: customerName }[dim] || territoryName;
+  const fn = {
+    territory: (d) => territoryName(d),
+    product: (d) => itemName(d),
+    customer: (d) => customerName(d),
+    region: (d) => d.region || 'Unassigned',
+    area: (d) => d.area || 'Unassigned',
+  }[dim] || ((d) => territoryName(d));
   const m = groupSum(deliveries, (d) => fn(d), (d) => d.value, (d) => d.quantity);
   return sortedEntries(m).map((e) => ({ name: e.key, value: e.value, quantity: e.qty, count: e.count }));
 }
@@ -503,8 +510,19 @@ function territoryPerformance(data, scope, range) {
   }).sort((a, b) => b.salesValue - a.salesValue);
 }
 
-function customerSummary(data, scope, range) {
-  const { orders, deliveries } = scopedFacts(data, scope, range.from, range.to);
+function regionPerformance(data, scope, range) {
+  const { orders } = scopedFacts(data, scope, range.from, range.to);
+  const m = groupSum(orders, (o) => o.region || 'Unassigned', (o) => o.value, (o) => o.quantity);
+  return sortedEntries(m).map((e) => ({ region: e.key, salesValue: e.value, quantity: e.qty, orderCount: e.count }));
+}
+
+function areaPerformance(data, scope, range) {
+  const { orders } = scopedFacts(data, scope, range.from, range.to);
+  const m = groupSum(orders, (o) => o.area || 'Unassigned', (o) => o.value, (o) => o.quantity);
+  return sortedEntries(m).map((e) => ({ area: e.key, salesValue: e.value, quantity: e.qty, orderCount: e.count }));
+}
+
+function customerSummary(data, scope, range) {  const { orders, deliveries } = scopedFacts(data, scope, range.from, range.to);
   const o = groupSum(orders, (x) => customerName(x), (x) => x.value, (x) => x.quantity);
   const d = groupSum(deliveries, (x) => customerName(x), (x) => x.value, (x) => x.quantity);
   return [...o.entries()].map(([k, v]) => ({
@@ -574,6 +592,8 @@ module.exports = {
   territoryPerformance,
   customerSummary,
   productSummary,
+  regionPerformance,
+  areaPerformance,
   orderBreakdown,
   deliveryBreakdown,
   dailySeries,

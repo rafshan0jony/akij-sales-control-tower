@@ -1,0 +1,287 @@
+﻿{
+    "updatedAt":  "2026-08-24T16:12:54.3549527+06:00",
+    "rows":  [
+                 {
+                     "system":  "Mohammadpur",
+                     "territory":  "Mohammadpur \u0026 Kawranbazar",
+                     "area":  "Dhaka South Area",
+                     "region":  "Dhaka \u0026 Outer Region"
+                 },
+                 {
+                     "system":  "Keraniganj",
+                     "territory":  "Keraniganj",
+                     "area":  "Dhaka South Area",
+                     "region":  "Dhaka \u0026 Outer Region"
+                 },
+                 {
+                     "system":  "Manikganj",
+                     "territory":  "Savar \u0026 Manikganj",
+                     "area":  "Dhaka South Area",
+                     "region":  "Dhaka \u0026 Outer Region"
+                 },
+                 {
+                     "system":  "Savar",
+                     "territory":  "Savar \u0026 Manikganj",
+                     "area":  "Dhaka South Area",
+                     "region":  "Dhaka \u0026 Outer Region"
+                 },
+                 {
+                     "system":  "Mirpur",
+                     "territory":  "Mirpur",
+                     "area":  "Dhaka North Area",
+                     "region":  "Dhaka \u0026 Outer Region"
+                 },
+                 {
+                     "system":  "Tongi",
+                     "territory":  "Tongi",
+                     "area":  "Dhaka North Area",
+                     "region":  "Dhaka \u0026 Outer Region"
+                 },
+                 {
+                     "system":  "Gazipur",
+                     "territory":  "Gazipur",
+                     "area":  "Dhaka North Area",
+                     "region":  "Dhaka \u0026 Outer Region"
+                 },
+                 {
+                     "system":  "Jamalpur",
+                     "territory":  "Gazipur",
+                     "area":  "Dhaka North Area",
+                     "region":  "Dhaka \u0026 Outer Region"
+                 },
+                 {
+                     "system":  "Mymensingh Metro",
+                     "territory":  "Gazipur",
+                     "area":  "Dhaka North Area",
+                     "region":  "Dhaka \u0026 Outer Region"
+                 },
+                 {
+                     "system":  "Tangail",
+                     "territory":  "Gazipur",
+                     "area":  "Dhaka North Area",
+                     "region":  "Dhaka \u0026 Outer Region"
+                 },
+                 {
+                     "system":  "Badda",
+                     "territory":  "Badda \u0026 Jatrabari",
+                     "area":  "Narayanganj Area",
+                     "region":  "Dhaka \u0026 Outer Region"
+                 },
+                 {
+                     "system":  "Jatrabari",
+                     "territory":  "Badda \u0026 Jatrabari",
+                     "area":  "Narayanganj Area",
+                     "region":  "Dhaka \u0026 Outer Region"
+                 },
+                 {
+                     "system":  "Araihazar",
+                     "territory":  "Munshiganj \u0026 Araihazar",
+                     "area":  "Narayanganj Area",
+                     "region":  "Dhaka \u0026 Outer Region"
+                 },
+                 {
+                     "system":  "Munshiganj",
+                     "territory":  "Munshiganj \u0026 Araihazar",
+                     "area":  "Narayanganj Area",
+                     "region":  "Dhaka \u0026 Outer Region"
+                 },
+                 {
+                     "system":  "Narayanganj Metro",
+                     "territory":  "Narayanganj Metro",
+                     "area":  "Narayanganj Area",
+                     "region":  "Dhaka \u0026 Outer Region"
+                 },
+                 {
+                     "system":  "Narsingdi",
+                     "territory":  "Narsingdi \u0026 Brahmanbaria",
+                     "area":  "Sylhet Area",
+                     "region":  "Dhaka \u0026 Outer Region"
+                 },
+                 {
+                     "system":  "Brahmanbaria",
+                     "territory":  "Narsingdi \u0026 Brahmanbaria",
+                     "area":  "Sylhet Area",
+                     "region":  "Dhaka \u0026 Outer Region"
+                 },
+                 {
+                     "system":  "Moulvibazar",
+                     "territory":  "Hobiganj \u0026 Moulvibazar",
+                     "area":  "Sylhet Area",
+                     "region":  "Dhaka \u0026 Outer Region"
+                 },
+                 {
+                     "system":  "Sunamganj",
+                     "territory":  "Sylhet Metro \u0026 Sunamganj",
+                     "area":  "Sylhet Area",
+                     "region":  "Dhaka \u0026 Outer Region"
+                 },
+                 {
+                     "system":  "Sylhet Metro",
+                     "territory":  "Sylhet Metro \u0026 Sunamganj",
+                     "area":  "Sylhet Area",
+                     "region":  "Dhaka \u0026 Outer Region"
+                 },
+                 {
+                     "system":  "Chowmuhani",
+                     "territory":  "Chowmuhani",
+                     "area":  "Cumilla Area",
+                     "region":  "East Region"
+                 },
+                 {
+                     "system":  "Feni",
+                     "territory":  "Laxmipur \u0026 Feni",
+                     "area":  "Cumilla Area",
+                     "region":  "East Region"
+                 },
+                 {
+                     "system":  "Laxmipur",
+                     "territory":  "Laxmipur \u0026 Feni",
+                     "area":  "Cumilla Area",
+                     "region":  "East Region"
+                 },
+                 {
+                     "system":  "Chaktai",
+                     "territory":  "Cumilla Metro \u0026 Chandpur",
+                     "area":  "Cumilla Area",
+                     "region":  "East Region"
+                 },
+                 {
+                     "system":  "Cox Bazar",
+                     "territory":  "Cumilla Metro \u0026 Chandpur",
+                     "area":  "Cumilla Area",
+                     "region":  "East Region"
+                 },
+                 {
+                     "system":  "Hathazari",
+                     "territory":  "Cumilla Metro \u0026 Chandpur",
+                     "area":  "Cumilla Area",
+                     "region":  "East Region"
+                 },
+                 {
+                     "system":  "Pahartali",
+                     "territory":  "Cumilla Metro \u0026 Chandpur",
+                     "area":  "Cumilla Area",
+                     "region":  "East Region"
+                 },
+                 {
+                     "system":  "Patiya",
+                     "territory":  "Cumilla Metro \u0026 Chandpur",
+                     "area":  "Cumilla Area",
+                     "region":  "East Region"
+                 },
+                 {
+                     "system":  "Rangamati",
+                     "territory":  "Cumilla Metro \u0026 Chandpur",
+                     "area":  "Cumilla Area",
+                     "region":  "East Region"
+                 },
+                 {
+                     "system":  "Chandpur",
+                     "territory":  "Cumilla Metro \u0026 Chandpur",
+                     "area":  "Cumilla Area",
+                     "region":  "East Region"
+                 },
+                 {
+                     "system":  "Cumilla Metro",
+                     "territory":  "Cumilla Metro \u0026 Chandpur",
+                     "area":  "Cumilla Area",
+                     "region":  "East Region"
+                 },
+                 {
+                     "system":  "Khulna Metro",
+                     "territory":  "Khulna Metro",
+                     "area":  "Khulna Area",
+                     "region":  "South \u0026 North Region"
+                 },
+                 {
+                     "system":  "Magura",
+                     "territory":  "Jashore Metro",
+                     "area":  "Khulna Area",
+                     "region":  "South \u0026 North Region"
+                 },
+                 {
+                     "system":  "Jashore Metro",
+                     "territory":  "Jashore Metro",
+                     "area":  "Khulna Area",
+                     "region":  "South \u0026 North Region"
+                 },
+                 {
+                     "system":  "Kushtia",
+                     "territory":  "Kushtia",
+                     "area":  "Khulna Area",
+                     "region":  "South \u0026 North Region"
+                 },
+                 {
+                     "system":  "Dinajpur",
+                     "territory":  "Madaripur",
+                     "area":  "Faridpur Area",
+                     "region":  "South \u0026 North Region"
+                 },
+                 {
+                     "system":  "Nilphamari",
+                     "territory":  "Madaripur",
+                     "area":  "Faridpur Area",
+                     "region":  "South \u0026 North Region"
+                 },
+                 {
+                     "system":  "Rangpur Metro",
+                     "territory":  "Madaripur",
+                     "area":  "Faridpur Area",
+                     "region":  "South \u0026 North Region"
+                 },
+                 {
+                     "system":  "Madaripur",
+                     "territory":  "Madaripur",
+                     "area":  "Faridpur Area",
+                     "region":  "South \u0026 North Region"
+                 },
+                 {
+                     "system":  "Shariatpur",
+                     "territory":  "Madaripur",
+                     "area":  "Faridpur Area",
+                     "region":  "South \u0026 North Region"
+                 },
+                 {
+                     "system":  "Faridpur Metro",
+                     "territory":  "Faridpur Metro",
+                     "area":  "Faridpur Area",
+                     "region":  "South \u0026 North Region"
+                 },
+                 {
+                     "system":  "Rajbari",
+                     "territory":  "Faridpur Metro",
+                     "area":  "Faridpur Area",
+                     "region":  "South \u0026 North Region"
+                 },
+                 {
+                     "system":  "Barishal Metro",
+                     "territory":  "Barishal Metro",
+                     "area":  "Faridpur Area",
+                     "region":  "South \u0026 North Region"
+                 },
+                 {
+                     "system":  "Jhalokathi",
+                     "territory":  "Barishal Metro",
+                     "area":  "Faridpur Area",
+                     "region":  "South \u0026 North Region"
+                 },
+                 {
+                     "system":  "Patuakhali",
+                     "territory":  "Barishal Metro",
+                     "area":  "Faridpur Area",
+                     "region":  "South \u0026 North Region"
+                 },
+                 {
+                     "system":  "Pabna",
+                     "territory":  "Pabna",
+                     "area":  "Rajshahi Area",
+                     "region":  "South \u0026 North Region"
+                 },
+                 {
+                     "system":  "Rajshahi Metro",
+                     "territory":  "Rajshahi Metro",
+                     "area":  "Rajshahi Area",
+                     "region":  "South \u0026 North Region"
+                 }
+             ]
+}

@@ -20,6 +20,28 @@ export async function renderPerformance(container, state, dim) {
       { label: 'Achievement %', key: 'achievementPct', pct: true },
       { label: 'Delivery', key: 'deliveryValue', money: true },
     ];
+  } else if (dim === 'area') {
+    endpoint = '/analytics/areas';
+    label = 'areas';
+    titleKey = 'area';
+    chartTitle = 'Area Sales Value';
+    columns = [
+      { label: 'Area', key: 'area' },
+      { label: 'Sales Value', key: 'salesValue', money: true },
+      { label: 'Quantity', key: 'quantity' },
+      { label: 'Orders', key: 'orderCount' },
+    ];
+  } else if (dim === 'region') {
+    endpoint = '/analytics/regions';
+    label = 'regions';
+    titleKey = 'region';
+    chartTitle = 'Region Sales Value';
+    columns = [
+      { label: 'Region', key: 'region' },
+      { label: 'Sales Value', key: 'salesValue', money: true },
+      { label: 'Quantity', key: 'quantity' },
+      { label: 'Orders', key: 'orderCount' },
+    ];
   } else if (dim === 'customer') {
     endpoint = '/analytics/customers';
     label = 'customers';

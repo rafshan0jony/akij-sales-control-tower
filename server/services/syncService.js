@@ -3,6 +3,7 @@
 const mcp = require('../mcp/client');
 const syncRepo = require('../repos/sync');
 const territoriesRepo = require('../repos/territories');
+const territoryMapping = require('./territoryMappingService');
 const logger = require('../logger');
 const config = require('../config');
 const dates = require('../lib/dates');
@@ -20,35 +21,47 @@ function int(v, dflt) {
 }
 
 function normalizeOrders(rows) {
-  return (rows || []).map((r) => ({
-    date: dates.toDateStr(r.date),
-    orderNo: r.orderNo == null ? null : String(r.orderNo),
-    customer: r.customer == null ? null : String(r.customer),
-    territory: r.territory == null ? null : String(r.territory),
-    status: r.status == null ? null : String(r.status),
-    item: r.item == null ? null : String(r.item),
-    uom: r.uom == null ? null : String(r.uom),
-    quantity: num(r.quantity),
-    value: num(r.value),
-    price: num(r.price),
-    deliveredQty: r.deliveredQty == null ? null : num(r.deliveredQty),
-    undeliveredQty: r.undeliveredQty == null ? null : num(r.undeliveredQty),
-    undeliveredValue: r.undeliveredValue == null ? null : num(r.undeliveredValue),
-  }));
+  return (rows || []).map((r) => {
+    const tm = territoryMapping.resolve(r.territory);
+    return {
+      date: dates.toDateStr(r.date),
+      orderNo: r.orderNo == null ? null : String(r.orderNo),
+      customer: r.customer == null ? null : String(r.customer),
+      territory: tm.territory,
+      area: tm.area,
+      region: tm.region,
+      systemTerritory: tm.systemTerritory,
+      status: r.status == null ? null : String(r.status),
+      item: r.item == null ? null : String(r.item),
+      uom: r.uom == null ? null : String(r.uom),
+      quantity: num(r.quantity),
+      value: num(r.value),
+      price: num(r.price),
+      deliveredQty: r.deliveredQty == null ? null : num(r.deliveredQty),
+      undeliveredQty: r.undeliveredQty == null ? null : num(r.undeliveredQty),
+      undeliveredValue: r.undeliveredValue == null ? null : num(r.undeliveredValue),
+    };
+  });
 }
 
 function normalizeDeliveries(rows) {
-  return (rows || []).map((r) => ({
-    date: dates.toDateStr(r.date),
-    customer: r.customer == null ? null : String(r.customer),
-    territory: r.territory == null ? null : String(r.territory),
-    status: r.status == null ? 'Delivered' : String(r.status),
-    orderNo: r.orderNo == null ? null : String(r.orderNo),
-    item: r.item == null ? null : String(r.item),
-    uom: r.uom == null ? null : String(r.uom),
-    quantity: num(r.quantity),
-    value: num(r.value),
-  }));
+  return (rows || []).map((r) => {
+    const tm = territoryMapping.resolve(r.territory);
+    return {
+      date: dates.toDateStr(r.date),
+      customer: r.customer == null ? null : String(r.customer),
+      territory: tm.territory,
+      area: tm.area,
+      region: tm.region,
+      systemTerritory: tm.systemTerritory,
+      status: r.status == null ? 'Delivered' : String(r.status),
+      orderNo: r.orderNo == null ? null : String(r.orderNo),
+      item: r.item == null ? null : String(r.item),
+      uom: r.uom == null ? null : String(r.uom),
+      quantity: num(r.quantity),
+      value: num(r.value),
+    };
+  });
 }
 
 function num(v) {
@@ -68,50 +81,37 @@ async function fetchWindow(from, to) {
 }
 
 /**
- * Import the territory hierarchy (National -> Region -> Zone -> Territory)
- * from the DWH into the app database so RBAC scope matches the real names.
+ * Import the territory hierarchy (National -> Region -> Area -> Territory)
+ * from the static mapping (server/data/territoryMapping.json). Idempotent —
+ * node codes are stable ("R:..", "A:..", "T:..") so user assignments persist.
  */
-async function importTerritories(rows) {
-  if (!Array.isArray(rows)) rows = await mcp.getTerritoryHierarchy();
-  if (!rows.length) return 0;
-
+function importTerritories() {
   const national = territoriesRepo.findByName('National') || territoriesRepo.findByCode('NATIONAL');
   if (!national) return 0;
 
+  territoriesRepo.removeNonMapping();
+
+  const mappingRows = territoryMapping.list();
   const regionMap = new Map();
-  const zoneMap = new Map();
+  const areaMap = new Map();
   let count = 0;
 
-  for (const r of rows) {
-    if (!r.territory) continue;
-
-    // Region (L5)
-    let region = regionMap.get(r.regionId);
+  for (const r of mappingRows) {
+    let region = regionMap.get(r.region);
     if (!region) {
-      region = territoriesRepo.upsertByCode({
-        code: String(r.regionId), name: r.region, level: 1, parentId: national.id, channelId: config.app.channelId,
-      });
-      regionMap.set(r.regionId, region);
+      region = territoriesRepo.upsertByCode({ code: 'R:' + r.region, name: r.region, level: 1, parentId: national.id, channelId: config.app.channelId });
+      regionMap.set(r.region, region);
       count++;
     }
-
-    // Zone (L6)
-    let zone = zoneMap.get(r.zoneId);
-    if (!zone) {
-      zone = territoriesRepo.upsertByCode({
-        code: String(r.zoneId), name: r.zone, level: 3, parentId: region.id, channelId: config.app.channelId,
-      });
-      zoneMap.set(r.zoneId, zone);
+    let area = areaMap.get(r.area);
+    if (!area) {
+      area = territoriesRepo.upsertByCode({ code: 'A:' + r.area, name: r.area, level: 2, parentId: region.id, channelId: config.app.channelId });
+      areaMap.set(r.area, area);
       count++;
     }
-
-    // Territory (L7)
-    territoriesRepo.upsertByCode({
-      code: String(r.territoryId), name: r.territory, level: 4, parentId: zone.id, channelId: config.app.channelId,
-    });
+    territoriesRepo.upsertByCode({ code: 'T:' + r.territory, name: r.territory, level: 4, parentId: area.id, channelId: config.app.channelId });
     count++;
   }
-
   return count;
 }
 

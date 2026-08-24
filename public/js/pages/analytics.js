@@ -28,6 +28,8 @@ export async function renderAnalytics(container, state, view) {
     el('label', { class: 'muted', text: 'Dimension: ' }),
     el('select', { id: 'dd-dim', class: 'select' }, [
       el('option', { value: 'territory', text: 'Territory' }),
+      el('option', { value: 'area', text: 'Area' }),
+      el('option', { value: 'region', text: 'Region' }),
       el('option', { value: 'customer', text: 'Customer' }),
       el('option', { value: 'product', text: 'Product' }),
     ]),
