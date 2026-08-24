@@ -71,8 +71,8 @@ async function fetchWindow(from, to) {
  * Import the territory hierarchy (National -> Region -> Zone -> Territory)
  * from the DWH into the app database so RBAC scope matches the real names.
  */
-async function importTerritories() {
-  const rows = await mcp.getTerritoryHierarchy();
+async function importTerritories(rows) {
+  if (!Array.isArray(rows)) rows = await mcp.getTerritoryHierarchy();
   if (!rows.length) return 0;
 
   const national = territoriesRepo.findByName('National') || territoriesRepo.findByCode('NATIONAL');
@@ -228,7 +228,7 @@ function getData() {
  * not reachable from the app host, e.g. on Vercel). Normalizes raw rows,
  * imports territories and updates sync status.
  */
-async function applyRemoteSnapshot({ orders, deliveries }) {
+async function applyRemoteSnapshot({ orders, deliveries, territories }) {
   const today = dates.todayStr();
   const normOrders = normalizeOrders(orders || []);
   const normDeliveries = normalizeDeliveries(deliveries || []);
@@ -237,7 +237,7 @@ async function applyRemoteSnapshot({ orders, deliveries }) {
   for (const d of normDeliveries) if (d.date < from) from = d.date;
 
   let territoryCount = 0;
-  try { territoryCount = await importTerritories(); } catch (e) { logger.warn('[sync] territory import failed:', e.message); }
+  try { territoryCount = await importTerritories(territories); } catch (e) { logger.warn('[sync] territory import failed:', e.message); }
 
   const syncedAt = new Date().toISOString();
   cache = {

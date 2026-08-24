@@ -33,11 +33,12 @@ function log(...a) {
 async function collectSnapshot() {
   const today = dates.todayStr();
   const from = dates.addDays(today, -LOOKBACK_DAYS);
-  const [orders, deliveries] = await Promise.all([
+  const [orders, deliveries, territories] = await Promise.all([
     mcp.getSalesOrders(from, today),
     mcp.getDeliveries(from, today),
+    mcp.getTerritoryHierarchy(),
   ]);
-  return { orders, deliveries };
+  return { orders, deliveries, territories };
 }
 
 async function push(snapshot) {

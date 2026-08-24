@@ -20,11 +20,11 @@ router.post('/ingest', asyncHandler(async (req, res) => {
   if (!secret || secret !== config.sync.secret) {
     return res.status(401).json({ error: 'Invalid sync secret' });
   }
-  const { orders, deliveries } = req.body || {};
+  const { orders, deliveries, territories } = req.body || {};
   if (!Array.isArray(orders) || !Array.isArray(deliveries)) {
     throw badRequest('orders and deliveries arrays are required');
   }
-  await syncService.applyRemoteSnapshot({ orders, deliveries });
+  await syncService.applyRemoteSnapshot({ orders, deliveries, territories: Array.isArray(territories) ? territories : null });
   res.json({ ok: true, sync: syncRepo.get() });
 }));
 
