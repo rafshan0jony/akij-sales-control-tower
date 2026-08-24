@@ -1,0 +1,885 @@
+﻿{
+    "updatedAt":  "2026-08-24T16:49:30.7656765+06:00",
+    "rows":  [
+                 {
+                     "item":  "Miniket 50 kg (T)",
+                     "weight":  "50",
+                     "variant":  "Miniket"
+                 },
+                 {
+                     "item":  "Atash 25 kg (T)",
+                     "weight":  "25",
+                     "variant":  "Atash"
+                 },
+                 {
+                     "item":  "Miniket 25 kg (T)",
+                     "weight":  "25",
+                     "variant":  "Miniket"
+                 },
+                 {
+                     "item":  "Kajol Lota 25 kg (T)",
+                     "weight":  "25",
+                     "variant":  "Kajol Lota"
+                 },
+                 {
+                     "item":  "Paijam Light Cream 25 kg (T)",
+                     "weight":  "25",
+                     "variant":  "Paijam"
+                 },
+                 {
+                     "item":  "Katari Najir New 25 kg (T)",
+                     "weight":  "25",
+                     "variant":  "Katari Najir"
+                 },
+                 {
+                     "item":  "Katari Najir New 50 kg (T)",
+                     "weight":  "50",
+                     "variant":  "Katari Najir"
+                 },
+                 {
+                     "item":  "Paijam Light Cream 50 kg (T)",
+                     "weight":  "50",
+                     "variant":  "Paijam"
+                 },
+                 {
+                     "item":  "Miniket 25 kg (M)",
+                     "weight":  "25",
+                     "variant":  "Miniket"
+                 },
+                 {
+                     "item":  "Miniket 50 kg (M)",
+                     "weight":  "50",
+                     "variant":  "Miniket"
+                 },
+                 {
+                     "item":  "Atash 50 kg (T)",
+                     "weight":  "50",
+                     "variant":  "Atash"
+                 },
+                 {
+                     "item":  "Katari Shiddho 25 kg (T)",
+                     "weight":  "25",
+                     "variant":  "Katari Shiddho"
+                 },
+                 {
+                     "item":  "Essential Atop Rice 25 kg (T)",
+                     "weight":  "25",
+                     "variant":  "Essential Atop Rice"
+                 },
+                 {
+                     "item":  "Chinigura Premium New 25 kg (T)",
+                     "weight":  "25",
+                     "variant":  "Chinigura"
+                 },
+                 {
+                     "item":  "Paijam Light Cream 25 kg (M) [1551974]",
+                     "weight":  "25",
+                     "variant":  "Paijam"
+                 },
+                 {
+                     "item":  "Paijam Light Cream 50 kg (M) [1551976]",
+                     "weight":  "50",
+                     "variant":  "Paijam"
+                 },
+                 {
+                     "item":  "Essential Popular Chinigura 25 kg(T)",
+                     "weight":  "25",
+                     "variant":  "Chinigura"
+                 },
+                 {
+                     "item":  "Katari Atop New 25 kg (T)",
+                     "weight":  "25",
+                     "variant":  "Katari Atop"
+                 },
+                 {
+                     "item":  "Chinigura Premium New 50 kg (T)",
+                     "weight":  "50",
+                     "variant":  "Chinigura"
+                 },
+                 {
+                     "item":  "Deshi Bashmoti 25 kg (T)",
+                     "weight":  "25",
+                     "variant":  "Bashmoti"
+                 },
+                 {
+                     "item":  "Atash 25 kg (M)",
+                     "weight":  "25",
+                     "variant":  "Atash"
+                 },
+                 {
+                     "item":  "Atash 50 kg (M)",
+                     "weight":  "50",
+                     "variant":  "Atash"
+                 },
+                 {
+                     "item":  "Najirshail 25 kg (M)",
+                     "weight":  "25",
+                     "variant":  "Najirshail"
+                 },
+                 {
+                     "item":  "Katari Shiddho 25 kg (M)",
+                     "weight":  "25",
+                     "variant":  "Katari Shiddho"
+                 },
+                 {
+                     "item":  "Paijam Light Cream 25 kg (M)",
+                     "weight":  "25",
+                     "variant":  "Paijam"
+                 },
+                 {
+                     "item":  "Paijam Light Cream 50 kg (M)",
+                     "weight":  "50",
+                     "variant":  "Paijam"
+                 },
+                 {
+                     "item":  "Special Jirashail 25 kg (T)",
+                     "weight":  "25",
+                     "variant":  "Special Jirashail"
+                 },
+                 {
+                     "item":  "Katari Atop New 25 kg (M)",
+                     "weight":  "25",
+                     "variant":  "Katari Atop"
+                 },
+                 {
+                     "item":  "Jirashail 25 kg (T)",
+                     "weight":  "25",
+                     "variant":  "Jirashail"
+                 },
+                 {
+                     "item":  "Jirashail 50 kg (T)",
+                     "weight":  "50",
+                     "variant":  "Jirashail"
+                 },
+                 {
+                     "item":  "Miniket 50 kg (T) [15512959]",
+                     "weight":  "50",
+                     "variant":  "Miniket"
+                 },
+                 {
+                     "item":  "Miniket 25 kg (M) [14411004]",
+                     "weight":  "25",
+                     "variant":  "Miniket"
+                 },
+                 {
+                     "item":  "Miniket 50 kg (M) [14411006]",
+                     "weight":  "50",
+                     "variant":  "Miniket"
+                 },
+                 {
+                     "item":  "Guti Shorna 50 kg (M)",
+                     "weight":  "50",
+                     "variant":  "Guti Shorna"
+                 },
+                 {
+                     "item":  "Chinigura Premium New 50 kg (M)",
+                     "weight":  "50",
+                     "variant":  "Chinigura"
+                 },
+                 {
+                     "item":  "Special Jirashail 25 kg (M)",
+                     "weight":  "25",
+                     "variant":  "Special Jirashail"
+                 },
+                 {
+                     "item":  "Special Jirashail 50 kg (M)",
+                     "weight":  "50",
+                     "variant":  "Special Jirashail"
+                 },
+                 {
+                     "item":  "Katari Atop New 50 kg (T)",
+                     "weight":  "50",
+                     "variant":  "Katari Atop"
+                 },
+                 {
+                     "item":  "Katari Shiddho 50 kg (T)",
+                     "weight":  "50",
+                     "variant":  "Katari Shiddho"
+                 },
+                 {
+                     "item":  "Katari Atop New 50 kg (M)",
+                     "weight":  "50",
+                     "variant":  "Katari Atop"
+                 },
+                 {
+                     "item":  "Chinigura Premium New 25 kg (M)",
+                     "weight":  "25",
+                     "variant":  "Chinigura"
+                 },
+                 {
+                     "item":  "Atash 25 kg (T) [15512929]",
+                     "weight":  "25",
+                     "variant":  "Atash"
+                 },
+                 {
+                     "item":  "Special Jirashail 50 kg (T)",
+                     "weight":  "50",
+                     "variant":  "Special Jirashail"
+                 },
+                 {
+                     "item":  "Kajol Lota 25 kg (T) [15513021]",
+                     "weight":  "25",
+                     "variant":  "Kajol Lota"
+                 },
+                 {
+                     "item":  "Katari Shiddho 50 kg (M)",
+                     "weight":  "50",
+                     "variant":  "Katari Shiddho"
+                 },
+                 {
+                     "item":  "Kajol Lota 50 kg (T)",
+                     "weight":  "50",
+                     "variant":  "Kajol Lota"
+                 },
+                 {
+                     "item":  "Chinigura Premium New 50 kg (M) [14411145]",
+                     "weight":  "50",
+                     "variant":  "Chinigura"
+                 },
+                 {
+                     "item":  "Essential Atop Rice 25 kg (T) [15513160]",
+                     "weight":  "25",
+                     "variant":  "Essential Atop Rice"
+                 },
+                 {
+                     "item":  "Atash Atop 25 kg (T)",
+                     "weight":  "25",
+                     "variant":  "Atash Atop"
+                 },
+                 {
+                     "item":  "Chinigura Premium New 50 kg (T) [15513005]",
+                     "weight":  "50",
+                     "variant":  "Chinigura"
+                 },
+                 {
+                     "item":  "Chinigura Premium New 25 kg (T) [15513004]",
+                     "weight":  "25",
+                     "variant":  "Chinigura"
+                 },
+                 {
+                     "item":  "Chinigura Premium New 25 kg (M) [14411143]",
+                     "weight":  "25",
+                     "variant":  "Chinigura"
+                 },
+                 {
+                     "item":  "Katari Shiddho (Unprinted) 50 kg (M)",
+                     "weight":  "50",
+                     "variant":  "Katari Shiddho"
+                 },
+                 {
+                     "item":  "Paijam Light Cream 25 kg (T) [15512976]",
+                     "weight":  "25",
+                     "variant":  "Paijam"
+                 },
+                 {
+                     "item":  "Katari Atop New 25 kg (M) [1551955]",
+                     "weight":  "25",
+                     "variant":  "Katari Atop"
+                 },
+                 {
+                     "item":  "Katari Shiddho 25 kg (M) [1441968]",
+                     "weight":  "25",
+                     "variant":  "Katari Shiddho"
+                 },
+                 {
+                     "item":  "Essential Atop Rice 25 kg (M)",
+                     "weight":  "25",
+                     "variant":  "Essential Atop Rice"
+                 },
+                 {
+                     "item":  "Najirshail 25 kg (T)",
+                     "weight":  "25",
+                     "variant":  "Najirshail"
+                 },
+                 {
+                     "item":  "Kajol Lota 25 kg (M)",
+                     "weight":  "25",
+                     "variant":  "Kajol Lota"
+                 },
+                 {
+                     "item":  "Essential Atop Rice 50 kg (T)",
+                     "weight":  "50",
+                     "variant":  "Essential Atop Rice"
+                 },
+                 {
+                     "item":  "Premium katari Ghee Bhog 25 kg (T)",
+                     "weight":  "25",
+                     "variant":  "katari Ghee Bhog"
+                 },
+                 {
+                     "item":  "Essential Popular Atop Rice 25 kg (T)",
+                     "weight":  "25",
+                     "variant":  "Essential Atop"
+                 },
+                 {
+                     "item":  "Premium katari Ghee Bhog 50 kg (T)",
+                     "weight":  "50",
+                     "variant":  "katari Ghee Bhog"
+                 },
+                 {
+                     "item":  "Special Jirashail 25 kg (M) [1551980]",
+                     "weight":  "25",
+                     "variant":  "Special Jirashail"
+                 },
+                 {
+                     "item":  "Katari Atop New 25 kg (T) [15513023]",
+                     "weight":  "25",
+                     "variant":  "Katari Atop"
+                 },
+                 {
+                     "item":  "Katari Shiddho 25 kg (T) [15513035]",
+                     "weight":  "25",
+                     "variant":  "Katari Shiddho"
+                 },
+                 {
+                     "item":  "Atash 50 kg (T) [15512930]",
+                     "weight":  "50",
+                     "variant":  "Atash"
+                 },
+                 {
+                     "item":  "Miniket 25 kg (T) [15512958]",
+                     "weight":  "25",
+                     "variant":  "Miniket"
+                 },
+                 {
+                     "item":  "Katari Najir New 25 kg (T) [15513027]",
+                     "weight":  "25",
+                     "variant":  "Katari Najir"
+                 },
+                 {
+                     "item":  "Special Jirashail 50 kg (M) [1551981]",
+                     "weight":  "50",
+                     "variant":  "Special Jirashail"
+                 },
+                 {
+                     "item":  "Atash 25 kg (M) [1441915]",
+                     "weight":  "25",
+                     "variant":  "Atash"
+                 },
+                 {
+                     "item":  "Atash 50 kg (M) [1441916]",
+                     "weight":  "50",
+                     "variant":  "Atash"
+                 },
+                 {
+                     "item":  "Paijam Light Cream 50 kg (T) [15512980]",
+                     "weight":  "50",
+                     "variant":  "Paijam"
+                 },
+                 {
+                     "item":  "Katari Najir New 50 kg (T) [15513028]",
+                     "weight":  "50",
+                     "variant":  "Katari Najir"
+                 },
+                 {
+                     "item":  "Paijam Light Cream 25 kg",
+                     "weight":  "25",
+                     "variant":  "Paijam"
+                 },
+                 {
+                     "item":  "Jirashail 25 kg",
+                     "weight":  "25",
+                     "variant":  "Jirashail"
+                 },
+                 {
+                     "item":  "Paijam Cream 25 kg",
+                     "weight":  "25",
+                     "variant":  "Paijam"
+                 },
+                 {
+                     "item":  "Paijam Light Cream 50 kg",
+                     "weight":  "50",
+                     "variant":  "Paijam"
+                 },
+                 {
+                     "item":  "Deshi Bashmoti 25 kg",
+                     "weight":  "25",
+                     "variant":  "Bashmoti"
+                 },
+                 {
+                     "item":  "Chinigura Premium New 25 kg",
+                     "weight":  "25",
+                     "variant":  "Chinigura"
+                 },
+                 {
+                     "item":  "Atash 25 kg",
+                     "weight":  "25",
+                     "variant":  "Atash"
+                 },
+                 {
+                     "item":  "Katari Najir New 25 kg",
+                     "weight":  "25",
+                     "variant":  "Katari Najir"
+                 },
+                 {
+                     "item":  "Katari Shiddho 25 kg",
+                     "weight":  "25",
+                     "variant":  "Katari Shiddho"
+                 },
+                 {
+                     "item":  "Miniket 25 kg",
+                     "weight":  "25",
+                     "variant":  "Miniket"
+                 },
+                 {
+                     "item":  "Miniket 50 kg",
+                     "weight":  "50",
+                     "variant":  "Miniket"
+                 },
+                 {
+                     "item":  "Katari Atop 25 kg",
+                     "weight":  "25",
+                     "variant":  "Katari Atop"
+                 },
+                 {
+                     "item":  "Katari Najir Old 25 kg",
+                     "weight":  "25",
+                     "variant":  "Katari Najir"
+                 },
+                 {
+                     "item":  "Katari Atop 50 kg",
+                     "weight":  "50",
+                     "variant":  "Katari Atop"
+                 },
+                 {
+                     "item":  "Katari Najir New 50 kg",
+                     "weight":  "50",
+                     "variant":  "Katari Najir"
+                 },
+                 {
+                     "item":  "Chinigura Premium New 50 kg",
+                     "weight":  "50",
+                     "variant":  "Chinigura"
+                 },
+                 {
+                     "item":  "Jirashail 50 kg",
+                     "weight":  "50",
+                     "variant":  "Jirashail"
+                 },
+                 {
+                     "item":  "Atash 50 kg",
+                     "weight":  "50",
+                     "variant":  "Atash"
+                 },
+                 {
+                     "item":  "Special Jirashail 25 kg",
+                     "weight":  "25",
+                     "variant":  "Special Jirashail"
+                 },
+                 {
+                     "item":  "Essential Atop Rice 25 kg",
+                     "weight":  "25",
+                     "variant":  "Essential Atop Rice"
+                 },
+                 {
+                     "item":  "Paijam Cream 50 kg",
+                     "weight":  "50",
+                     "variant":  "Paijam"
+                 },
+                 {
+                     "item":  "Special Jirashail 50 kg",
+                     "weight":  "50",
+                     "variant":  "Special Jirashail"
+                 },
+                 {
+                     "item":  "Katari Shiddho 50 kg",
+                     "weight":  "50",
+                     "variant":  "Katari Shiddho"
+                 },
+                 {
+                     "item":  "Najirshail 25 kg",
+                     "weight":  "25",
+                     "variant":  "Najirshail"
+                 },
+                 {
+                     "item":  "Katari Najir Old 50 kg",
+                     "weight":  "50",
+                     "variant":  "Katari Najir"
+                 },
+                 {
+                     "item":  "Essential Atop Rice 50 kg",
+                     "weight":  "50",
+                     "variant":  "Essential Atop Rice"
+                 },
+                 {
+                     "item":  "Chinigura Premium Old 25 kg",
+                     "weight":  "25",
+                     "variant":  "Chinigura"
+                 },
+                 {
+                     "item":  "Jirashail 25 kg [15512907]",
+                     "weight":  "25",
+                     "variant":  "Jirashail"
+                 },
+                 {
+                     "item":  "Katari Steam 25 kg (T)",
+                     "weight":  "25",
+                     "variant":  "Katari Steam"
+                 },
+                 {
+                     "item":  "Jirashail 25 kg (M)",
+                     "weight":  "25",
+                     "variant":  "Jirashail"
+                 },
+                 {
+                     "item":  "Special Jirashail 25 kg (T) [15512985]",
+                     "weight":  "25",
+                     "variant":  "Special Jirashail"
+                 },
+                 {
+                     "item":  "Katari Shiddho Rice(Unprinted) 50 kg (M)",
+                     "weight":  "50",
+                     "variant":  "Katari Shiddho"
+                 },
+                 {
+                     "item":  "Katari Atop New 25 kg",
+                     "weight":  "25",
+                     "variant":  "Katari Atop"
+                 },
+                 {
+                     "item":  "Deshi Basmoti 5 Kg",
+                     "weight":  "5",
+                     "variant":  "Bashmoti"
+                 },
+                 {
+                     "item":  "Miniket 5 kg",
+                     "weight":  "5",
+                     "variant":  "Miniket"
+                 },
+                 {
+                     "item":  "Katari Scent 50 kg",
+                     "weight":  "50",
+                     "variant":  "Katari Scaent"
+                 },
+                 {
+                     "item":  "Kajol Lota 25 kg (M) [1441954]",
+                     "weight":  "25",
+                     "variant":  "Kajol Lota"
+                 },
+                 {
+                     "item":  "Essential Miniket Atop Rice 25 kg (T)",
+                     "weight":  "25",
+                     "variant":  "Miniket Atop"
+                 },
+                 {
+                     "item":  "Essential Miniket Atop Rice 50 kg (T)",
+                     "weight":  "50",
+                     "variant":  "Miniket Atop"
+                 },
+                 {
+                     "item":  "Atash Atop 25 (T) [15513162]",
+                     "weight":  "25",
+                     "variant":  "Atash Atop"
+                 },
+                 {
+                     "item":  "Popular Miniket 25 Kg (M)",
+                     "weight":  "25",
+                     "variant":  "Popular Miniket"
+                 },
+                 {
+                     "item":  "Popular Miniket 50 Kg (M)",
+                     "weight":  "50",
+                     "variant":  "Popular Miniket"
+                 },
+                 {
+                     "item":  "Essential Popular Miniket Rice 50 kg (T)",
+                     "weight":  "50",
+                     "variant":  "Popular Miniket"
+                 },
+                 {
+                     "item":  "Essential Popular Miniket Rice 25 kg (T)",
+                     "weight":  "25",
+                     "variant":  "Popular Miniket"
+                 },
+                 {
+                     "item":  "Premium katari Ghee Bhog 25 kg (M)",
+                     "weight":  "25",
+                     "variant":  "katari Ghee Bhog"
+                 },
+                 {
+                     "item":  "Katari Najir New 25 kg (M)",
+                     "weight":  "25",
+                     "variant":  "Katari Najir"
+                 },
+                 {
+                     "item":  "Katari Najir New 50 kg (M)",
+                     "weight":  "50",
+                     "variant":  "Katari Najir"
+                 },
+                 {
+                     "item":  "Deshi Bashmoti 25 kg (M)",
+                     "weight":  "25",
+                     "variant":  "Bashmoti"
+                 },
+                 {
+                     "item":  "Essential Atop Rice 25 kg (M) [14411653]",
+                     "weight":  "25",
+                     "variant":  "Essential Atop Rice"
+                 },
+                 {
+                     "item":  "Premium katari Ghee Bhog 25 kg (T) [14411988]",
+                     "weight":  "25",
+                     "variant":  "katari Ghee Bhog"
+                 },
+                 {
+                     "item":  "Essential Atop Rice 50 kg (M) [14411654]",
+                     "weight":  "50",
+                     "variant":  "Essential Atop Rice"
+                 },
+                 {
+                     "item":  "Popular Miniket 25 Kg (M) [14412038]",
+                     "weight":  "25",
+                     "variant":  "Popular Miniket"
+                 },
+                 {
+                     "item":  "Popular Miniket 50 Kg (M) [14412039]",
+                     "weight":  "50",
+                     "variant":  "Popular Miniket"
+                 },
+                 {
+                     "item":  "Katari Najir New 25 kg (M) [1551960]",
+                     "weight":  "25",
+                     "variant":  "Katari Najir"
+                 },
+                 {
+                     "item":  "Najirshail 25 kg (T) [14411007]",
+                     "weight":  "25",
+                     "variant":  "Najirshail"
+                 },
+                 {
+                     "item":  "Katari Shiddho 50 kg (T) [15513036]",
+                     "weight":  "50",
+                     "variant":  "Katari Shiddho"
+                 },
+                 {
+                     "item":  "Katari Atop New 50 kg (T) [15513024]",
+                     "weight":  "50",
+                     "variant":  "Katari Atop"
+                 },
+                 {
+                     "item":  "Deshi Bashmoti 25 kg (T) [15513008]",
+                     "weight":  "25",
+                     "variant":  "Bashmoti"
+                 },
+                 {
+                     "item":  "Jirashail 25 kg (T) [15512907]",
+                     "weight":  "25",
+                     "variant":  "Jirashail"
+                 },
+                 {
+                     "item":  "Essential Popular Miniket Rice 50 kg [15513167]",
+                     "weight":  "50",
+                     "variant":  "Popular Miniket"
+                 },
+                 {
+                     "item":  "Essential Popular Miniket Rice 25 kg (T) [15513166]",
+                     "weight":  "25",
+                     "variant":  "Popular Miniket"
+                 },
+                 {
+                     "item":  "Essential Miniket Atop Rice 25 kg (T) [1551971]",
+                     "weight":  "25",
+                     "variant":  "Miniket Atop"
+                 },
+                 {
+                     "item":  "Premium katari Ghee Bhog 25 kg",
+                     "weight":  "25",
+                     "variant":  "katari Ghee Bhog"
+                 },
+                 {
+                     "item":  "Kajol Lota 25 kg",
+                     "weight":  "25",
+                     "variant":  "Kajol Lota"
+                 },
+                 {
+                     "item":  "Kajol Lota 50 kg",
+                     "weight":  "50",
+                     "variant":  "Kajol Lota"
+                 },
+                 {
+                     "item":  "Paijam Cream 25 kg (T)",
+                     "weight":  "25",
+                     "variant":  "Paijam"
+                 },
+                 {
+                     "item":  "Kajol Lota 50 kg (T) [15513022]",
+                     "weight":  "50",
+                     "variant":  "Kajol Lota"
+                 },
+                 {
+                     "item":  "Chinigura Premium Old 25 kg (T)",
+                     "weight":  "25",
+                     "variant":  "Chinigura"
+                 },
+                 {
+                     "item":  "Premium katari Ghee Bhog 50 kg (T)",
+                     "weight":  "50",
+                     "variant":  "katari Ghee Bhog"
+                 },
+                 {
+                     "item":  "Hybrid 25 kg",
+                     "weight":  "25",
+                     "variant":  "Hybrid"
+                 },
+                 {
+                     "item":  "Katari Atop Old 25 kg",
+                     "weight":  "25",
+                     "variant":  "Katari Atop"
+                 },
+                 {
+                     "item":  "Paijam 25 kg",
+                     "weight":  "25",
+                     "variant":  "Paijam"
+                 },
+                 {
+                     "item":  "Guti Swarna 25 kg",
+                     "weight":  "25",
+                     "variant":  "Guti Shorna"
+                 },
+                 {
+                     "item":  "Banglamoti 25 kg",
+                     "weight":  "25",
+                     "variant":  "Bashmoti"
+                 },
+                 {
+                     "item":  "Guti Shorna 25 kg",
+                     "weight":  "25",
+                     "variant":  "Guti Shorna"
+                 },
+                 {
+                     "item":  "Jirashail 25 kg (M) [14411050]",
+                     "weight":  "25",
+                     "variant":  "JIrashail"
+                 },
+                 {
+                     "item":  "Katari Steam 25 kg",
+                     "weight":  "25",
+                     "variant":  "Katari Najir"
+                 },
+                 {
+                     "item":  "Chinigura Premium 25 kg",
+                     "weight":  "25",
+                     "variant":  "Chinigura"
+                 },
+                 {
+                     "item":  "Katari Atop Old 50 kg",
+                     "weight":  "50",
+                     "variant":  "Katari Atop"
+                 },
+                 {
+                     "item":  "Katari Atop New 50 kg",
+                     "weight":  "50",
+                     "variant":  "Katari Atop"
+                 },
+                 {
+                     "item":  "Paijam 50 kg",
+                     "weight":  "50",
+                     "variant":  "Paijam"
+                 },
+                 {
+                     "item":  "Chinigura Premium Old 50 kg",
+                     "weight":  "50",
+                     "variant":  "Chinigura"
+                 },
+                 {
+                     "item":  "Guti Shorna 50 kg",
+                     "weight":  "50",
+                     "variant":  "Guti Shorna"
+                 },
+                 {
+                     "item":  "Paijam Atop 50 kg",
+                     "weight":  "50",
+                     "variant":  "Essential Atop Rice"
+                 },
+                 {
+                     "item":  "Jirashail 50 kg (M)",
+                     "weight":  "50",
+                     "variant":  "Jirashail"
+                 },
+                 {
+                     "item":  "Hybrid 50 kg",
+                     "weight":  "50",
+                     "variant":  "Hybrid"
+                 },
+                 {
+                     "item":  "Chinigura Premium 50 kg",
+                     "weight":  "50",
+                     "variant":  "Chinigura"
+                 },
+                 {
+                     "item":  "Deshi Bashmoti 50 kg",
+                     "weight":  "50",
+                     "variant":  "Bashmoti"
+                 },
+                 {
+                     "item":  "Atash Atop 50 kg (T)",
+                     "weight":  "50",
+                     "variant":  "Atash Atop"
+                 },
+                 {
+                     "item":  "Chinigura Premium Old 25 Kg (T)",
+                     "weight":  "25",
+                     "variant":  "Chinigura"
+                 },
+                 {
+                     "item":  "Chinigura Premium Old 50 Kg (T)",
+                     "weight":  "50",
+                     "variant":  "Chinigura"
+                 },
+                 {
+                     "item":  "Chinigura Premium Old 50 kg (T) [14411144]",
+                     "weight":  "50",
+                     "variant":  "Chinigura"
+                 },
+                 {
+                     "item":  "Chinigura Premium Old 25 kg (T) [14411142]",
+                     "weight":  "25",
+                     "variant":  "Chinigura"
+                 },
+                 {
+                     "item":  "Paijam Atop 25 kg (T) [15512960]",
+                     "weight":  "25",
+                     "variant":  "Essential Atop Rice"
+                 },
+                 {
+                     "item":  "Paijam Atop 25 kg (T)",
+                     "weight":  "25",
+                     "variant":  "Essential Atop Rice"
+                 },
+                 {
+                     "item":  "Paijam Light Cream 50 kg (T) [15512980]",
+                     "weight":  "50",
+                     "variant":  "Paijam"
+                 },
+                 {
+                     "item":  "Katari Atop Old 25 kg (T)",
+                     "weight":  "25",
+                     "variant":  "Katari Atop"
+                 },
+                 {
+                     "item":  "Miniket 25 kg (New-T)",
+                     "weight":  "25",
+                     "variant":  "Miniket"
+                 },
+                 {
+                     "item":  "Miniket 50 kg (New-T)",
+                     "weight":  "50",
+                     "variant":  "Miniket"
+                 },
+                 {
+                     "item":  "Miniket 25 kg (New-T) [15517795]",
+                     "weight":  "25",
+                     "variant":  "Miniket"
+                 },
+                 {
+                     "item":  "Miniket 50 kg (New-T) [15517794]",
+                     "weight":  "50",
+                     "variant":  "Miniket"
+                 },
+                 {
+                     "item":  "",
+                     "weight":  "",
+                     "variant":  ""
+                 }
+             ]
+}

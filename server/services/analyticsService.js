@@ -45,6 +45,10 @@ function itemName(fact) {
   return fact.item ? String(fact.item).trim() : 'Unknown';
 }
 
+function productName(fact) {
+  return fact.product ? String(fact.product).trim() : itemName(fact);
+}
+
 /** Apply scope + date filter to cached facts. */
 function scopedFacts(data, scope, from, to) {
   if (!data) return { orders: [], deliveries: [] };
@@ -306,7 +310,7 @@ function dashboardSummary(data, scope, range, opts = {}) {
 function orderBreakdown(orders, dim) {
   const fn = {
     territory: (o) => territoryName(o),
-    product: (o) => itemName(o),
+    product: (o) => productName(o),
     customer: (o) => customerName(o),
     region: (o) => o.region || 'Unassigned',
     area: (o) => o.area || 'Unassigned',
@@ -318,7 +322,7 @@ function orderBreakdown(orders, dim) {
 function deliveryBreakdown(deliveries, dim) {
   const fn = {
     territory: (d) => territoryName(d),
-    product: (d) => itemName(d),
+    product: (d) => productName(d),
     customer: (d) => customerName(d),
     region: (d) => d.region || 'Unassigned',
     area: (d) => d.area || 'Unassigned',
@@ -537,8 +541,8 @@ function customerSummary(data, scope, range) {  const { orders, deliveries } = s
 
 function productSummary(data, scope, range) {
   const { orders, deliveries } = scopedFacts(data, scope, range.from, range.to);
-  const o = groupSum(orders, (x) => itemName(x), (x) => x.value, (x) => x.quantity);
-  const d = groupSum(deliveries, (x) => itemName(x), (x) => x.value, (x) => x.quantity);
+  const o = groupSum(orders, (x) => productName(x), (x) => x.value, (x) => x.quantity);
+  const d = groupSum(deliveries, (x) => productName(x), (x) => x.value, (x) => x.quantity);
   return [...o.entries()].map(([k, v]) => ({
     product: k,
     salesValue: v.value,

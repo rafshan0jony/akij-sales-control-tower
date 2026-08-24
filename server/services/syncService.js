@@ -4,6 +4,7 @@ const mcp = require('../mcp/client');
 const syncRepo = require('../repos/sync');
 const territoriesRepo = require('../repos/territories');
 const territoryMapping = require('./territoryMappingService');
+const itemMapping = require('./itemMappingService');
 const logger = require('../logger');
 const config = require('../config');
 const dates = require('../lib/dates');
@@ -21,9 +22,12 @@ function int(v, dflt) {
 }
 
 function normalizeOrders(rows) {
-  return (rows || []).map((r) => {
+  const out = [];
+  for (const r of rows || []) {
+    const pm = itemMapping.resolveProduct(r.item);
+    if (!pm) continue; // exclude by-products / unmapped items
     const tm = territoryMapping.resolve(r.territory);
-    return {
+    out.push({
       date: dates.toDateStr(r.date),
       orderNo: r.orderNo == null ? null : String(r.orderNo),
       customer: r.customer == null ? null : String(r.customer),
@@ -33,6 +37,7 @@ function normalizeOrders(rows) {
       systemTerritory: tm.systemTerritory,
       status: r.status == null ? null : String(r.status),
       item: r.item == null ? null : String(r.item),
+      product: pm.product,
       uom: r.uom == null ? null : String(r.uom),
       quantity: num(r.quantity),
       value: num(r.value),
@@ -40,14 +45,18 @@ function normalizeOrders(rows) {
       deliveredQty: r.deliveredQty == null ? null : num(r.deliveredQty),
       undeliveredQty: r.undeliveredQty == null ? null : num(r.undeliveredQty),
       undeliveredValue: r.undeliveredValue == null ? null : num(r.undeliveredValue),
-    };
-  });
+    });
+  }
+  return out;
 }
 
 function normalizeDeliveries(rows) {
-  return (rows || []).map((r) => {
+  const out = [];
+  for (const r of rows || []) {
+    const pm = itemMapping.resolveProduct(r.item);
+    if (!pm) continue;
     const tm = territoryMapping.resolve(r.territory);
-    return {
+    out.push({
       date: dates.toDateStr(r.date),
       customer: r.customer == null ? null : String(r.customer),
       territory: tm.territory,
@@ -57,11 +66,13 @@ function normalizeDeliveries(rows) {
       status: r.status == null ? 'Delivered' : String(r.status),
       orderNo: r.orderNo == null ? null : String(r.orderNo),
       item: r.item == null ? null : String(r.item),
+      product: pm.product,
       uom: r.uom == null ? null : String(r.uom),
       quantity: num(r.quantity),
       value: num(r.value),
-    };
-  });
+    });
+  }
+  return out;
 }
 
 function num(v) {
