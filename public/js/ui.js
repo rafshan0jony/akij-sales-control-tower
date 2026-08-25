@@ -39,8 +39,9 @@ export function el(tag, attrs = {}, children = []) {
     else if (v !== undefined && v !== null) node.setAttribute(k, v);
   }
   for (const c of [].concat(children)) {
-    if (c == null) continue;
-    node.appendChild(typeof c === 'string' ? document.createTextNode(c) : c);
+    if (c === null || c === undefined || c === false) continue;
+    if (typeof c === 'string' || typeof c === 'number') node.appendChild(document.createTextNode(String(c)));
+    else node.appendChild(c);
   }
   return node;
 }
