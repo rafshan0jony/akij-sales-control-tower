@@ -19,6 +19,25 @@ function get() {
   };
 }
 
+/** Persist the operational snapshot so it survives restarts/cold-starts. */
+function saveSnapshot(snapshot) {
+  const payload = JSON.stringify(snapshot);
+  getDb().prepare(
+    'INSERT INTO sync_data (id, payload, updated_at) VALUES (1, ?, ?) ON CONFLICT(id) DO UPDATE SET payload = excluded.payload, updated_at = excluded.updated_at'
+  ).run(payload, new Date().toISOString());
+}
+
+/** Load the last persisted snapshot (or null). */
+function loadSnapshot() {
+  const r = getDb().prepare('SELECT payload FROM sync_data WHERE id = 1').get();
+  if (!r || !r.payload) return null;
+  try {
+    return JSON.parse(r.payload);
+  } catch (_) {
+    return null;
+  }
+}
+
 function set(fields) {
   const cur = get() || {};
   const next = { ...cur, ...fields };
@@ -50,4 +69,4 @@ function set(fields) {
   );
 }
 
-module.exports = { get, set };
+module.exports = { get, set, saveSnapshot, loadSnapshot };

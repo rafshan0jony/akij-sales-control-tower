@@ -163,6 +163,7 @@ async function fullRefresh() {
     finishedAt: cache.syncedAt,
     durationMs: Date.now() - started,
   });
+  try { syncRepo.saveSnapshot(cache); } catch (e) { logger.warn('[sync] snapshot save failed:', e.message); }
   logger.info(`[sync] full refresh OK: ${data.orders.length} order rows, ${data.deliveries.length} delivery rows, ${territoryCount} territories (${Date.now() - started}ms)`);
   return cache;
 }
@@ -236,6 +237,7 @@ async function bootstrap() {
 }
 
 function getData() {
+  if (!cache) loadSnapshot();
   return cache;
 }
 
@@ -273,12 +275,28 @@ async function applyRemoteSnapshot({ orders, deliveries, territories }) {
     counts: { orders: normOrders.length, deliveries: normDeliveries.length, territories: territoryCount },
     finishedAt: syncedAt,
   });
+  try { syncRepo.saveSnapshot(cache); } catch (e) { logger.warn('[sync] snapshot save failed:', e.message); }
   logger.info(`[sync] remote snapshot applied: ${normOrders.length} orders, ${normDeliveries.length} deliveries, ${territoryCount} territories`);
   return cache;
+}
+
+/**
+ * Restore the last persisted snapshot into memory (used at startup so data
+ * survives restarts/cold-starts). Returns true if restored.
+ */
+function loadSnapshot() {
+  if (cache) return false;
+  const snap = syncRepo.loadSnapshot();
+  if (snap && snap.orders && snap.deliveries) {
+    cache = snap;
+    logger.info(`[sync] restored snapshot from disk: ${snap.orders.length} orders, ${snap.deliveries.length} deliveries (synced ${snap.syncedAt})`);
+    return true;
+  }
+  return false;
 }
 
 function lastUpdated() {
   return cache ? cache.syncedAt : (syncRepo.get() ? syncRepo.get().lastUpdated : null);
 }
 
-module.exports = { refresh, bootstrap, getData, lastUpdated, fullRefresh, incrementalRefresh, applyRemoteSnapshot };
+module.exports = { refresh, bootstrap, getData, lastUpdated, fullRefresh, incrementalRefresh, applyRemoteSnapshot, loadSnapshot };

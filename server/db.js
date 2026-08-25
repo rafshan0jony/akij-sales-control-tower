@@ -116,6 +116,12 @@ function migrate(db) {
       finished_at TEXT,
       duration_ms INTEGER
     );
+
+    CREATE TABLE IF NOT EXISTS sync_data (
+      id INTEGER PRIMARY KEY CHECK (id = 1),
+      payload TEXT NOT NULL,
+      updated_at TEXT NOT NULL
+    );
   `);
 }
 

@@ -19,7 +19,9 @@ async function main() {
     logger.info(`[boot] ${config.app.company} — ${config.app.name} (${config.app.channel}) listening on :${config.port}`);
   });
 
-  // Initial data sync (best effort — the app still serves if the source is down).
+  // Restore last persisted snapshot so data is available immediately,
+  // then refresh from the source (DWH or bridge) in the background.
+  syncService.loadSnapshot();
   const boot = await syncService.bootstrap();
   if (boot.ok) {
     logger.info('[boot] initial data sync complete');
