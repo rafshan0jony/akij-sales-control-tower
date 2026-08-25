@@ -68,7 +68,7 @@ const config = {
 
   auth: {
     jwtSecret: process.env.JWT_SECRET || 'dev-only-insecure-secret',
-    jwtExpiresIn: process.env.JWT_EXPIRES_IN || '12h',
+    jwtExpiresIn: process.env.JWT_EXPIRES_IN || '30d',
   },
 
   sync: {

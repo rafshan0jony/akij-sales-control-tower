@@ -26,8 +26,8 @@ async function request(path, opts = {}) {
   try { data = await res.json(); } catch { data = null; }
   if (res.status === 401) {
     token.clear();
-    if (!location.hash.includes('/login')) location.hash = '#/login';
-    throw new Error(data?.error || 'Unauthorized');
+    if (!location.hash.includes('/login')) location.reload();
+    throw new Error(data?.error || 'Session expired — please log in again');
   }
   if (!res.ok) {
     throw new Error(data?.error || `Request failed (${res.status})`);
