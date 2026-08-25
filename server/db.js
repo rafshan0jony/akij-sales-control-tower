@@ -185,9 +185,6 @@ function seed(db) {
     const areaId = getRole.get('AREA').id;
     for (const p of dashPermissions) grant.run(areaId, p);
 
-    const zoneId = getRole.get('ZONE').id;
-    for (const p of dashPermissions) grant.run(zoneId, p);
-
     const terrId = getRole.get('TERRITORY').id;
     for (const p of dashPermissions) grant.run(terrId, p);
   }
