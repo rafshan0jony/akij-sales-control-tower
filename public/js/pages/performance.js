@@ -11,14 +11,13 @@ export async function renderPerformance(container, state, dim) {
     endpoint = '/analytics/territories';
     label = 'territories';
     titleKey = 'territory';
-    chartTitle = 'Territory Sales Value';
+    chartTitle = 'Territory Delivery (MT)';
     columns = [
       { label: 'Territory', key: 'territory' },
       { label: 'Sales Value', key: 'salesValue', money: true },
-      { label: 'Quantity', key: 'quantity' },
-      { label: 'Target', key: 'target', money: true },
-      { label: 'Achievement %', key: 'achievementPct', pct: true },
-      { label: 'Delivery', key: 'deliveryValue', money: true },
+      { label: 'Sales (MT)', key: 'salesMt' },
+      { label: 'Delivery (MT)', key: 'deliveryMt' },
+      { label: 'Delivery Value', key: 'deliveryValue', money: true },
     ];
   } else if (dim === 'area') {
     endpoint = '/analytics/areas';

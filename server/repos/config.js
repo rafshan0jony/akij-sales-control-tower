@@ -3,6 +3,9 @@
 const { getDb } = require('../db');
 
 const DEFAULTS = {
+  // Achievement is always based on DELIVERY (company rule: only delivered
+  // quantity counts toward achievement, not booked orders).
+  targetBasis: 'delivery',
   pendingAgingBuckets: [
     { label: '0-2 Days', min: 0, max: 2 },
     { label: '3-7 Days', min: 3, max: 7 },

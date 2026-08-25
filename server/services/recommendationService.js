@@ -25,16 +25,16 @@ function generateRecommendations(data, scope, range) {
   const summary = analytics.dashboardSummary(data, scope, range);
   const kpis = summary.kpis;
 
-  // 1. Achievement pacing
-  if (kpis.mtdTarget > 0) {
-    const gap = kpis.achievementPct - kpis.monthProgressPct;
+  // 1. Achievement pacing (achievement = delivery)
+  if (kpis.mtdTargetMt > 0) {
+    const gap = kpis.achievementMtPct - kpis.monthProgressPct;
     const behindGap = num(configRepo.get('recommendations').behindGapPct || 10);
     if (gap < -behindGap) {
       recs.push({
-        title: 'Increase daily sales coverage',
-        description: `Achievement (${round1(kpis.achievementPct)}%) is ${round1(Math.abs(gap))} points below month progress. Required daily sales to close the gap: ${money(kpis.requiredDaily)}.`,
+        title: 'Increase delivery coordination',
+        description: `Achievement (${round1(kpis.achievementMtPct)}%) is ${round1(Math.abs(gap))} points below month progress. Required daily delivery to close the gap: ${round1(kpis.requiredDaily)} MT.`,
         severity: 'HIGH',
-        target: 'Sales',
+        target: 'Delivery',
       });
     }
   }
@@ -49,13 +49,14 @@ function generateRecommendations(data, scope, range) {
     });
   }
 
-  // 3. Territory-level recommendations
-  const territories = analytics.territoryPerformance(data, scope, range).filter((t) => t.target > 0);
-  for (const t of territories.filter((x) => x.achievementPct < 85).slice(0, 5)) {
+  // 3. Territory-level recommendations (delivery lagging behind bookings)
+  const territories = analytics.territoryPerformance(data, scope, range);
+  const lowDelivery = territories.filter((t) => t.salesMt > 0 && t.deliveryMt / t.salesMt < 0.5).slice(0, 5);
+  for (const t of lowDelivery) {
     recs.push({
-      title: `Boost ${t.territory}`,
-      description: `${t.territory} is at ${round1(t.achievementPct)}% of target. Increase market visits and focus on high-volume customers.`,
-      severity: t.achievementPct < 60 ? 'CRITICAL' : 'MEDIUM',
+      title: `Boost delivery in ${t.territory}`,
+      description: `${t.territory} delivered ${round1(t.deliveryMt)} MT vs ${round1(t.salesMt)} MT booked.`,
+      severity: 'MEDIUM',
       target: t.territory,
     });
   }

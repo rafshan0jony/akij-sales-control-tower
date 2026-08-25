@@ -277,13 +277,14 @@ function dashboardSummary(data, scope, range, opts = {}) {
   const target = sumTargets(targetRows);
   const targetMt = rateService.totalTargetMt();
 
-  const basis = (configRepo.get('targetBasis') || 'sales').toLowerCase();
-  const achievement = basis === 'delivery' ? mtdTotals.deliveryValue : mtdTotals.salesValue;
+  const basis = (configRepo.get('targetBasis') || 'delivery').toLowerCase();
+  const achievement = basis === 'sales' ? mtdTotals.salesValue : mtdTotals.deliveryValue;
+  const achievementMt = basis === 'sales' ? mtdTotals.salesMt : mtdTotals.deliveryMt;
   const achievementPct = target > 0 ? (achievement / target) * 100 : 0;
-  const achievementMtPct = targetMt > 0 ? (mtdTotals.salesMt / targetMt) * 100 : 0;
+  const achievementMtPct = targetMt > 0 ? (achievementMt / targetMt) * 100 : 0;
   const pending = computePending(mtd.orders, mtd.deliveries, now);
-  const pacing = monthProgress.computePacing(target, achievement, prog);
-  const status = monthProgress.performanceStatus(achievementPct, prog.monthProgressPct);
+  const pacing = monthProgress.computePacing(targetMt, achievementMt, prog);
+  const status = monthProgress.performanceStatus(achievementMtPct, prog.monthProgressPct);
 
   const daily = dailySeries(orders, deliveries, range.from, range.to);
 
@@ -297,15 +298,17 @@ function dashboardSummary(data, scope, range, opts = {}) {
       mtdTarget: target,
       mtdTargetMt: targetMt,
       achievement,
+      achievementMt: round1(achievementMt),
       achievementPct: round1(achievementPct),
       achievementMtPct: round1(achievementMtPct),
       pendingTarget: Math.max(target - achievement, 0),
-      pendingTargetMt: Math.max(targetMt - mtdTotals.salesMt, 0),
+      pendingTargetMt: Math.max(targetMt - achievementMt, 0),
       deliveryValue: mtdTotals.deliveryValue,
       deliveryQty: mtdTotals.deliveryQty,
       deliveryMt: round1(mtdTotals.deliveryMt),
       pendingOrderValue: pending.totalValue,
       pendingOrderQty: pending.totalQty,
+      pendingOrderMt: round1(pending.totalMt),
       pendingOrders: pending.orderCount,
       activeCustomers: t.customerCount,
       runRatePct: pacing.runRatePct,
@@ -479,30 +482,25 @@ function targetAchievement(data, scope, range, opts = {}) {
   const targetRows = resolveTargets(scope, monthKey(now));
   const target = sumTargets(targetRows);
   const targetMt = rateService.totalTargetMt();
-  const achievementMt = t.salesMt;
-  const basis = (configRepo.get('targetBasis') || 'sales').toLowerCase();
-  const achievement = basis === 'delivery' ? t.deliveryValue : t.salesValue;
-  const pacing = monthProgress.computePacing(target, achievement, prog);
-  const status = monthProgress.performanceStatus(pacing.achievementPct, prog.monthProgressPct);
+  const achievementMt = t.deliveryMt;
+  const achievementMtPct = targetMt > 0 ? (achievementMt / targetMt) * 100 : 0;
+  const pacing = monthProgress.computePacing(targetMt, achievementMt, prog);
+  const status = monthProgress.performanceStatus(achievementMtPct, prog.monthProgressPct);
 
   const cumulative = [];
   let acc = 0;
   const daily = dailySeries(orders, deliveries, `${year}-${dates.pad(month)}-01`, now);
   for (const d of daily) {
-    acc += basis === 'delivery' ? d.deliveryValue : d.salesValue;
-    cumulative.push({ date: d.date, achievement: acc, target: target * (d.date <= now ? 1 : 0) });
+    acc += d.deliveryMt;
+    cumulative.push({ date: d.date, achievement: acc, targetMt: targetMt * (d.date <= now ? 1 : 0) });
   }
 
   return {
     metrics: {
-      target,
-      achievement,
-      achievementPct: round1(pacing.achievementPct),
       targetMt,
       achievementMt: round1(achievementMt),
-      achievementMtPct: targetMt > 0 ? round1((achievementMt / targetMt) * 100) : 0,
+      achievementMtPct: round1(achievementMtPct),
       pendingTargetMt: round1(Math.max(targetMt - achievementMt, 0)),
-      gap: Math.max(target - achievement, 0),
       requiredDaily: pacing.requiredDaily,
       requiredWeekly: pacing.requiredDaily * 7,
       forecast: pacing.forecast,
@@ -517,25 +515,25 @@ function targetAchievement(data, scope, range, opts = {}) {
   };
 }
 
-/** Product-wise target (MT) vs achievement (MT). */
+/** Product-wise target (MT) vs achievement (delivery MT). */
 function productTargetAchievement(data, scope, range) {
-  const { orders } = scopedFacts(data, scope, range.from, range.to);
+  const { deliveries } = scopedFacts(data, scope, range.from, range.to);
   const mtByProduct = new Map();
   const valueByProduct = new Map();
-  for (const x of orders) {
+  for (const x of deliveries) {
     const k = productName(x);
     mtByProduct.set(k, (mtByProduct.get(k) || 0) + num(x.mt));
     valueByProduct.set(k, (valueByProduct.get(k) || 0) + num(x.value));
   }
   const rows = [];
   for (const e of rateService.list()) {
-    const salesMt = mtByProduct.get(e.product) || 0;
+    const delMt = mtByProduct.get(e.product) || 0;
     rows.push({
       product: e.product,
       targetMt: e.forecastMt,
-      salesMt: round1(salesMt),
-      achievementPct: e.forecastMt > 0 ? round1((salesMt / e.forecastMt) * 100) : 0,
-      salesValue: valueByProduct.get(e.product) || 0,
+      deliveryMt: round1(delMt),
+      achievementPct: e.forecastMt > 0 ? round1((delMt / e.forecastMt) * 100) : 0,
+      deliveryValue: valueByProduct.get(e.product) || 0,
     });
   }
   rows.sort((a, b) => b.targetMt - a.targetMt);
@@ -546,27 +544,24 @@ function territoryPerformance(data, scope, range) {
   const { orders, deliveries } = scopedFacts(data, scope, range.from, range.to);
   const byTerr = groupSum(orders, (o) => territoryName(o), (o) => o.value, (o) => o.quantity);
   const dTerr = groupSum(deliveries, (d) => territoryName(d), (d) => d.value, (d) => d.quantity);
-  const now = dates.todayStr();
-  const month = monthKey(now);
-  const targetRows = resolveTargets(scope, month);
-  const targetByTerr = new Map();
-  for (const tr of targetRows) {
-    const tn = territoriesRepo.findById(tr.territory_id);
-    const name = tn ? tn.name : String(tr.territory_id);
-    targetByTerr.set(name.toLowerCase(), (targetByTerr.get(name.toLowerCase()) || 0) + num(tr.target_value));
+  const salesMtByTerr = new Map();
+  const delMtByTerr = new Map();
+  for (const o of orders) {
+    const k = territoryName(o);
+    salesMtByTerr.set(k, (salesMtByTerr.get(k) || 0) + num(o.mt));
   }
-  return [...byTerr.entries()].map(([k, v]) => {
-    const target = targetByTerr.get(k.toLowerCase()) || 0;
-    const delivery = dTerr.get(k) ? dTerr.get(k).value : 0;
-    return {
-      territory: k,
-      salesValue: v.value,
-      quantity: v.qty,
-      target,
-      achievementPct: target > 0 ? (v.value / target) * 100 : 0,
-      deliveryValue: delivery,
-    };
-  }).sort((a, b) => b.salesValue - a.salesValue);
+  for (const d of deliveries) {
+    const k = territoryName(d);
+    delMtByTerr.set(k, (delMtByTerr.get(k) || 0) + num(d.mt));
+  }
+  return [...byTerr.entries()].map(([k, v]) => ({
+    territory: k,
+    salesValue: v.value,
+    salesMt: round1(salesMtByTerr.get(k) || 0),
+    deliveryValue: dTerr.get(k) ? dTerr.get(k).value : 0,
+    deliveryMt: round1(delMtByTerr.get(k) || 0),
+    quantity: v.qty,
+  })).sort((a, b) => b.salesValue - a.salesValue);
 }
 
 function regionPerformance(data, scope, range) {
@@ -598,13 +593,19 @@ function productSummary(data, scope, range) {
   const { orders, deliveries } = scopedFacts(data, scope, range.from, range.to);
   const o = groupSum(orders, (x) => productName(x), (x) => x.value, (x) => x.quantity);
   const d = groupSum(deliveries, (x) => productName(x), (x) => x.value, (x) => x.quantity);
-  const mtByProduct = new Map();
+  const salesMtByProduct = new Map();
+  const delMtByProduct = new Map();
   for (const x of orders) {
     const k = productName(x);
-    mtByProduct.set(k, (mtByProduct.get(k) || 0) + num(x.mt));
+    salesMtByProduct.set(k, (salesMtByProduct.get(k) || 0) + num(x.mt));
+  }
+  for (const x of deliveries) {
+    const k = productName(x);
+    delMtByProduct.set(k, (delMtByProduct.get(k) || 0) + num(x.mt));
   }
   return [...o.entries()].map(([k, v]) => {
-    const salesMt = mtByProduct.get(k) || 0;
+    const salesMt = salesMtByProduct.get(k) || 0;
+    const deliveryMt = delMtByProduct.get(k) || 0;
     const targetMt = rateService.forecastMt(k);
     return {
       product: k,
@@ -613,8 +614,9 @@ function productSummary(data, scope, range) {
       orderCount: v.count,
       deliveryValue: d.get(k) ? d.get(k).value : 0,
       salesMt: round1(salesMt),
+      deliveryMt: round1(deliveryMt),
       targetMt,
-      achievementPct: targetMt > 0 ? round1((salesMt / targetMt) * 100) : 0,
+      achievementPct: targetMt > 0 ? round1((deliveryMt / targetMt) * 100) : 0,
     };
   }).sort((a, b) => b.salesValue - a.salesValue);
 }

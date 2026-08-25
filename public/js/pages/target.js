@@ -11,13 +11,13 @@ export async function renderTarget(container, state) {
   const achPct = m.achievementMtPct != null ? m.achievementMtPct : m.achievementPct;
 
   container.appendChild(kpiGrid([
-    { label: 'Target', value: fmt(m.targetMt, 0) + ' MT', opts: { sub: compactMoney(m.target) } },
-    { label: 'Achievement', value: fmt(m.achievementMt, 0) + ' MT', opts: { sub: compactMoney(m.achievement) } },
+    { label: 'Target', value: fmt(m.targetMt, 0) + ' MT' },
+    { label: 'Achievement (Delivery)', value: fmt(m.achievementMt, 0) + ' MT' },
     { label: 'Achievement %', value: pct(achPct), opts: { color: achColor(achPct) } },
     { label: 'Pending Target', value: fmt(m.pendingTargetMt, 0) + ' MT' },
-    { label: 'Required Daily', value: compactMoney(m.requiredDaily) },
-    { label: 'Required Weekly', value: compactMoney(m.requiredWeekly) },
-    { label: 'Forecast', value: compactMoney(m.forecast) },
+    { label: 'Required Daily', value: fmt(m.requiredDaily, 1) + ' MT' },
+    { label: 'Required Weekly', value: fmt(m.requiredWeekly, 1) + ' MT' },
+    { label: 'Forecast', value: fmt(m.forecast, 0) + ' MT' },
     { label: 'Run Rate', value: pct(m.runRatePct) },
     { label: 'Month Progress', value: pct(m.monthProgressPct) },
   ]));
@@ -37,15 +37,15 @@ export async function renderTarget(container, state) {
   ]);
   barChart('ta-bar', ['Target (MT)', 'Achievement (MT)'], [{ label: 'MT', data: [m.targetMt, m.achievementMt], color: '#2563eb' }], { stacked: false });
 
-  // Product-wise target vs achievement (MT)
+  // Product-wise target vs achievement (delivery MT)
   const products = data.byProduct || [];
-  container.appendChild(card('Product-wise Target vs Achievement (MT)', dataTable({
+  container.appendChild(card('Product-wise Target vs Achievement (Delivery MT)', dataTable({
     columns: [
       { label: 'Product', key: 'product' },
       { label: 'Target (MT)', key: 'targetMt' },
-      { label: 'Sales (MT)', key: 'salesMt' },
+      { label: 'Delivery (MT)', key: 'deliveryMt' },
       { label: 'Achievement %', key: 'achievementPct', pct: true },
-      { label: 'Sales Value', key: 'salesValue', money: true },
+      { label: 'Delivery Value', key: 'deliveryValue', money: true },
     ],
     rows: products,
   })));
@@ -55,10 +55,10 @@ export async function renderTarget(container, state) {
   container.appendChild(card('Territory Comparison', dataTable({
     columns: [
       { label: 'Territory', key: 'territory' },
+      { label: 'Sales (MT)', key: 'salesMt' },
+      { label: 'Delivery (MT)', key: 'deliveryMt' },
       { label: 'Sales Value', key: 'salesValue', money: true },
-      { label: 'Target', key: 'target', money: true },
-      { label: 'Achievement %', key: 'achievementPct', pct: true },
-      { label: 'Delivery', key: 'deliveryValue', money: true },
+      { label: 'Delivery Value', key: 'deliveryValue', money: true },
     ],
     rows: territories,
   })));

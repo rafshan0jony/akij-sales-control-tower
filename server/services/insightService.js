@@ -25,23 +25,23 @@ function generateInsights(data, scope, range) {
   const summary = analytics.dashboardSummary(data, scope, range);
   const kpis = summary.kpis;
 
-  // 1. Run-rate / target pacing
-  if (kpis.mtdTarget > 0) {
-    const gapPts = round1(kpis.achievementPct - kpis.monthProgressPct);
+  // 1. Run-rate / target pacing (achievement = delivery)
+  if (kpis.mtdTargetMt > 0) {
+    const gapPts = round1(kpis.achievementMtPct - kpis.monthProgressPct);
     if (gapPts < -10) {
       insights.push({
         title: 'Target may be missed on current run rate',
-        description: `Achievement (${pct(kpis.achievementPct)}) trails month progress (${pct(kpis.monthProgressPct)}) by ${Math.abs(gapPts)} points.`,
-        metric: pct(kpis.achievementPct),
+        description: `Achievement ${pct(kpis.achievementMtPct)} (${kpis.achievementMt} MT delivered) trails month progress (${pct(kpis.monthProgressPct)}) by ${Math.abs(gapPts)} points.`,
+        metric: pct(kpis.achievementMtPct),
         severity: gapPts < -20 ? 'CRITICAL' : 'WARNING',
         dimension: 'National',
-        action: 'Increase daily sales coverage and prioritize high-potential customers.',
+        action: 'Increase delivery coordination and prioritize pending order conversion.',
       });
     } else if (gapPts >= 0) {
       insights.push({
         title: 'Performance ahead of plan',
-        description: `Achievement (${pct(kpis.achievementPct)}) is ${gapPts} points above month progress (${pct(kpis.monthProgressPct)}).`,
-        metric: pct(kpis.achievementPct),
+        description: `Achievement ${pct(kpis.achievementMtPct)} (${kpis.achievementMt} MT delivered) is ${gapPts} points above month progress (${pct(kpis.monthProgressPct)}).`,
+        metric: pct(kpis.achievementMtPct),
         severity: 'SUCCESS',
         dimension: 'National',
         action: 'Sustain momentum and reallocate effort to lagging territories.',
@@ -49,28 +49,28 @@ function generateInsights(data, scope, range) {
     }
   }
 
-  // 2. Territory performance outliers (only where targets are configured)
-  const territories = analytics.territoryPerformance(data, scope, range).filter((t) => t.target > 0);
-  const behind = territories.filter((t) => t.achievementPct < 80).sort((a, b) => a.achievementPct - b.achievementPct);
-  const ahead = territories.filter((t) => t.achievementPct >= 105).sort((a, b) => b.achievementPct - a.achievementPct);
-  for (const t of behind.slice(0, 3)) {
+  // 2. Territory delivery (achievement) outliers
+  const territories = analytics.territoryPerformance(data, scope, range);
+  const top = territories.slice(0, 3);
+  const bottom = territories.slice(-3).reverse();
+  for (const t of top) {
     insights.push({
-      title: `${t.territory} is behind target`,
-      description: `${t.territory} achieved ${pct(t.achievementPct)} of MTD target (${money(t.salesValue)} vs ${money(t.target)}).`,
-      metric: pct(t.achievementPct),
-      severity: t.achievementPct < 60 ? 'CRITICAL' : 'WARNING',
-      dimension: t.territory,
-      action: 'Increase market visits and focus on high-volume customers in this territory.',
-    });
-  }
-  for (const t of ahead.slice(0, 3)) {
-    insights.push({
-      title: `${t.territory} is exceeding target`,
-      description: `${t.territory} achieved ${pct(t.achievementPct)} of MTD target.`,
-      metric: pct(t.achievementPct),
+      title: `${t.territory} is leading delivery`,
+      description: `${t.territory} delivered ${t.deliveryMt} MT this period.`,
+      metric: `${t.deliveryMt} MT`,
       severity: 'SUCCESS',
       dimension: t.territory,
       action: 'Identify winning practices to replicate across other territories.',
+    });
+  }
+  for (const t of bottom) {
+    insights.push({
+      title: `${t.territory} has lowest delivery`,
+      description: `${t.territory} delivered only ${t.deliveryMt} MT this period.`,
+      metric: `${t.deliveryMt} MT`,
+      severity: 'WARNING',
+      dimension: t.territory,
+      action: 'Review delivery bottlenecks and pending orders in this territory.',
     });
   }
 

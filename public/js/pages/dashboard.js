@@ -12,11 +12,11 @@ export async function renderDashboard(container, state) {
 
   container.appendChild(el('div', {}, [
     kpiGrid([
-      { label: 'MTD Target', value: fmt(k.mtdTargetMt, 0) + ' MT', opts: { sub: compactMoney(k.mtdTarget) } },
-      { label: 'MTD Sales', value: fmt(k.mtdSalesMt, 0) + ' MT', opts: { sub: compactMoney(k.mtdSalesValue) } },
+      { label: 'Target', value: fmt(k.mtdTargetMt, 0) + ' MT' },
+      { label: 'Achievement', value: fmt(k.achievementMt, 0) + ' MT', opts: { sub: 'Delivery (MT)' } },
       { label: 'Achievement %', value: pct(achPct), opts: { color: achColor } },
-      { label: 'Pending Target', value: fmt(k.pendingTargetMt, 0) + ' MT', opts: { sub: compactMoney(k.pendingTarget) } },
-      { label: 'Delivery', value: fmt(k.deliveryMt, 0) + ' MT', opts: { sub: compactMoney(k.deliveryValue) } },
+      { label: 'Pending', value: fmt(k.pendingTargetMt, 0) + ' MT' },
+      { label: 'Sales (Booked)', value: fmt(k.mtdSalesMt, 0) + ' MT' },
       { label: 'Pending Order', value: compactMoney(k.pendingOrderValue), opts: { sub: `${k.pendingOrders} orders` } },
       { label: 'Active Customers', value: fmt(k.activeCustomers) },
       { label: 'Run Rate', value: pct(k.runRatePct) },
@@ -34,13 +34,13 @@ export async function renderDashboard(container, state) {
       el('div', { class: 'muted', style: 'font-size:12px;margin-top:4px;', text: `Achievement ${pct(achPct)} vs month progress ${pct(prog.monthProgressPct)}` }),
     ])),
     card('Pacing', el('div', { class: 'stack' }, [
-      row('Required daily sales', compactMoney(k.requiredDaily)),
-      row('Forecast achievement', compactMoney(k.forecast)),
+      row('Required daily', fmt(k.requiredDaily, 1) + ' MT'),
+      row('Forecast achievement', fmt(k.forecast, 0) + ' MT'),
       row('Run rate', pct(k.runRatePct)),
     ])),
     card('Pending Snapshot', el('div', { class: 'stack' }, [
       row('Pending value', money(k.pendingOrderValue)),
-      row('Pending quantity', fmt(k.pendingOrderQty)),
+      row('Pending quantity', fmt(k.pendingOrderMt, 1) + ' MT'),
       row('Pending orders', fmt(k.pendingOrders)),
     ])),
   ]));
