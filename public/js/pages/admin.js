@@ -118,16 +118,43 @@ function openUserModal(user, users, roles, territories) {
 }
 
 function assignTerritoryModal(users, territories) {
-  const userSel = el('select', { class: 'select' }, users.map((u) => el('option', { value: u.id, text: u.name })));
-  const terrSel = el('select', { class: 'select' }, territories.map((t) => el('option', { value: t.id, text: `${levelLabel(t.level)} · ${t.name}` })));
-  modal('Assign Territory', el('div', {}, [
+  const userSel = el('select', { class: 'select' }, users.map((u) => el('option', { value: u.id, text: `${u.name} (${u.username})` })));
+  const checkWrap = el('div', { class: 'check-list' });
+  const selAll = el('button', { class: 'btn btn-sm', text: 'Select all', onclick: () => { document.querySelectorAll('.check-list input').forEach((c) => { c.checked = true; checked.add(Number(c.value)); }); } });
+  const clrAll = el('button', { class: 'btn btn-sm', text: 'Clear all', onclick: () => { document.querySelectorAll('.check-list input').forEach((c) => { c.checked = false; checked.delete(Number(c.value)); }); } });
+  let checked = new Set();
+
+  async function loadAssigned() {
+    const d = await api.get('/admin/users/' + userSel.value + '/territories');
+    checked = new Set((d.territories || []).map((t) => t.id));
+    checkWrap.innerHTML = '';
+    const sorted = [...territories].sort((a, b) => a.level - b.level || a.name.localeCompare(b.name));
+    for (const t of sorted) {
+      checkWrap.appendChild(el('label', {}, [
+        el('input', { type: 'checkbox', value: t.id, checked: checked.has(t.id) ? '' : null, onchange: (e) => { e.target.checked ? checked.add(t.id) : checked.delete(t.id); } }),
+        el('span', { text: levelLabel(t.level) + ' · ' + t.name }),
+      ]));
+    }
+  }
+  userSel.addEventListener('change', loadAssigned);
+  loadAssigned();
+
+  modal('Assign Territories', el('div', {}, [
     el('div', { class: 'form-row' }, [el('label', { text: 'User' }), userSel]),
-    el('div', { class: 'form-row' }, [el('label', { text: 'Territory' }), terrSel]),
+    el('div', { style: 'display:flex;gap:6px;margin-bottom:6px;' }, [selAll, clrAll]),
+    el('label', { class: 'muted', text: 'Select territories (Region = সব child territory access)' }),
+    checkWrap,
   ]), [
-    el('button', { class: 'btn btn-primary', text: 'Assign', onclick: async () => {
+    el('button', { class: 'btn btn-primary', text: 'Save', onclick: async () => {
       try {
-        await api.post(`/admin/users/${userSel.value}/territories`, { territoryIds: [Number(terrSel.value)] });
-        toast('Assigned', 'success');
+        const uid = userSel.value;
+        const current = await api.get('/admin/users/' + uid + '/territories');
+        const curIds = new Set((current.territories || []).map((t) => t.id));
+        const toAdd = [...checked].filter((id) => !curIds.has(id));
+        const toRemove = [...curIds].filter((id) => !checked.has(id));
+        if (toAdd.length) await api.post('/admin/users/' + uid + '/territories', { territoryIds: toAdd });
+        for (const id of toRemove) await api.del('/admin/users/' + uid + '/territories/' + id);
+        toast('Territories saved', 'success');
         location.reload();
       } catch (e) { toast(e.message, 'error'); }
     } }),
