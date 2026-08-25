@@ -160,7 +160,6 @@ function seed(db) {
       ['NATIONAL', 'National Manager', LEVELS.NATIONAL],
       ['REGION', 'Region Manager', LEVELS.REGION],
       ['AREA', 'Area Manager', LEVELS.AREA],
-      ['ZONE', 'Zone Manager', LEVELS.ZONE],
       ['TERRITORY', 'Territory Officer', LEVELS.TERRITORY],
     ];
     for (const [code, name, level] of defs) insRole.run(code, name, level, now);

@@ -33,7 +33,17 @@ router.post('/logout', authenticate, (req, res) => {
 });
 
 router.get('/me', authenticate, (req, res) => {
-  res.json({ user: authService.userPayload(req.user), scope: req.scope });
+  const s = req.scope;
+  res.json({
+    user: authService.userPayload(req.user),
+    scope: {
+      scopeAll: s.scopeAll,
+      level: s.level,
+      territoryIds: [...(s.territoryIds || [])],
+      territoryNames: [...(s.territoryNames || [])],
+      role: s.role ? { code: s.role.code, name: s.role.name, level: s.role.level } : null,
+    },
+  });
 });
 
 router.post('/change-password', authenticate, asyncHandler(async (req, res) => {
