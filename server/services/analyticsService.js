@@ -302,7 +302,7 @@ function dashboardSummary(data, scope, range, opts = {}) {
       achievementPct: round1(achievementPct),
       achievementMtPct: round1(achievementMtPct),
       pendingTarget: Math.max(target - achievement, 0),
-      pendingTargetMt: Math.max(targetMt - achievementMt, 0),
+      pendingTargetMt: round1(Math.max(targetMt - achievementMt, 0)),
       deliveryValue: mtdTotals.deliveryValue,
       deliveryQty: mtdTotals.deliveryQty,
       deliveryMt: round1(mtdTotals.deliveryMt),
