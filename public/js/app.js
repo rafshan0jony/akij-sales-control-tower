@@ -177,7 +177,7 @@ async function route() {
   document.getElementById('app').innerHTML = '';
   const container = document.getElementById('app');
   try {
-    await render(container);
+    await render(container, state);
   } catch (err) {
     container.appendChild(ui.errorState(err.message));
   }
