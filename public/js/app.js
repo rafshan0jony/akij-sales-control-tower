@@ -10,6 +10,7 @@ import { renderTarget } from './pages/target.js';
 import { renderPerformance } from './pages/performance.js';
 import { renderAnalytics } from './pages/analytics.js';
 import { renderInsights } from './pages/insights.js';
+import { renderCreditStatus } from './pages/credit.js';
 import { renderAdmin } from './pages/admin.js';
 
 const FILTERS = [
@@ -30,6 +31,7 @@ const NAV = [
   { label: 'Sales Order', hash: '#/sales', ico: '🧾', perm: 'VIEW_SALES_ORDER' },
   { label: 'Delivery', hash: '#/delivery', ico: '🚚', perm: 'VIEW_DELIVERY' },
   { label: 'Pending', hash: '#/pending', ico: '⏳', perm: 'VIEW_PENDING' },
+  { label: 'Credit Status', hash: '#/credit-status', ico: '💳' },
   { section: 'Performance' },
   { label: 'Target vs Achievement', hash: '#/target', ico: '🎯', perm: 'VIEW_TARGET' },
   { label: 'Region', hash: '#/region', ico: '🗺️', perm: 'VIEW_ANALYTICS' },
@@ -146,6 +148,7 @@ const ROUTES = [
   ['#/sales', 'Sales Order', renderSales],
   ['#/delivery', 'Delivery', renderDelivery],
   ['#/pending', 'Pending', renderPending],
+  ['#/credit-status', 'Credit Status', renderCreditStatus],
   ['#/target', 'Target vs Achievement', renderTarget],
   ['#/region', 'Region Performance', (c) => renderPerformance(c, state, 'region')],
   ['#/area', 'Area Performance', (c) => renderPerformance(c, state, 'area')],

@@ -80,19 +80,47 @@ function normalizeDeliveries(rows) {
   return out;
 }
 
+function normalizeCredit(rows) {
+  const today = dates.todayStr();
+  return (rows || []).map((r) => {
+    const tm = territoryMapping.resolve(r.territory);
+    const creditDays = num(r.creditDays);
+    const lastDeliveryDate = r.lastDeliveryDate ? dates.toDateStr(r.lastDeliveryDate) : null;
+    const lastPaymentDate = r.lastPaymentDate ? dates.toDateStr(r.lastPaymentDate) : null;
+    const deliveryGap = lastDeliveryDate ? Math.max(0, dates.diffDays(lastDeliveryDate, today)) : null;
+    const paymentGap = lastPaymentDate ? Math.max(0, dates.diffDays(lastPaymentDate, today)) : null;
+    return {
+      partnerCode: r.partnerCode == null ? null : String(r.partnerCode).trim(),
+      partnerName: r.partnerName == null ? null : String(r.partnerName).trim(),
+      creditDays,
+      ledgerBalance: Math.round(Math.abs(num(r.ledgerBalance)) * 100) / 100,
+      territory: tm.territory,
+      area: tm.area,
+      region: tm.region,
+      lastDeliveryDate,
+      lastPaymentDate,
+      deliveryGap,
+      paymentGap,
+      daysBaseOverdue: paymentGap != null ? Math.max(0, paymentGap - creditDays) : null,
+    };
+  });
+}
+
 function num(v) {
   const n = Number(v);
   return Number.isFinite(n) ? n : 0;
 }
 
 async function fetchWindow(from, to) {
-  const [orders, deliveries] = await Promise.all([
+  const [orders, deliveries, credit] = await Promise.all([
     mcp.getSalesOrders(from, to),
     mcp.getDeliveries(from, to),
+    mcp.getCreditStatus(),
   ]);
   return {
     orders: normalizeOrders(orders),
     deliveries: normalizeDeliveries(deliveries),
+    credit: normalizeCredit(credit),
   };
 }
 
@@ -246,10 +274,11 @@ function getData() {
  * not reachable from the app host, e.g. on Vercel). Normalizes raw rows,
  * imports territories and updates sync status.
  */
-async function applyRemoteSnapshot({ orders, deliveries, territories }) {
+async function applyRemoteSnapshot({ orders, deliveries, territories, credit }) {
   const today = dates.todayStr();
   const normOrders = normalizeOrders(orders || []);
   const normDeliveries = normalizeDeliveries(deliveries || []);
+  const normCredit = normalizeCredit(credit || []);
   let from = today;
   for (const o of normOrders) if (o.date < from) from = o.date;
   for (const d of normDeliveries) if (d.date < from) from = d.date;
@@ -261,6 +290,7 @@ async function applyRemoteSnapshot({ orders, deliveries, territories }) {
   cache = {
     orders: normOrders,
     deliveries: normDeliveries,
+    credit: normCredit,
     syncedAt,
     dataSource: 'BRIDGE',
     from,
@@ -272,11 +302,11 @@ async function applyRemoteSnapshot({ orders, deliveries, territories }) {
     lastSuccess: syncedAt,
     error: null,
     dataSource: 'BRIDGE',
-    counts: { orders: normOrders.length, deliveries: normDeliveries.length, territories: territoryCount },
+    counts: { orders: normOrders.length, deliveries: normDeliveries.length, credit: normCredit.length, territories: territoryCount },
     finishedAt: syncedAt,
   });
   try { syncRepo.saveSnapshot(cache); } catch (e) { logger.warn('[sync] snapshot save failed:', e.message); }
-  logger.info(`[sync] remote snapshot applied: ${normOrders.length} orders, ${normDeliveries.length} deliveries, ${territoryCount} territories`);
+  logger.info(`[sync] remote snapshot applied: ${normOrders.length} orders, ${normDeliveries.length} deliveries, ${normCredit.length} credit, ${territoryCount} territories`);
   return cache;
 }
 

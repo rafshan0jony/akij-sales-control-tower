@@ -183,6 +183,54 @@ async function getTerritoryHierarchy(channelId = config.app.channelId) {
   return query(q, [{ name: 'channel', type: sql.BigInt, value: channelId }]);
 }
 
+/**
+ * Customer Credit Status for the Rice Bulk channel.
+ * Returns partners who OWE money (positive ledger balance in the report
+ * convention = numLedgerBalance < 0 in the ERP) with credit + territory info.
+ */
+async function getCreditStatus(channelId = config.app.channelId) {
+  const q = `
+    SELECT
+      p.strBusinessPartnerCode AS partnerCode,
+      p.strBusinessPartnerName AS partnerName,
+      s.intCollectionDays AS creditDays,
+      s.numLedgerBalance AS ledgerBalance,
+      terr.strTerritoryName AS territory,
+      d.lastDeliveryDate,
+      pc.lastPaymentDate
+    FROM prt.tblBusinessPartnerSalesArc s
+    INNER JOIN prt.tblBusinessPartnerArc p ON p.intBusinessPartnerId = s.intBusinessPartnerId
+    LEFT JOIN (
+      SELECT intSoldToPartnerId, MAX(dteDeliveryDate) AS lastDeliveryDate
+      FROM sms.tblDeliveryHeaderArc
+      WHERE intDistributionChannelId = @channel AND isActive = 1
+      GROUP BY intSoldToPartnerId
+    ) d ON d.intSoldToPartnerId = p.intBusinessPartnerId
+    LEFT JOIN (
+      SELECT intSoldToPartnerId, MAX(dteCollectionDate) AS lastPaymentDate
+      FROM sms.tblDeliveryHeaderArc
+      WHERE intDistributionChannelId = @channel AND isActive = 1 AND dteCollectionDate IS NOT NULL
+      GROUP BY intSoldToPartnerId
+    ) pc ON pc.intSoldToPartnerId = p.intBusinessPartnerId
+    LEFT JOIN (
+      SELECT x.intSoldToPartnerId, x.intTerritoryId
+      FROM (
+        SELECT intSoldToPartnerId, intTerritoryId,
+               ROW_NUMBER() OVER (PARTITION BY intSoldToPartnerId ORDER BY dteSalesOrderDate DESC) AS rn
+        FROM oms.tblSalesOrderHeaderArc
+        WHERE intDistributionChannelId = @channel AND isActive = 1
+      ) x
+      WHERE x.rn = 1
+    ) so ON so.intSoldToPartnerId = p.intBusinessPartnerId
+    LEFT JOIN rtm.tblTerritoryInfoArc terr ON terr.intTerritoryId = so.intTerritoryId
+    WHERE s.isActive = 1 AND s.numLedgerBalance < 0
+      AND so.intSoldToPartnerId IS NOT NULL
+      AND (s.strCreditFacilityType IS NULL OR s.strCreditFacilityType = 'Credit')
+    ORDER BY s.numLedgerBalance ASC
+  `;
+  return query(q, [{ name: 'channel', type: sql.BigInt, value: channelId }]);
+}
+
 module.exports = {
   getPool,
   close,
@@ -193,4 +241,5 @@ module.exports = {
   getSalesOrders,
   getDeliveries,
   getTerritoryHierarchy,
+  getCreditStatus,
 };

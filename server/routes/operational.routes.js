@@ -54,6 +54,12 @@ router.get('/target-achievement', requirePermission('VIEW_TARGET'), asyncHandler
   res.json({ ...payload, ...freshness() });
 }));
 
+router.get('/credit-status', asyncHandler(async (req, res) => {
+  const data = syncService.getData();
+  const credit = analytics.creditStatus(data, req.scope);
+  res.json({ credit, ...freshness() });
+}));
+
 function pickFilter(query, keys) {
   const out = {};
   for (const k of keys) {

@@ -576,6 +576,12 @@ function areaPerformance(data, scope, range) {
   return sortedEntries(m).map((e) => ({ area: e.key, salesValue: e.value, quantity: e.qty, orderCount: e.count }));
 }
 
+function creditStatus(data, scope) {
+  if (!data || !data.credit) return [];
+  const filter = permissionService.makeFactFilter(scope);
+  return data.credit.filter((c) => filter({ territory: c.territory }));
+}
+
 function customerSummary(data, scope, range) {  const { orders, deliveries } = scopedFacts(data, scope, range.from, range.to);
   const o = groupSum(orders, (x) => customerName(x), (x) => x.value, (x) => x.quantity);
   const d = groupSum(deliveries, (x) => customerName(x), (x) => x.value, (x) => x.quantity);
@@ -667,6 +673,7 @@ module.exports = {
   productSummary,
   regionPerformance,
   areaPerformance,
+  creditStatus,
   orderBreakdown,
   deliveryBreakdown,
   dailySeries,
