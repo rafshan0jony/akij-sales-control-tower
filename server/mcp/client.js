@@ -209,7 +209,8 @@ async function getCreditStatus(channelId = config.app.channelId) {
     LEFT JOIN (
       SELECT intSoldToPartnerId, MAX(dteCollectionDate) AS lastPaymentDate
       FROM sms.tblDeliveryHeaderArc
-      WHERE intDistributionChannelId = @channel AND isActive = 1 AND dteCollectionDate IS NOT NULL
+      WHERE intDistributionChannelId = @channel AND isActive = 1
+        AND dteCollectionDate IS NOT NULL AND dteCollectionDate <= CAST(GETDATE() AS date)
       GROUP BY intSoldToPartnerId
     ) pc ON pc.intSoldToPartnerId = p.intBusinessPartnerId
     LEFT JOIN (
