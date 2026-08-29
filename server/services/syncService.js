@@ -89,11 +89,13 @@ function normalizeCredit(rows) {
     const lastPaymentDate = r.lastPaymentDate ? dates.toDateStr(r.lastPaymentDate) : null;
     const deliveryGap = lastDeliveryDate ? Math.max(0, dates.diffDays(lastDeliveryDate, today)) : null;
     const paymentGap = lastPaymentDate ? Math.max(0, dates.diffDays(lastPaymentDate, today)) : null;
+    const ledgerBalance = Math.round(Math.abs(num(r.ledgerBalance)) * 100) / 100;
+    const daysBaseOverdue = Math.round(Math.max(0, ledgerBalance - num(r.deliveryWithinCreditDays)) * 100) / 100;
     return {
       partnerCode: r.partnerCode == null ? null : String(r.partnerCode).trim(),
       partnerName: r.partnerName == null ? null : String(r.partnerName).trim(),
       creditDays,
-      ledgerBalance: Math.round(Math.abs(num(r.ledgerBalance)) * 100) / 100,
+      ledgerBalance,
       territory: tm.territory,
       area: tm.area,
       region: tm.region,
@@ -101,7 +103,7 @@ function normalizeCredit(rows) {
       lastPaymentDate,
       deliveryGap,
       paymentGap,
-      daysBaseOverdue: paymentGap != null ? Math.max(0, paymentGap - creditDays) : null,
+      daysBaseOverdue,
     };
   });
 }

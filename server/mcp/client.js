@@ -193,11 +193,12 @@ async function getCreditStatus(channelId = config.app.channelId) {
     SELECT
       p.strBusinessPartnerCode AS partnerCode,
       p.strBusinessPartnerName AS partnerName,
-      s.intCollectionDays AS creditDays,
+      s.numRunningDayLimit AS creditDays,
       s.numLedgerBalance AS ledgerBalance,
       terr.strTerritoryName AS territory,
       d.lastDeliveryDate,
-      pc.lastPaymentDate
+      pc.lastPaymentDate,
+      dd.deliveryWithinCreditDays
     FROM prt.tblBusinessPartnerSalesArc s
     INNER JOIN prt.tblBusinessPartnerArc p ON p.intBusinessPartnerId = s.intBusinessPartnerId
     LEFT JOIN (
@@ -213,6 +214,15 @@ async function getCreditStatus(channelId = config.app.channelId) {
         AND dteCollectionDate IS NOT NULL AND dteCollectionDate <= CAST(GETDATE() AS date)
       GROUP BY intSoldToPartnerId
     ) pc ON pc.intSoldToPartnerId = p.intBusinessPartnerId
+    LEFT JOIN (
+      SELECT h.intSoldToPartnerId,
+             SUM(h.numTotalNetValue) AS deliveryWithinCreditDays
+      FROM sms.tblDeliveryHeaderArc h
+      INNER JOIN prt.tblBusinessPartnerSalesArc sc ON sc.intBusinessPartnerId = h.intSoldToPartnerId
+      WHERE h.intDistributionChannelId = @channel AND h.isActive = 1
+        AND h.dteDeliveryDate >= DATEADD(day, -ISNULL(sc.numRunningDayLimit, 0), CAST(GETDATE() AS date))
+      GROUP BY h.intSoldToPartnerId
+    ) dd ON dd.intSoldToPartnerId = p.intBusinessPartnerId
     LEFT JOIN (
       SELECT x.intSoldToPartnerId, x.intTerritoryId
       FROM (
