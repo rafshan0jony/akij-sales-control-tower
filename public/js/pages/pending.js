@@ -1,5 +1,5 @@
 import { api, qs } from '../api.js';
-import { el, money, compactMoney, fmt, badge, statusBadge } from '../ui.js';
+import { el, money, fmt, badge, statusBadge } from '../ui.js';
 import { kpiGrid, card } from './common.js';
 import { dataTable } from '../ui.js';
 import { barChart } from '../charts.js';
@@ -22,7 +22,7 @@ export async function renderPending(container, state) {
       kpiBox.innerHTML = '';
       kpiBox.appendChild(kpiGrid([
         { label: 'Pending Quantity (MT)', value: fmt(m.pendingMt, 1) },
-        { label: 'Pending Value', value: compactMoney(m.pendingValue) },
+        { label: 'Pending Value', value: money(m.pendingValue) },
         { label: 'Pending Orders', value: fmt(m.pendingOrders) },
         { label: 'Pending Customers', value: fmt(m.pendingCustomers) },
         { label: 'Avg Pending Days', value: fmt(m.avgPendingDays, 1) },

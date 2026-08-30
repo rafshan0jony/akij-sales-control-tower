@@ -1,5 +1,5 @@
 import { api, qs } from '../api.js';
-import { el, money, compactMoney, fmt, pct } from '../ui.js';
+import { el, money, fmt, pct } from '../ui.js';
 import { kpiGrid, card, chartCard } from './common.js';
 import { lineChart, hbarChart, donutChart } from '../charts.js';
 import { dataTable } from '../ui.js';
@@ -21,7 +21,7 @@ export async function renderDelivery(container, state) {
       const kpiBox = document.getElementById('del-kpis');
       kpiBox.innerHTML = '';
       kpiBox.appendChild(kpiGrid([
-        { label: 'Delivery Value', value: compactMoney(m.deliveryValue) },
+        { label: 'Delivery Value', value: money(m.deliveryValue) },
         { label: 'Delivery Quantity (MT)', value: fmt(m.deliveryMt, 1) },
         { label: 'Delivered Customers', value: fmt(m.deliveredCustomers) },
         { label: 'Delivery Achievement %', value: pct(m.deliveryAchievementPct) },

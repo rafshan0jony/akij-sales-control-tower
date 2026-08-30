@@ -1,5 +1,5 @@
 import { api, qs } from '../api.js';
-import { el, money, compactMoney, fmt, emptyState } from '../ui.js';
+import { el, money, fmt, emptyState } from '../ui.js';
 import { kpiGrid, card, chartCard } from './common.js';
 import { lineChart, hbarChart, donutChart } from '../charts.js';
 import { dataTable } from '../ui.js';
@@ -21,10 +21,10 @@ export async function renderSales(container, state) {
       kpiBox.innerHTML = '';
       kpiBox.appendChild(kpiGrid([
         { label: 'Total Orders', value: fmt(m.totalOrders) },
-        { label: 'Order Value', value: compactMoney(m.orderValue) },
+        { label: 'Order Value', value: money(m.orderValue) },
         { label: 'Order Quantity (MT)', value: fmt(m.orderMt, 1) },
         { label: 'Customers', value: fmt(m.customers) },
-        { label: 'Avg Order Value', value: compactMoney(m.avgOrderValue) },
+        { label: 'Avg Order Value', value: money(m.avgOrderValue) },
       ]));
 
       const chartBox = document.getElementById('sales-charts');

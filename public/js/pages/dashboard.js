@@ -1,5 +1,5 @@
 import { api, qs } from '../api.js';
-import { el, money, compactMoney, pct, fmt, statusBadge, badge, emptyState, errorState } from '../ui.js';
+import { el, money, pct, fmt, statusBadge, badge, emptyState, errorState } from '../ui.js';
 import { kpiGrid, kpiCard, card, chartCard } from './common.js';
 import { lineChart, barChart, donutChart } from '../charts.js';
 
@@ -17,7 +17,7 @@ export async function renderDashboard(container, state) {
       { label: 'Achievement %', value: pct(achPct), opts: { color: achColor } },
       { label: 'Pending', value: fmt(k.pendingTargetMt, 0) + ' MT' },
       { label: 'Sales (Booked)', value: fmt(k.mtdSalesMt, 0) + ' MT' },
-      { label: 'Pending Order', value: compactMoney(k.pendingOrderValue), opts: { sub: `${k.pendingOrders} orders` } },
+      { label: 'Pending Order', value: fmt(k.pendingOrderMt, 0) + ' MT', opts: { sub: `${k.pendingOrders} orders` } },
       { label: 'Active Customers', value: fmt(k.activeCustomers) },
       { label: 'Run Rate', value: pct(k.runRatePct) },
       { label: 'Month Progress', value: pct(k.monthProgressPct) },
