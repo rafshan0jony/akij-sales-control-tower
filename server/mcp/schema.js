@@ -36,6 +36,7 @@ const COLUMNS = {
   salesOrderRow: {
     orderId: 'intSalesOrderId',
     orderNo: 'strSalesOrderCode',
+    rowId: 'intRowId',
     item: 'strItemName',
     uom: 'strUOM',
     quantity: 'numOrderQuantity',
@@ -48,13 +49,15 @@ const COLUMNS = {
   deliveryHeader: {
     id: 'intDeliveryId',
     channel: 'intDistributionChannelId',
-    date: 'dteDeliveryDate',
+    date: 'dteLastActionDateTime',
     active: 'isActive',
     customer: 'strSoldToPartnerName',
+    shipmentPosted: 'isShipmentPosted',
   },
   deliveryRow: {
     deliveryId: 'intDeliveryId',
     orderId: 'intSalesOrderId',
+    salesOrderRowId: 'intSalesOrderRowId',
     orderNo: 'strSalesOrderCode',
     item: 'strItemName',
     uom: 'strUOM',

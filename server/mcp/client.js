@@ -96,7 +96,9 @@ function getLastError() {
 /**
  * Sales-order facts for a date range.
  * Territory name resolved via rtm.tblTerritoryInfoArc.
- * Pending fields come directly from the ERP (numUndeliveryQuantity/Values).
+ * Pending fields are challan-based: delivered = challan'd (isShipmentPosted=1)
+ * quantity, pending = order quantity - challan'd quantity (so a DO created but
+ * not yet challan'd still shows as pending).
  */
 async function getSalesOrders(from, to, channelId = config.app.channelId) {
   const q = `
@@ -113,12 +115,20 @@ async function getSalesOrders(from, to, channelId = config.app.channelId) {
       r.[${R.quantity}] AS quantity,
       r.[${R.value}] AS value,
       r.[${R.price}] AS price,
-      r.[${R.deliveredQty}] AS deliveredQty,
-      r.[${R.undeliveredQty}] AS undeliveredQty,
-      r.[${R.undeliveredValue}] AS undeliveredValue
+      ISNULL(d.challanQty, 0) AS deliveredQty,
+      r.[${R.quantity}] - ISNULL(d.challanQty, 0) AS undeliveredQty,
+      r.[${R.value}] - ISNULL(d.challanQty, 0) * r.[${R.price}] AS undeliveredValue
     FROM ${TABLES.salesOrderHeader} h
     INNER JOIN ${TABLES.salesOrderRow} r ON h.[${H.id}] = r.[${R.orderId}]
     LEFT JOIN ${TABLES.territoryInfo} t ON t.[${TI.id}] = h.[${H.territoryId}]
+    LEFT JOIN (
+      SELECT dr.[${DR.orderId}] AS salesOrderId, dr.[${DR.salesOrderRowId}] AS salesOrderRowId,
+             SUM(dr.[${DR.quantity}]) AS challanQty
+      FROM ${TABLES.deliveryHeader} dh
+      INNER JOIN ${TABLES.deliveryRow} dr ON dh.[${DH.id}] = dr.[${DR.deliveryId}]
+      WHERE dh.[${DH.channel}] = @channel AND dh.[${DH.active}] = 1 AND dh.[${DH.shipmentPosted}] = 1
+      GROUP BY dr.[${DR.orderId}], dr.[${DR.salesOrderRowId}]
+    ) d ON d.salesOrderId = h.[${H.id}] AND d.salesOrderRowId = r.[${R.rowId}]
     WHERE h.[${H.channel}] = @channel
       AND h.[${H.date}] >= @from AND h.[${H.date}] <= @to
       AND h.[${H.active}] = 1
@@ -154,6 +164,7 @@ async function getDeliveries(from, to, channelId = config.app.channelId) {
     WHERE h.[${DH.channel}] = @channel
       AND h.[${DH.date}] >= @from AND h.[${DH.date}] <= @to
       AND h.[${DH.active}] = 1
+      AND h.[${DH.shipmentPosted}] = 1
     ORDER BY h.[${DH.date}]
   `;
   return query(q, [
