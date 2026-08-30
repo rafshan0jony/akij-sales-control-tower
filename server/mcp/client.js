@@ -185,8 +185,16 @@ async function getTerritoryHierarchy(channelId = config.app.channelId) {
 
 /**
  * Customer Credit Status for the Rice Bulk channel.
- * Returns partners who OWE money (positive ledger balance in the report
- * convention = numLedgerBalance < 0 in the ERP) with credit + territory info.
+ * Returns partners who OWE money (positive ledger balance) with credit +
+ * territory info.
+ *
+ * The ledger balance is the EXACT "Trade Receivable (Local)" sub-ledger
+ * balance straight from the accounting journal (fin.tblAccountingJournalArc),
+ * matching the ERP customer-ledger report 1:1:
+ *   SUM(numAmount) where numAmount>0  -> Sales Journal (delivery) debit
+ *                 where numAmount<0  -> Bank Receipts Journal (collection) credit
+ * The stale numLedgerBalance field and the old delivery/bank/adjustment
+ * approximation are NOT used.
  */
 async function getCreditStatus(channelId = config.app.channelId) {
   const q = `
@@ -194,17 +202,27 @@ async function getCreditStatus(channelId = config.app.channelId) {
       p.strBusinessPartnerCode AS partnerCode,
       p.strBusinessPartnerName AS partnerName,
       s.numRunningDayLimit AS creditDays,
-      s.numLedgerBalance AS ledgerBalance,
+      gl.ledgerBalance AS ledgerBalance,
       terr.strTerritoryName AS territory,
       d.lastDeliveryDate,
       pc.lastPaymentDate,
-      dd.deliveryWithinCreditDays,
-      dn.deliveryNet,
-      bj.bank,
-      aj.adjustment,
-      ud.undelivered
+      dd.deliveryWithinCreditDays
     FROM prt.tblBusinessPartnerSalesArc s
     INNER JOIN prt.tblBusinessPartnerArc p ON p.intBusinessPartnerId = s.intBusinessPartnerId
+    LEFT JOIN (
+      SELECT strSubGlCode, SUM(numAmount) AS ledgerBalance
+      FROM fin.tblAccountingJournalArc
+      WHERE intGeneralLedgerId = (
+        SELECT TOP 1 intGeneralLedgerId
+        FROM fin.tblGeneralLedgerArc
+        WHERE strGeneralLedgerCode = '1120001'
+          AND strGeneralLedgerName = 'Trade Receivable (Local)'
+          AND isActive = 1
+        ORDER BY intGeneralLedgerId
+      )
+        AND isActive = 1
+      GROUP BY strSubGlCode
+    ) gl ON gl.strSubGlCode = p.strBusinessPartnerCode
     LEFT JOIN (
       SELECT intSoldToPartnerId, MAX(dteDeliveryDate) AS lastDeliveryDate
       FROM sms.tblDeliveryHeaderArc
@@ -228,31 +246,6 @@ async function getCreditStatus(channelId = config.app.channelId) {
       GROUP BY h.intSoldToPartnerId
     ) dd ON dd.intSoldToPartnerId = p.intBusinessPartnerId
     LEFT JOIN (
-      SELECT intSoldToPartnerId, SUM(numTotalNetValue) AS deliveryNet
-      FROM sms.tblDeliveryHeaderArc
-      WHERE intDistributionChannelId = @channel AND isActive = 1
-      GROUP BY intSoldToPartnerId
-    ) dn ON dn.intSoldToPartnerId = p.intBusinessPartnerId
-    LEFT JOIN (
-      SELECT intBusinessPartnerId, SUM(numAmount) AS bank
-      FROM fin.tblBankJournalHeaderArc
-      WHERE isActive = 1
-      GROUP BY intBusinessPartnerId
-    ) bj ON bj.intBusinessPartnerId = p.intBusinessPartnerId
-    LEFT JOIN (
-      SELECT intBusinessPartnerId, SUM(numAmount) AS adjustment
-      FROM fin.tblAdjustmentJournalRowArc
-      WHERE isActive = 1
-      GROUP BY intBusinessPartnerId
-    ) aj ON aj.intBusinessPartnerId = p.intBusinessPartnerId
-    LEFT JOIN (
-      SELECT h.intSoldToPartnerId, SUM(r.numUndeliveryValues) AS undelivered
-      FROM oms.tblSalesOrderHeaderArc h
-      INNER JOIN oms.tblSalesOrderRowArc r ON r.intSalesOrderId = h.intSalesOrderId
-      WHERE h.intDistributionChannelId = @channel AND h.isActive = 1
-      GROUP BY h.intSoldToPartnerId
-    ) ud ON ud.intSoldToPartnerId = p.intBusinessPartnerId
-    LEFT JOIN (
       SELECT x.intSoldToPartnerId, x.intTerritoryId
       FROM (
         SELECT intSoldToPartnerId, intTerritoryId,
@@ -263,10 +256,10 @@ async function getCreditStatus(channelId = config.app.channelId) {
       WHERE x.rn = 1
     ) so ON so.intSoldToPartnerId = p.intBusinessPartnerId
     LEFT JOIN rtm.tblTerritoryInfoArc terr ON terr.intTerritoryId = so.intTerritoryId
-    WHERE s.isActive = 1 AND s.numLedgerBalance < 0
+    WHERE s.isActive = 1 AND gl.ledgerBalance > 0
       AND so.intSoldToPartnerId IS NOT NULL
       AND (s.strCreditFacilityType IS NULL OR s.strCreditFacilityType = 'Credit')
-    ORDER BY s.numLedgerBalance ASC
+    ORDER BY gl.ledgerBalance DESC
   `;
   return query(q, [{ name: 'channel', type: sql.BigInt, value: channelId }]);
 }

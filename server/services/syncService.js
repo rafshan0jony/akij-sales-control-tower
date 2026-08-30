@@ -89,11 +89,9 @@ function normalizeCredit(rows) {
     const lastPaymentDate = r.lastPaymentDate ? dates.toDateStr(r.lastPaymentDate) : null;
     const deliveryGap = lastDeliveryDate ? Math.max(0, dates.diffDays(lastDeliveryDate, today)) : null;
     const paymentGap = lastPaymentDate ? Math.max(0, dates.diffDays(lastPaymentDate, today)) : null;
-    // Live ledger balance (the ERP computes this, not the stale numLedgerBalance):
-    //   Ledger = total delivery - total collection (bank - adjustment) - undelivered
-    const deposit = num(r.bank) - num(r.adjustment);
-    const liveLedger = Math.max(0, num(r.deliveryNet) - deposit - num(r.undelivered));
-    const ledgerBalance = Math.round(liveLedger * 100) / 100;
+    // EXACT ledger balance straight from the accounting journal
+    // (fin.tblAccountingJournalArc), matching the ERP customer-ledger report.
+    const ledgerBalance = Math.round(num(r.ledgerBalance) * 100) / 100;
     const daysBaseOverdue = Math.round(Math.max(0, ledgerBalance - num(r.deliveryWithinCreditDays)) * 100) / 100;
     return {
       partnerCode: r.partnerCode == null ? null : String(r.partnerCode).trim(),
