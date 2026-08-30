@@ -95,9 +95,10 @@ function generateInsights(data, scope, range) {
     }
   }
 
-  // 4. Customer with highest pending value
+  // 4. Customer with highest pending value (April-onwards, matching report)
   const full = analytics.scopedFacts(data, scope, range.from, range.to);
-  const pend = analytics.computePending(full.orders, full.deliveries, now);
+  const pendScope = analytics.scopedFacts(data, scope, dates.monthsAgoStart(4, now), now);
+  const pend = analytics.computePending(pendScope.orders, pendScope.deliveries, now);
   const pendByCust = new Map();
   for (const r of pend.rows) {
     pendByCust.set(r.customer, (pendByCust.get(r.customer) || 0) + r.pendingValue);

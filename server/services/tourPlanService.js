@@ -40,8 +40,9 @@ function generateTourPlan(data, scope, range) {
   const full = analytics.scopedFacts(data, scope, range.from, range.to);
   const customers = new Set(full.orders.map((o) => o.customer).filter(Boolean));
 
-  // pending by customer
-  const pending = analytics.computePending(full.orders, full.deliveries, now);
+  // pending by customer (April-onwards, matching report)
+  const pendingScope = analytics.scopedFacts(data, scope, dates.monthsAgoStart(4, now), now);
+  const pending = analytics.computePending(pendingScope.orders, pendingScope.deliveries, now);
   const pendByCust = new Map();
   const deliveryIssueByCust = new Map();
   for (const r of pending.rows) {
