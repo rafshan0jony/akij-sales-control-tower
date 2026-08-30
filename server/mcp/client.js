@@ -198,7 +198,11 @@ async function getCreditStatus(channelId = config.app.channelId) {
       terr.strTerritoryName AS territory,
       d.lastDeliveryDate,
       pc.lastPaymentDate,
-      dd.deliveryWithinCreditDays
+      dd.deliveryWithinCreditDays,
+      dn.deliveryNet,
+      bj.bank,
+      aj.adjustment,
+      ud.undelivered
     FROM prt.tblBusinessPartnerSalesArc s
     INNER JOIN prt.tblBusinessPartnerArc p ON p.intBusinessPartnerId = s.intBusinessPartnerId
     LEFT JOIN (
@@ -223,6 +227,31 @@ async function getCreditStatus(channelId = config.app.channelId) {
         AND h.dteDeliveryDate >= DATEADD(day, -ISNULL(sc.numRunningDayLimit, 0), CAST(GETDATE() AS date))
       GROUP BY h.intSoldToPartnerId
     ) dd ON dd.intSoldToPartnerId = p.intBusinessPartnerId
+    LEFT JOIN (
+      SELECT intSoldToPartnerId, SUM(numTotalNetValue) AS deliveryNet
+      FROM sms.tblDeliveryHeaderArc
+      WHERE intDistributionChannelId = @channel AND isActive = 1
+      GROUP BY intSoldToPartnerId
+    ) dn ON dn.intSoldToPartnerId = p.intBusinessPartnerId
+    LEFT JOIN (
+      SELECT intBusinessPartnerId, SUM(numAmount) AS bank
+      FROM fin.tblBankJournalHeaderArc
+      WHERE isActive = 1
+      GROUP BY intBusinessPartnerId
+    ) bj ON bj.intBusinessPartnerId = p.intBusinessPartnerId
+    LEFT JOIN (
+      SELECT intBusinessPartnerId, SUM(numAmount) AS adjustment
+      FROM fin.tblAdjustmentJournalRowArc
+      WHERE isActive = 1
+      GROUP BY intBusinessPartnerId
+    ) aj ON aj.intBusinessPartnerId = p.intBusinessPartnerId
+    LEFT JOIN (
+      SELECT h.intSoldToPartnerId, SUM(r.numUndeliveryValues) AS undelivered
+      FROM oms.tblSalesOrderHeaderArc h
+      INNER JOIN oms.tblSalesOrderRowArc r ON r.intSalesOrderId = h.intSalesOrderId
+      WHERE h.intDistributionChannelId = @channel AND h.isActive = 1
+      GROUP BY h.intSoldToPartnerId
+    ) ud ON ud.intSoldToPartnerId = p.intBusinessPartnerId
     LEFT JOIN (
       SELECT x.intSoldToPartnerId, x.intTerritoryId
       FROM (
