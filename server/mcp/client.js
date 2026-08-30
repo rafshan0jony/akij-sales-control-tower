@@ -204,9 +204,8 @@ async function getTerritoryHierarchy(channelId = config.app.channelId) {
  * matching the ERP customer-ledger report 1:1:
  *   SUM(numAmount) where numAmount>0  -> Sales Journal (delivery) debit
  *                 where numAmount<0  -> Bank Receipts Journal (collection) credit
- * The stale numLedgerBalance field is NOT used. The deliveryNet/bank/adjustment/
- * undelivered columns are still emitted for backward compatibility with older
- * app builds (they are ignored by the current normalizeCredit).
+ * The stale numLedgerBalance field is NOT used. Delivery date / credit
+ * window are challan-based (dteLastActionDateTime + isShipmentPosted=1).
  */
 async function getCreditStatus(channelId = config.app.channelId) {
   const q = `

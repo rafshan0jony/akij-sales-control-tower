@@ -71,7 +71,8 @@ function scopedFacts(data, scope, from, to) {
 function computePending(orders, deliveries, uptoStr = dates.todayStr()) {
   const buckets = configRepo.get('pendingAgingBuckets');
 
-  // Prefer the ERP's own undelivered figures when present (numUndeliveryQuantity/Values).
+  // Pending is challan-based: deliveredQty/undeliveredQty come from the
+  // challan'd delivery quantity (order - challan'd), not numUndeliveryQuantity.
   const hasDwhPending = orders.some((o) => o.undeliveredQty != null);
   let rows;
   if (hasDwhPending) {
