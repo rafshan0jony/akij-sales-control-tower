@@ -13,7 +13,6 @@ export async function renderCreditStatus(container, state) {
       { label: 'Partner Name', key: 'partnerName' },
       { label: 'Credit Days', key: 'creditDays' },
       { label: 'Ledger Balance', key: 'ledgerBalance', money: true },
-      { label: 'Days Base Overdue', key: 'daysBaseOverdue' },
       { label: 'Product Delivery Gap (Day)', key: 'deliveryGap', format: (v) => v == null ? '—' : fmt(v, 0) },
       { label: 'Payment Gap (Day)', key: 'paymentGap', format: (v) => v == null ? '—' : fmt(v, 0) },
       { label: 'Territory', key: 'territory' },
