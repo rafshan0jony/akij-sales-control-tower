@@ -20,11 +20,14 @@
 const config = require('../server/config');
 const mcp = require('../server/mcp/client');
 const dates = require('../server/lib/dates');
+const fs = require('node:fs');
+const path = require('node:path');
 
 const TARGET_URL = (process.env.SYNC_TARGET_URL || '').replace(/\/$/, '');
 const SECRET = config.sync.secret;
 const LOOKBACK_DAYS = parseInt(process.env.SYNC_LOOKBACK_DAYS || '730', 10);
 const INTERVAL_MS = config.sync.intervalMs;
+const BACKUP_FILE = path.join(__dirname, '..', 'data', 'metadata-backup.json');
 
 function log(...a) {
   console.log(`[${new Date().toISOString()}] [bridge]`, ...a);
@@ -59,6 +62,39 @@ async function push(snapshot) {
   return res.json();
 }
 
+/**
+ * Backup / restore app metadata (users/roles/territories/targets/config) so
+ * created users survive the host's ephemeral-database resets.
+ */
+async function backupRestoreMetadata() {
+  if (!TARGET_URL) return;
+  const get = await fetch(TARGET_URL + '/api/sync/metadata', { headers: { 'x-sync-secret': SECRET } });
+  if (!get.ok) return;
+  const current = await get.json();
+
+  let backup = null;
+  try { backup = JSON.parse(fs.readFileSync(BACKUP_FILE, 'utf8')); } catch (_) {}
+
+  const currentUsers = (current.users || []).length;
+  const backupUsers = backup && Array.isArray(backup.users) ? backup.users.length : 0;
+
+  if (currentUsers === 1 && backupUsers > 1) {
+    // Host DB was reset (only admin re-seeded) — restore the backup.
+    const res = await fetch(TARGET_URL + '/api/sync/metadata', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'x-sync-secret': SECRET },
+      body: JSON.stringify(backup),
+    });
+    if (res.ok) {
+      log(`restored metadata backup (${backupUsers} users)`);
+    } else {
+      log('WARN: metadata restore failed', res.status);
+    }
+  } else {
+    fs.writeFileSync(BACKUP_FILE, JSON.stringify(current));
+  }
+}
+
 async function runOnce() {
   const started = Date.now();
   log('collecting from DWH...');
@@ -66,6 +102,7 @@ async function runOnce() {
   log(`collected ${snapshot.orders.length} orders, ${snapshot.deliveries.length} deliveries in ${Date.now() - started}ms`);
   const result = await push(snapshot);
   log('pushed to', TARGET_URL, '->', JSON.stringify(result.sync && { status: result.sync.status, counts: result.sync.counts }));
+  try { await backupRestoreMetadata(); } catch (err) { log('WARN: metadata backup failed:', err.message); }
 }
 
 async function main() {
