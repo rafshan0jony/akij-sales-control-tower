@@ -282,7 +282,8 @@ function dashboardSummary(data, scope, range, opts = {}) {
   const achievementMt = basis === 'sales' ? mtdTotals.salesMt : mtdTotals.deliveryMt;
   const achievementPct = target > 0 ? (achievement / target) * 100 : 0;
   const achievementMtPct = targetMt > 0 ? (achievementMt / targetMt) * 100 : 0;
-  const pending = computePending(mtd.orders, mtd.deliveries, now);
+  const pendingScope = scopedFacts(data, scope, dates.monthsAgoStart(4, now), now);
+  const pending = computePending(pendingScope.orders, pendingScope.deliveries, now);
   const pacing = monthProgress.computePacing(targetMt, achievementMt, prog);
   const status = monthProgress.performanceStatus(achievementMtPct, prog.monthProgressPct);
 
@@ -436,8 +437,9 @@ function deliveryModule(data, scope, range, opts = {}) {
  * Pending module payload.
  */
 function pendingModule(data, scope, range, opts = {}) {
-  const { orders, deliveries } = scopedFacts(data, scope, range.from, range.to);
-  const pending = computePending(orders, deliveries, dates.todayStr());
+  const now = dates.todayStr();
+  const { orders, deliveries } = scopedFacts(data, scope, dates.monthsAgoStart(4, now), now);
+  const pending = computePending(orders, deliveries, now);
   const buckets = configRepo.get('pendingAgingBuckets');
 
   const aging = buckets.map((b) => {

@@ -110,6 +110,15 @@ function prevMonth(year, month) {
   return { year, month: month - 1 };
 }
 
+/** First day of the month `months` months before refStr (e.g. 4 from Aug -> Apr 1). */
+function monthsAgoStart(months, refStr = todayStr()) {
+  const [y, m] = refStr.split('-').map(Number);
+  let py = y;
+  let pm = m - months;
+  while (pm <= 0) { pm += 12; py -= 1; }
+  return `${py}-${pad(pm)}-01`;
+}
+
 /** Financial year for a given date (default today). FY start month is configurable. */
 function financialYear(refStr = todayStr()) {
   const [y, m] = refStr.split('-').map(Number);
@@ -179,6 +188,7 @@ module.exports = {
   remainingBusinessDays,
   currentMonth,
   prevMonth,
+  monthsAgoStart,
   financialYear,
   resolveRange,
 };
