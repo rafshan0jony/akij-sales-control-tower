@@ -53,4 +53,13 @@ function territories() {
   return [...new Set(allRows.map((r) => r.territory))].sort();
 }
 
-module.exports = { map, resolve, list, regions, areas, territories };
+/** Distinct territories with their area + region (for filter dropdowns). */
+function territoriesDetailed() {
+  const seen = new Map();
+  for (const r of allRows) {
+    if (!seen.has(r.territory)) seen.set(r.territory, { territory: r.territory, area: r.area, region: r.region });
+  }
+  return [...seen.values()].sort((a, b) => a.region.localeCompare(b.region) || a.territory.localeCompare(b.territory));
+}
+
+module.exports = { map, resolve, list, regions, areas, territories, territoriesDetailed };

@@ -12,51 +12,52 @@ const router = express.Router();
 router.use(authenticate);
 
 router.get('/sales/orders', requirePermission('VIEW_SALES_ORDER'), asyncHandler(async (req, res) => {
-  const { range } = parseRange(req);
+  const { range, scope } = parseRange(req);
   const data = syncService.getData();
   const opts = {
     page: req.query.page, pageSize: req.query.pageSize, search: req.query.search,
     sort: req.query.sort, order: req.query.order,
     filter: pickFilter(req.query, ['territory', 'item', 'customer']),
   };
-  const payload = analytics.salesOrders(data, req.scope, range, opts);
+  const payload = analytics.salesOrders(data, scope, range, opts);
   res.json({ ...payload, ...freshness() });
 }));
 
 router.get('/delivery', requirePermission('VIEW_DELIVERY'), asyncHandler(async (req, res) => {
-  const { range } = parseRange(req);
+  const { range, scope } = parseRange(req);
   const data = syncService.getData();
   const opts = {
     page: req.query.page, pageSize: req.query.pageSize, search: req.query.search,
     sort: req.query.sort, order: req.query.order,
     filter: pickFilter(req.query, ['territory', 'item', 'customer']),
   };
-  const payload = analytics.deliveryModule(data, req.scope, range, opts);
+  const payload = analytics.deliveryModule(data, scope, range, opts);
   res.json({ ...payload, ...freshness() });
 }));
 
 router.get('/pending', requirePermission('VIEW_PENDING'), asyncHandler(async (req, res) => {
-  const { range } = parseRange(req);
+  const { range, scope } = parseRange(req);
   const data = syncService.getData();
   const opts = {
     page: req.query.page, pageSize: req.query.pageSize, search: req.query.search,
     sort: req.query.sort, order: req.query.order,
     filter: pickFilter(req.query, ['territory', 'item', 'customer']),
   };
-  const payload = analytics.pendingModule(data, req.scope, range, opts);
+  const payload = analytics.pendingModule(data, scope, range, opts);
   res.json({ ...payload, ...freshness() });
 }));
 
 router.get('/target-achievement', requirePermission('VIEW_TARGET'), asyncHandler(async (req, res) => {
-  const { range } = parseRange(req);
+  const { range, scope } = parseRange(req);
   const data = syncService.getData();
-  const payload = analytics.targetAchievement(data, req.scope, range);
+  const payload = analytics.targetAchievement(data, scope, range);
   res.json({ ...payload, ...freshness() });
 }));
 
 router.get('/credit-status', asyncHandler(async (req, res) => {
+  const { scope } = parseRange(req);
   const data = syncService.getData();
-  const credit = analytics.creditStatus(data, req.scope);
+  const credit = analytics.creditStatus(data, scope);
   res.json({ credit, ...freshness() });
 }));
 

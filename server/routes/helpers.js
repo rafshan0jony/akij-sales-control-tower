@@ -3,11 +3,32 @@
 const dates = require('../lib/dates');
 const syncRepo = require('../repos/sync');
 
+/** Narrow a user's scope to a single territory (when a territory is selected). */
+function narrowScope(scope, territory) {
+  if (!scope) return scope;
+  if (!territory || territory === 'All' || territory === '') return scope;
+  const name = String(territory).toLowerCase().trim();
+  if (scope.scopeAll) {
+    return { ...scope, scopeAll: false, territoryNames: new Set([name]) };
+  }
+  if (scope.territoryNames.has(name)) {
+    return { ...scope, scopeAll: false, territoryNames: new Set([name]) };
+  }
+  return scope;
+}
+
 /** Parse ?filter= and ?from=&to= into a resolved date range. */
 function parseRange(req) {
   const filter = req.query.filter || 'this_month';
   const custom = req.query.from && req.query.to ? { from: req.query.from, to: req.query.to } : null;
-  return { filter, custom, range: dates.resolveRange(filter, custom) };
+  const territory = req.query.territory || '';
+  return {
+    filter,
+    custom,
+    range: dates.resolveRange(filter, custom),
+    territory,
+    scope: narrowScope(req.scope, territory),
+  };
 }
 
 /** Freshness metadata attached to every data response. */
@@ -21,4 +42,4 @@ function freshness() {
   };
 }
 
-module.exports = { parseRange, freshness };
+module.exports = { parseRange, freshness, narrowScope };

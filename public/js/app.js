@@ -76,6 +76,7 @@ const state = {
     if (stored && FILTERS.some((f) => f.key === stored)) return stored;
     return FILTERS[0] ? FILTERS[0].key : 'month:2026-09';
   })(),
+  territory: localStorage.getItem('akij_territory') || 'All',
   custom: null,
   lastUpdated: null,
   refreshStatus: 'IDLE',
@@ -87,6 +88,7 @@ state.query = function () {
     q.from = this.custom.from;
     q.to = this.custom.to;
   }
+  if (this.territory && this.territory !== 'All') q.territory = this.territory;
   return q;
 };
 
@@ -128,6 +130,26 @@ function renderFilter() {
     document.getElementById('filter-from').value = state.custom?.from || '';
     document.getElementById('filter-to').value = state.custom?.to || '';
   }
+}
+
+async function renderTerritoryFilter() {
+  const sel = document.getElementById('territory-select');
+  if (sel.options.length > 0) { sel.value = state.territory; return; }
+  let list = [];
+  try { const d = await api.get('/dashboard/territory-list'); list = d.territories || []; } catch (_) {}
+  sel.appendChild(ui.el('option', { value: 'All', text: 'All Territories' }));
+  const byRegion = new Map();
+  for (const t of list) {
+    const r = t.region || 'Unassigned';
+    if (!byRegion.has(r)) byRegion.set(r, []);
+    byRegion.get(r).push(t);
+  }
+  for (const [region, items] of byRegion) {
+    const og = ui.el('optgroup', { label: region });
+    for (const t of items) og.appendChild(ui.el('option', { value: t.territory, text: t.territory }));
+    sel.appendChild(og);
+  }
+  sel.value = state.territory;
 }
 
 function renderUser() {
@@ -213,6 +235,7 @@ async function boot() {
     hideLogin();
     renderUser();
     renderFilter();
+    renderTerritoryFilter();
     startSyncPoll();
     route();
   } catch (_) {
@@ -283,6 +306,11 @@ function setupEvents() {
     state.filter = e.target.value;
     localStorage.setItem('akij_filter', state.filter);
     renderFilter();
+    route();
+  });
+  document.getElementById('territory-select').addEventListener('change', (e) => {
+    state.territory = e.target.value;
+    localStorage.setItem('akij_territory', state.territory);
     route();
   });
   document.getElementById('filter-from').addEventListener('change', syncCustom);

@@ -11,23 +11,24 @@ const recommendationService = require('../services/recommendationService');
 const tourPlanService = require('../services/tourPlanService');
 const syncRepo = require('../repos/sync');
 const permissionService = require('../services/permissionService');
+const territoryMappingService = require('../services/territoryMappingService');
 
 const router = express.Router();
 router.use(authenticate);
 
 router.get('/summary', asyncHandler(async (req, res) => {
-  const { range } = parseRange(req);
+  const { range, scope } = parseRange(req);
   const data = syncService.getData();
-  const payload = analytics.dashboardSummary(data, req.scope, range);
+  const payload = analytics.dashboardSummary(data, scope, range);
   res.json({ ...payload, ...freshness() });
 }));
 
 router.get('/management-summary', asyncHandler(async (req, res) => {
-  const { range } = parseRange(req);
+  const { range, scope } = parseRange(req);
   const data = syncService.getData();
-  const summary = analytics.dashboardSummary(data, req.scope, range);
-  const territories = analytics.territoryPerformance(data, req.scope, range);
-  const products = analytics.productSummary(data, req.scope, range);
+  const summary = analytics.dashboardSummary(data, scope, range);
+  const territories = analytics.territoryPerformance(data, scope, range);
+  const products = analytics.productSummary(data, scope, range);
   res.json({
     kpis: summary.kpis,
     topTerritories: territories.slice(0, 5),
@@ -38,21 +39,21 @@ router.get('/management-summary', asyncHandler(async (req, res) => {
 }));
 
 router.get('/insights', asyncHandler(async (req, res) => {
-  const { range } = parseRange(req);
+  const { range, scope } = parseRange(req);
   const data = syncService.getData();
-  res.json({ insights: insightService.generateInsights(data, req.scope, range), ...freshness() });
+  res.json({ insights: insightService.generateInsights(data, scope, range), ...freshness() });
 }));
 
 router.get('/recommendations', asyncHandler(async (req, res) => {
-  const { range } = parseRange(req);
+  const { range, scope } = parseRange(req);
   const data = syncService.getData();
-  res.json({ recommendations: recommendationService.generateRecommendations(data, req.scope, range), ...freshness() });
+  res.json({ recommendations: recommendationService.generateRecommendations(data, scope, range), ...freshness() });
 }));
 
 router.get('/tour-plan', asyncHandler(async (req, res) => {
-  const { range } = parseRange(req);
+  const { range, scope } = parseRange(req);
   const data = syncService.getData();
-  res.json({ tourPlan: tourPlanService.generateTourPlan(data, req.scope, range), ...freshness() });
+  res.json({ tourPlan: tourPlanService.generateTourPlan(data, scope, range), ...freshness() });
 }));
 
 router.get('/sync-status', asyncHandler(async (req, res) => {
@@ -65,9 +66,13 @@ router.get('/sync-status', asyncHandler(async (req, res) => {
 }));
 
 router.get('/territory-list', asyncHandler(async (req, res) => {
-  // List of territories visible to this user (for filters / labels).
+  // Structured list of territories (with area + region) visible to this user.
   const scope = req.scope;
-  res.json({ scopeAll: scope.scopeAll, level: scope.level, territoryNames: [...scope.territoryNames] });
+  const detailed = territoryMappingService.territoriesDetailed();
+  const territories = scope.scopeAll
+    ? detailed
+    : detailed.filter((t) => scope.territoryNames.has(t.territory.toLowerCase()));
+  res.json({ scopeAll: scope.scopeAll, level: scope.level, territories });
 }));
 
 module.exports = router;
