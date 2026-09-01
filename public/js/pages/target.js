@@ -50,14 +50,14 @@ export async function renderTarget(container, state) {
     rows: products,
   })));
 
-  // Territory comparison table
+  // Territory-wise target vs achievement (delivery MT)
   const territories = data.byTerritory || [];
-  container.appendChild(card('Territory Comparison', dataTable({
+  container.appendChild(card('Territory Target vs Achievement', dataTable({
     columns: [
       { label: 'Territory', key: 'territory' },
-      { label: 'Sales (MT)', key: 'salesMt' },
+      { label: 'Target (MT)', key: 'targetMt' },
       { label: 'Delivery (MT)', key: 'deliveryMt' },
-      { label: 'Sales Value', key: 'salesValue', money: true },
+      { label: 'Achievement %', key: 'achievementPct', pct: true },
       { label: 'Delivery Value', key: 'deliveryValue', money: true },
     ],
     rows: territories,

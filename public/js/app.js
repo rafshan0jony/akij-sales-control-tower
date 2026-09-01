@@ -13,16 +13,28 @@ import { renderInsights } from './pages/insights.js';
 import { renderCreditStatus } from './pages/credit.js';
 import { renderAdmin } from './pages/admin.js';
 
-const FILTERS = [
-  { key: 'today', label: 'Today' },
-  { key: 'yesterday', label: 'Yesterday' },
-  { key: 'this_week', label: 'This Week' },
-  { key: 'this_month', label: 'This Month' },
-  { key: 'last_month', label: 'Last Month' },
-  { key: 'ytd', label: 'YTD' },
-  { key: 'fy', label: 'Current FY' },
-  { key: 'custom', label: 'Custom Range' },
-];
+const MONTH_NAMES = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
+const MONTH_START = { y: 2026, m: 9 }; // September 2026
+
+// Month list: September 2026 -> current month (auto-grows as months pass).
+function buildFilters() {
+  const now = new Date();
+  let endY = now.getFullYear();
+  let endM = now.getMonth() + 1;
+  if (endY < MONTH_START.y || (endY === MONTH_START.y && endM < MONTH_START.m)) { endY = MONTH_START.y; endM = MONTH_START.m; }
+  const filters = [];
+  let y = MONTH_START.y;
+  let m = MONTH_START.m;
+  while (y < endY || (y === endY && m <= endM)) {
+    const mm = String(m).padStart(2, '0');
+    filters.push({ key: 'month:' + y + '-' + mm, label: MONTH_NAMES[m - 1] + ' ' + y });
+    m++;
+    if (m > 12) { m = 1; y++; }
+  }
+  return filters.reverse();
+}
+
+const FILTERS = buildFilters();
 
 const NAV = [
   { section: 'Overview' },
@@ -59,7 +71,11 @@ const NAV = [
 const state = {
   user: null,
   scope: null,
-  filter: localStorage.getItem('akij_filter') || 'this_month',
+  filter: (() => {
+    const stored = localStorage.getItem('akij_filter');
+    if (stored && FILTERS.some((f) => f.key === stored)) return stored;
+    return FILTERS[0] ? FILTERS[0].key : 'month:2026-09';
+  })(),
   custom: null,
   lastUpdated: null,
   refreshStatus: 'IDLE',

@@ -10,30 +10,33 @@ const analytics = require('../server/services/analyticsService');
 const insightService = require('../server/services/insightService');
 const recommendationService = require('../server/services/recommendationService');
 const tourPlanService = require('../server/services/tourPlanService');
+const dates = require('../server/lib/dates');
+
+const YM = dates.todayStr().slice(0, 7); // current month, e.g. "2026-09"
 
 function makeData() {
-  // 3 customers across 2 territories, Aug 2026
+  // 3 customers across 2 territories, current month
   const orders = [];
   const deliveries = [];
   let so = 1;
   for (let day = 1; day <= 24; day++) {
-    const date = `2026-08-${String(day).padStart(2, '0')}`;
+    const date = `${YM}-${String(day).padStart(2, '0')}`;
     orders.push({ date, orderNo: 'SO' + so, customer: 'Cust A', territory: 'Dhaka North', item: 'Rice X', uom: 'BAG', quantity: 20, value: 20000, status: 'Open' });
     so++;
     orders.push({ date, orderNo: 'SO' + so, customer: 'Cust B', territory: 'Dhaka North', item: 'Rice X', uom: 'BAG', quantity: 10, value: 10000, status: 'Open' });
     so++;
     orders.push({ date, orderNo: 'SO' + so, customer: 'Cust C', territory: 'Savar', item: 'Rice Y', uom: 'BAG', quantity: 5, value: 7500, status: 'Open' });
     so++;
-    if (day % 3 === 0) {
+    if (day % 3 === 0 || day === 1) {
       deliveries.push({ date, customer: 'Cust A', territory: 'Dhaka North', orderNo: 'SO' + (so - 3), item: 'Rice X', uom: 'BAG', quantity: 20, value: 20000 });
       deliveries.push({ date, customer: 'Cust B', territory: 'Dhaka North', orderNo: 'SO' + (so - 2), item: 'Rice X', uom: 'BAG', quantity: 10, value: 10000 });
     }
   }
-  return { orders, deliveries, syncedAt: '2026-08-24T10:00:00+06:00' };
+  return { orders, deliveries, syncedAt: `${YM}-24T10:00:00+06:00` };
 }
 
 const scopeAll = { scopeAll: true, territoryIds: new Set(), territoryNames: new Set(), level: 0, role: { code: 'NATIONAL', level: 0 } };
-const range = { from: '2026-08-01', to: '2026-08-24', label: 'This Month' };
+const range = { from: `${YM}-01`, to: `${YM}-24`, label: 'This Month' };
 
 test('dashboard summary computes KPIs', () => {
   const data = makeData();

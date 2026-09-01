@@ -7,6 +7,7 @@ const territoriesRepo = require('../repos/territories');
 const permissionService = require('./permissionService');
 const monthProgress = require('./monthProgressService');
 const rateService = require('./rateService');
+const territoryTargetService = require('./territoryTargetService');
 
 const num = (v) => {
   const n = Number(v);
@@ -481,10 +482,9 @@ function targetAchievement(data, scope, range, opts = {}) {
   const t = totals(orders, deliveries);
   const now = dates.todayStr();
   const { year, month } = dates.currentMonth(now);
+  const selMonth = range.from ? range.from.slice(0, 7) : `${year}-${dates.pad(month)}`;
   const prog = monthProgress.computeMonthProgress(year, month, now);
-  const targetRows = resolveTargets(scope, monthKey(now));
-  const target = sumTargets(targetRows);
-  const targetMt = rateService.totalTargetMt();
+  const targetMt = territoryTargetService.nationalTotalMt(selMonth);
   const achievementMt = t.deliveryMt;
   const achievementMtPct = targetMt > 0 ? (achievementMt / targetMt) * 100 : 0;
   const pacing = monthProgress.computePacing(targetMt, achievementMt, prog);
@@ -513,13 +513,13 @@ function targetAchievement(data, scope, range, opts = {}) {
     },
     cumulative,
     monthlyTrend: [],
-    byProduct: productTargetAchievement(data, scope, range),
-    byTerritory: territoryPerformance(data, scope, range),
+    byProduct: productTargetAchievement(data, scope, range, selMonth),
+    byTerritory: territoryTargetAchievement(data, scope, range, selMonth),
   };
 }
 
-/** Product-wise target (MT) vs achievement (delivery MT). */
-function productTargetAchievement(data, scope, range) {
+/** Product-wise target (MT) vs achievement (delivery MT) for a month. */
+function productTargetAchievement(data, scope, range, selMonth) {
   const { deliveries } = scopedFacts(data, scope, range.from, range.to);
   const mtByProduct = new Map();
   const valueByProduct = new Map();
@@ -529,18 +529,41 @@ function productTargetAchievement(data, scope, range) {
     valueByProduct.set(k, (valueByProduct.get(k) || 0) + num(x.value));
   }
   const rows = [];
-  for (const e of rateService.list()) {
-    const delMt = mtByProduct.get(e.product) || 0;
+  for (const p of territoryTargetService.productsList()) {
+    const targetMt = territoryTargetService.nationalProductMt(selMonth, p);
+    const delMt = mtByProduct.get(p) || 0;
     rows.push({
-      product: e.product,
-      targetMt: e.forecastMt,
+      product: p,
+      targetMt,
       deliveryMt: round1(delMt),
-      achievementPct: e.forecastMt > 0 ? round1((delMt / e.forecastMt) * 100) : 0,
-      deliveryValue: valueByProduct.get(e.product) || 0,
+      achievementPct: targetMt > 0 ? round1((delMt / targetMt) * 100) : 0,
+      deliveryValue: valueByProduct.get(p) || 0,
     });
   }
   rows.sort((a, b) => b.targetMt - a.targetMt);
   return rows;
+}
+
+/** Territory target vs achievement (delivery MT) for a month. */
+function territoryTargetAchievement(data, scope, range, selMonth) {
+  const { deliveries } = scopedFacts(data, scope, range.from, range.to);
+  const delMtByTerr = new Map();
+  const delValByTerr = new Map();
+  for (const d of deliveries) {
+    const k = territoryName(d);
+    delMtByTerr.set(k, (delMtByTerr.get(k) || 0) + num(d.mt));
+    delValByTerr.set(k, (delValByTerr.get(k) || 0) + num(d.value));
+  }
+  return territoryTargetService.territoryTargets(selMonth).map((tt) => {
+    const delMt = delMtByTerr.get(tt.territory) || 0;
+    return {
+      territory: tt.territory,
+      targetMt: round1(tt.targetMt),
+      deliveryMt: round1(delMt),
+      deliveryValue: delValByTerr.get(tt.territory) || 0,
+      achievementPct: tt.targetMt > 0 ? round1((delMt / tt.targetMt) * 100) : 0,
+    };
+  }).sort((a, b) => b.targetMt - a.targetMt);
 }
 
 function territoryPerformance(data, scope, range) {
@@ -671,6 +694,7 @@ module.exports = {
   deliveryModule,
   pendingModule,
   targetAchievement,
+  territoryTargetAchievement,
   territoryPerformance,
   customerSummary,
   productSummary,

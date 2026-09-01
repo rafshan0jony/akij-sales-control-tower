@@ -6,6 +6,8 @@ const TZ = config.app.timezone;
 const FY_START_MONTH = config.app.financialYearStartMonth;
 const WEEKEND = config.app.weekendDays;
 
+const MONTH_NAMES = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
+
 function pad(n) {
   return String(n).padStart(2, '0');
 }
@@ -138,6 +140,16 @@ function resolveRange(filter, custom = null) {
   const today = todayStr();
   const { year, month } = currentMonth(today);
   const pv = prevMonth(year, month);
+  if (typeof filter === 'string' && filter.startsWith('month:')) {
+    const m = filter.slice(6).match(/^(\d{4})-(\d{2})$/);
+    if (m) {
+      const y = Number(m[1]);
+      const mo = Number(m[2]);
+      const from = `${y}-${pad(mo)}-01`;
+      const to = `${y}-${pad(mo)}-${pad(daysInMonth(y, mo))}`;
+      return { from, to, label: `${MONTH_NAMES[mo - 1]} ${y}` };
+    }
+  }
   switch (filter) {
     case 'today':
       return { from: today, to: today, label: 'Today' };
@@ -191,4 +203,5 @@ module.exports = {
   monthsAgoStart,
   financialYear,
   resolveRange,
+  MONTH_NAMES,
 };
