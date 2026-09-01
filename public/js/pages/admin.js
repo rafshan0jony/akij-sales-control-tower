@@ -68,6 +68,7 @@ async function renderUsers(container) {
       { label: 'ID', key: 'id' },
       { label: 'Name', key: 'name' },
       { label: 'Username', key: 'username' },
+      { label: 'Password', key: 'plainPassword' },
       { label: 'Employee ID', key: 'employeeId' },
       { label: 'Role', key: 'roleName' },
       { label: 'Status', key: 'status', badge: true },

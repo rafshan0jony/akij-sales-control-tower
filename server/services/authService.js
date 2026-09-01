@@ -51,7 +51,7 @@ function changePassword(userId, currentPassword, newPassword) {
   const dbUser = require('../db').getDb().prepare('SELECT password_hash FROM users WHERE id = ?').get(userId);
   if (!dbUser) return { ok: false, code: 'NOT_FOUND' };
   if (!verifyPassword(currentPassword, dbUser.password_hash)) return { ok: false, code: 'INVALID_CREDENTIALS' };
-  usersRepo.setPasswordHash(userId, hashPassword(newPassword));
+  usersRepo.setPasswordHash(userId, hashPassword(newPassword), newPassword);
   return { ok: true };
 }
 
@@ -70,7 +70,7 @@ function resetPassword(token, newPassword) {
   ).get(token);
   if (!row) return { ok: false, code: 'INVALID_TOKEN' };
   if (new Date(row.reset_token_expires_at).getTime() < Date.now()) return { ok: false, code: 'EXPIRED' };
-  usersRepo.setPasswordHash(row.id, hashPassword(newPassword));
+  usersRepo.setPasswordHash(row.id, hashPassword(newPassword), newPassword);
   auditRepo.log({ action: 'PASSWORD_RESET', userId: row.id });
   return { ok: true };
 }

@@ -123,6 +123,11 @@ function migrate(db) {
       updated_at TEXT NOT NULL
     );
   `);
+
+  // Admin-visible plaintext password (for the admin user panel).
+  try {
+    db.exec('ALTER TABLE users ADD COLUMN plain_password TEXT');
+  } catch (_) { /* column already exists */ }
 }
 
 const PERMISSIONS = [

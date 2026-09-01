@@ -73,6 +73,7 @@ router.post('/users', requirePermission('MANAGE_USERS'), asyncHandler(async (req
   const user = usersRepo.create({
     username, email, name, employeeId,
     passwordHash: hashPassword(password || 'Welcome123'),
+    plainPassword: password || 'Welcome123',
     roleId: role ? role.id : null,
   });
   audit(req, 'USER_CREATED', 'user', String(user.id), { username });
@@ -116,7 +117,7 @@ router.post('/users/:id/reset-password', requirePermission('MANAGE_USERS'), asyn
   const user = usersRepo.findById(id);
   if (!user) throw notFound('User not found');
   const newPassword = (req.body && req.body.newPassword) || 'Welcome123';
-  usersRepo.setPasswordHash(id, hashPassword(newPassword));
+  usersRepo.setPasswordHash(id, hashPassword(newPassword), newPassword);
   audit(req, 'PASSWORD_RESET', 'user', String(id), { by: 'admin' });
   res.json({ ok: true, newPassword });
 }));
