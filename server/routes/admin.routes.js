@@ -65,7 +65,7 @@ router.get('/users', requirePermission('MANAGE_USERS'), asyncHandler(async (req,
 }));
 
 router.post('/users', requirePermission('MANAGE_USERS'), asyncHandler(async (req, res) => {
-  const { username, email, name, employeeId, password, roleId } = req.body || {};
+  const { username, email, name, employeeId, password, roleId, title } = req.body || {};
   if (!username || !name) throw badRequest('Username and name are required');
   if (usersRepo.findByUsername(username)) throw badRequest('Username already exists');
   const role = roleId ? rolesRepo.findById(roleId) : null;
@@ -74,6 +74,7 @@ router.post('/users', requirePermission('MANAGE_USERS'), asyncHandler(async (req
     username, email, name, employeeId,
     passwordHash: hashPassword(password || 'Welcome123'),
     plainPassword: password || 'Welcome123',
+    title: title || null,
     roleId: role ? role.id : null,
   });
   audit(req, 'USER_CREATED', 'user', String(user.id), { username });
@@ -89,7 +90,7 @@ router.get('/users/:id', requirePermission('MANAGE_USERS'), asyncHandler(async (
 router.put('/users/:id', requirePermission('MANAGE_USERS'), asyncHandler(async (req, res) => {
   const id = Number(req.params.id);
   if (!usersRepo.findById(id)) throw notFound('User not found');
-  const { username, email, name, employeeId, roleId, status } = req.body || {};
+  const { username, email, name, employeeId, roleId, status, title } = req.body || {};
   const fields = {};
   if (username !== undefined) fields.username = username;
   if (email !== undefined) fields.email = email || null;
@@ -97,6 +98,7 @@ router.put('/users/:id', requirePermission('MANAGE_USERS'), asyncHandler(async (
   if (employeeId !== undefined) fields.employee_id = employeeId || null;
   if (roleId !== undefined) fields.role_id = roleId;
   if (status !== undefined) fields.status = status;
+  if (title !== undefined) fields.title = title || null;
   const user = usersRepo.update(id, fields);
   audit(req, 'USER_UPDATED', 'user', String(id), { ...fields });
   res.json({ user });

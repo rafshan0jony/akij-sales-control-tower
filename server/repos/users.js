@@ -14,6 +14,7 @@ function rowToUser(r) {
     employeeId: r.employee_id,
     roleId: r.role_id,
     status: r.status,
+    title: r.title,
     plainPassword: r.plain_password,
     lastLoginAt: r.last_login_at,
     createdAt: r.created_at,
@@ -42,14 +43,14 @@ function list() {
 function create(data) {
   const db = getDb();
   const info = db.prepare(
-    'INSERT INTO users (username, email, name, employee_id, password_hash, plain_password, role_id, status, created_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)'
-  ).run(data.username, data.email || null, data.name, data.employeeId || null, data.passwordHash, data.plainPassword || null, data.roleId, data.status || 'active', now());
+    'INSERT INTO users (username, email, name, employee_id, password_hash, plain_password, title, role_id, status, created_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)'
+  ).run(data.username, data.email || null, data.name, data.employeeId || null, data.passwordHash, data.plainPassword || null, data.title || null, data.roleId, data.status || 'active', now());
   return findById(info.lastInsertRowid);
 }
 
 function update(id, fields) {
   const db = getDb();
-  const allowed = ['username', 'email', 'name', 'employee_id', 'role_id', 'status'];
+  const allowed = ['username', 'email', 'name', 'employee_id', 'role_id', 'status', 'title'];
   const sets = [];
   const vals = [];
   for (const key of allowed) {

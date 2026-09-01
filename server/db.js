@@ -128,6 +128,11 @@ function migrate(db) {
   try {
     db.exec('ALTER TABLE users ADD COLUMN plain_password TEXT');
   } catch (_) { /* column already exists */ }
+
+  // User title / designation (e.g. "Zonal Manager", "Manager").
+  try {
+    db.exec('ALTER TABLE users ADD COLUMN title TEXT');
+  } catch (_) { /* column already exists */ }
 }
 
 const PERMISSIONS = [

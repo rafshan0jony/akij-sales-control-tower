@@ -68,6 +68,7 @@ async function renderUsers(container) {
       { label: 'ID', key: 'id' },
       { label: 'Name', key: 'name' },
       { label: 'Username', key: 'username' },
+      { label: 'Title', key: 'title' },
       { label: 'Password', key: 'plainPassword' },
       { label: 'Employee ID', key: 'employeeId' },
       { label: 'Role', key: 'roleName' },
@@ -88,7 +89,7 @@ async function renderUsers(container) {
 
 function openUserModal(user, users, roles, territories) {
   const isNew = !user;
-  const f = { username: '', email: '', name: '', employeeId: '', roleId: '', status: 'active' };
+  const f = { username: '', email: '', name: '', employeeId: '', roleId: '', title: '', status: 'active' };
   if (user) Object.assign(f, user);
 
   const roleSel = el('select', { class: 'select' }, roles.map((r) => el('option', { value: r.id, text: r.name, selected: r.id === f.roleId ? '' : null })));
@@ -96,10 +97,12 @@ function openUserModal(user, users, roles, territories) {
   const name = input(f.name);
   const email = input(f.email);
   const emp = input(f.employeeId);
+  const title = input(f.title);
   const password = input('', 'password');
 
   const content = el('div', {}, [
     field('Username', username), field('Name', name), field('Email', email), field('Employee ID', emp),
+    field('Title', title),
     el('div', { class: 'form-row' }, [el('label', { text: 'Role' }), roleSel]),
     isNew ? field('Password', password) : null,
   ]);
@@ -107,7 +110,7 @@ function openUserModal(user, users, roles, territories) {
   modal(isNew ? 'Create User' : 'Edit User', content, [
     el('button', { class: 'btn btn-primary', text: 'Save', onclick: async () => {
       try {
-        const body = { username: username.value, name: name.value, email: email.value, employeeId: emp.value, roleId: Number(roleSel.value) };
+        const body = { username: username.value, name: name.value, email: email.value, employeeId: emp.value, roleId: Number(roleSel.value), title: title.value };
         if (isNew) body.password = password.value || undefined;
         if (isNew) await api.post('/admin/users', body);
         else await api.put('/admin/users/' + user.id, body);
