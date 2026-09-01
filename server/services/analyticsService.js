@@ -277,7 +277,8 @@ function dashboardSummary(data, scope, range, opts = {}) {
   const prog = monthProgress.computeMonthProgress(year, month, now);
   const targetRows = resolveTargets(scope, monthKey(now));
   const target = sumTargets(targetRows);
-  const targetMt = rateService.totalTargetMt();
+  const selMonth = range.from ? range.from.slice(0, 7) : `${year}-${dates.pad(month)}`;
+  const targetMt = territoryTargetService.nationalTotalMt(selMonth);
 
   const basis = (configRepo.get('targetBasis') || 'delivery').toLowerCase();
   const achievement = basis === 'sales' ? mtdTotals.salesValue : mtdTotals.deliveryValue;
@@ -638,7 +639,7 @@ function productSummary(data, scope, range) {
   return [...o.entries()].map(([k, v]) => {
     const salesMt = salesMtByProduct.get(k) || 0;
     const deliveryMt = delMtByProduct.get(k) || 0;
-    const targetMt = rateService.forecastMt(k);
+    const targetMt = territoryTargetService.nationalProductMt(range.from ? range.from.slice(0, 7) : '', k);
     return {
       product: k,
       salesValue: v.value,
