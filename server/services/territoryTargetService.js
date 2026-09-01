@@ -142,6 +142,25 @@ function territoryTargets(month) {
   }));
 }
 
+/** Total target MT for a set of territory names (case-insensitive), excluding National. */
+function scopeTotalMt(month, territoryNames) {
+  if (!territoryNames || !territoryNames.size) return 0;
+  const names = new Set([...territoryNames].map((t) => String(t).toLowerCase()));
+  return rowsForMonth(month)
+    .filter((r) => names.has(r.territory.toLowerCase()))
+    .reduce((s, r) => s + productsList().reduce((p, prod) => p + num(r.targets[prod]), 0), 0);
+}
+
+/** Per-territory target for a scope (all territories if scopeAll). */
+function territoryTargetsForScope(month, scope) {
+  const all = territoryTargets(month);
+  if (scope && !scope.scopeAll) {
+    const names = new Set([...(scope.territoryNames || [])].map((t) => String(t).toLowerCase()));
+    return all.filter((t) => names.has(t.territory.toLowerCase()));
+  }
+  return all;
+}
+
 module.exports = {
   fetchFromSheet,
   setData,
@@ -154,4 +173,6 @@ module.exports = {
   nationalTotalMt,
   nationalProductMt,
   territoryTargets,
+  scopeTotalMt,
+  territoryTargetsForScope,
 };

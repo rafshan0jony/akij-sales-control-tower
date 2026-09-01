@@ -278,7 +278,7 @@ function dashboardSummary(data, scope, range, opts = {}) {
   const targetRows = resolveTargets(scope, monthKey(now));
   const target = sumTargets(targetRows);
   const selMonth = range.from ? range.from.slice(0, 7) : `${year}-${dates.pad(month)}`;
-  const targetMt = territoryTargetService.nationalTotalMt(selMonth);
+  const targetMt = scopeTargetMt(scope, selMonth);
 
   const basis = (configRepo.get('targetBasis') || 'delivery').toLowerCase();
   const achievement = basis === 'sales' ? mtdTotals.salesValue : mtdTotals.deliveryValue;
@@ -475,6 +475,14 @@ function pendingModule(data, scope, range, opts = {}) {
   };
 }
 
+/** Total target MT for a scope (national total if scopeAll, else sum of assigned territories). */
+function scopeTargetMt(scope, month) {
+  if (scope && !scope.scopeAll) {
+    return territoryTargetService.scopeTotalMt(month, scope.territoryNames);
+  }
+  return territoryTargetService.nationalTotalMt(month);
+}
+
 /**
  * Target vs Achievement module.
  */
@@ -485,7 +493,7 @@ function targetAchievement(data, scope, range, opts = {}) {
   const { year, month } = dates.currentMonth(now);
   const selMonth = range.from ? range.from.slice(0, 7) : `${year}-${dates.pad(month)}`;
   const prog = monthProgress.computeMonthProgress(year, month, now);
-  const targetMt = territoryTargetService.nationalTotalMt(selMonth);
+  const targetMt = scopeTargetMt(scope, selMonth);
   const achievementMt = t.deliveryMt;
   const achievementMtPct = targetMt > 0 ? (achievementMt / targetMt) * 100 : 0;
   const pacing = monthProgress.computePacing(targetMt, achievementMt, prog);
@@ -555,7 +563,7 @@ function territoryTargetAchievement(data, scope, range, selMonth) {
     delMtByTerr.set(k, (delMtByTerr.get(k) || 0) + num(d.mt));
     delValByTerr.set(k, (delValByTerr.get(k) || 0) + num(d.value));
   }
-  return territoryTargetService.territoryTargets(selMonth).map((tt) => {
+  return territoryTargetService.territoryTargetsForScope(selMonth, scope).map((tt) => {
     const delMt = delMtByTerr.get(tt.territory) || 0;
     return {
       territory: tt.territory,
