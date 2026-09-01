@@ -5,6 +5,7 @@ const syncRepo = require('../repos/sync');
 const territoriesRepo = require('../repos/territories');
 const territoryMapping = require('./territoryMappingService');
 const itemMapping = require('./itemMappingService');
+const territoryTargetService = require('./territoryTargetService');
 const logger = require('../logger');
 const config = require('../config');
 const dates = require('../lib/dates');
@@ -278,11 +279,12 @@ function getData() {
  * not reachable from the app host, e.g. on Vercel). Normalizes raw rows,
  * imports territories and updates sync status.
  */
-async function applyRemoteSnapshot({ orders, deliveries, territories, credit }) {
+async function applyRemoteSnapshot({ orders, deliveries, territories, credit, territoryTarget }) {
   const today = dates.todayStr();
   const normOrders = normalizeOrders(orders || []);
   const normDeliveries = normalizeDeliveries(deliveries || []);
   const normCredit = normalizeCredit(credit || []);
+  if (territoryTarget && territoryTarget.rows) territoryTargetService.setData(territoryTarget);
   let from = today;
   for (const o of normOrders) if (o.date < from) from = o.date;
   for (const d of normDeliveries) if (d.date < from) from = d.date;
@@ -295,6 +297,7 @@ async function applyRemoteSnapshot({ orders, deliveries, territories, credit }) 
     orders: normOrders,
     deliveries: normDeliveries,
     credit: normCredit,
+    territoryTarget: territoryTarget && territoryTarget.rows ? territoryTarget : (cache && cache.territoryTarget) || null,
     syncedAt,
     dataSource: 'BRIDGE',
     from,
@@ -323,6 +326,7 @@ function loadSnapshot() {
   const snap = syncRepo.loadSnapshot();
   if (snap && snap.orders && snap.deliveries) {
     cache = snap;
+    if (snap.territoryTarget && snap.territoryTarget.rows) territoryTargetService.setData(snap.territoryTarget);
     logger.info(`[sync] restored snapshot from disk: ${snap.orders.length} orders, ${snap.deliveries.length} deliveries (synced ${snap.syncedAt})`);
     return true;
   }
