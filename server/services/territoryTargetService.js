@@ -100,7 +100,7 @@ function nationalRow(month) {
 }
 
 function productsList() {
-  return (load().products || []).filter((p) => p !== BYPRODUCT);
+  return load().products || [];
 }
 
 /** Sorted month list (YYYY-MM). */
