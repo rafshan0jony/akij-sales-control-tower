@@ -1,10 +1,10 @@
-import { api } from '../api.js';
+import { api, qs } from '../api.js';
 import { el, money, fmt } from '../ui.js';
 import { card } from './common.js';
 import { dataTable } from '../ui.js';
 
 export async function renderCreditStatus(container, state) {
-  const data = await api.get('/credit-status');
+  const data = await api.get('/credit-status?' + qs(state.query()));
   const credit = data.credit || [];
 
   container.appendChild(card('Customer Credit Status — Positive Ledger Balance (' + credit.length + ')', dataTable({
