@@ -121,8 +121,20 @@ async function main() {
     }
   };
 
+  // Frequent metadata backup/restore: recovers users/roles quickly whenever a
+  // Render deploy resets the (ephemeral) app DB. Runs every 60s.
+  const metaLoop = async () => {
+    try {
+      await backupRestoreMetadata();
+    } catch (err) {
+      log('WARN: metadata backup failed:', err.message);
+    }
+  };
+
   await loop();
   setInterval(loop, INTERVAL_MS);
+  await metaLoop();
+  setInterval(metaLoop, 60000);
 }
 
 main();
