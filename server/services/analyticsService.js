@@ -539,7 +539,9 @@ function productTargetAchievement(data, scope, range, selMonth) {
   }
   const rows = [];
   for (const p of territoryTargetService.productsList()) {
-    const targetMt = territoryTargetService.nationalProductMt(selMonth, p);
+    const targetMt = scope.scopeAll
+      ? territoryTargetService.nationalProductMt(selMonth, p)
+      : territoryTargetService.scopeProductMt(selMonth, p, scope.territoryNames);
     const delMt = mtByProduct.get(p) || 0;
     rows.push({
       product: p,
@@ -647,7 +649,10 @@ function productSummary(data, scope, range) {
   return [...o.entries()].map(([k, v]) => {
     const salesMt = salesMtByProduct.get(k) || 0;
     const deliveryMt = delMtByProduct.get(k) || 0;
-    const targetMt = territoryTargetService.nationalProductMt(range.from ? range.from.slice(0, 7) : '', k);
+    const m = range.from ? range.from.slice(0, 7) : '';
+    const targetMt = scope.scopeAll
+      ? territoryTargetService.nationalProductMt(m, k)
+      : territoryTargetService.scopeProductMt(m, k, scope.territoryNames);
     return {
       product: k,
       salesValue: v.value,

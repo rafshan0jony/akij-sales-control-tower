@@ -151,6 +151,15 @@ function scopeTotalMt(month, territoryNames) {
     .reduce((s, r) => s + productsList().reduce((p, prod) => p + num(r.targets[prod]), 0), 0);
 }
 
+/** Target MT for a product across a set of territory names (case-insensitive). */
+function scopeProductMt(month, product, territoryNames) {
+  if (!territoryNames || !territoryNames.size) return 0;
+  const names = new Set([...territoryNames].map((t) => String(t).toLowerCase()));
+  return rowsForMonth(month)
+    .filter((r) => names.has(r.territory.toLowerCase()))
+    .reduce((s, r) => s + num(r.targets[product]), 0);
+}
+
 /** Per-territory target for a scope (all territories if scopeAll). */
 function territoryTargetsForScope(month, scope) {
   const all = territoryTargets(month);
@@ -174,5 +183,6 @@ module.exports = {
   nationalProductMt,
   territoryTargets,
   scopeTotalMt,
+  scopeProductMt,
   territoryTargetsForScope,
 };
