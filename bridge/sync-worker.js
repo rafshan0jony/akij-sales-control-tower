@@ -29,6 +29,10 @@ const SECRET = config.sync.secret;
 const LOOKBACK_DAYS = parseInt(process.env.SYNC_LOOKBACK_DAYS || '730', 10);
 const INTERVAL_MS = config.sync.intervalMs;
 const BACKUP_FILE = path.join(__dirname, '..', 'data', 'metadata-backup.json');
+const GITHUB_TOKEN_FILE = path.join(__dirname, '..', 'data', '.github_token');
+const GITHUB_REPO = 'rafshan0jony/akij-sales-control-tower';
+const SNAPSHOT_BRANCH = 'snapshot';
+const SNAPSHOT_PATH = 'data/snapshot.json';
 
 function log(...a) {
   console.log(`[${new Date().toISOString()}] [bridge]`, ...a);
@@ -62,6 +66,53 @@ async function push(snapshot) {
     throw new Error(`ingest failed (${res.status}): ${text}`);
   }
   return res.json();
+}
+
+async function ensureSnapshotBranch(headers) {
+  const branchApi = `https://api.github.com/repos/${GITHUB_REPO}/branches/${SNAPSHOT_BRANCH}`;
+  const check = await fetch(branchApi, { headers });
+  if (check.ok) return;
+  const mainInfo = await fetch(`https://api.github.com/repos/${GITHUB_REPO}/branches/main`, { headers });
+  if (!mainInfo.ok) return;
+  const sha = (await mainInfo.json()).commit.sha;
+  await fetch(`https://api.github.com/repos/${GITHUB_REPO}/git/refs`, {
+    method: 'POST',
+    headers,
+    body: JSON.stringify({ ref: `refs/heads/${SNAPSHOT_BRANCH}`, sha }),
+  });
+}
+
+/**
+ * Persist the latest collected snapshot to GitHub (raw JSON committed to the
+ * dedicated `snapshot` branch). This lets the deployed app recover the most
+ * recent data even when the office PC (this bridge) is switched off and the
+ * app host's database is reset.
+ */
+async function pushSnapshotToGithub(snapshot) {
+  try {
+    const token = fs.readFileSync(GITHUB_TOKEN_FILE, 'utf8').trim();
+    if (!token) { log('WARN: no GitHub token — skipping snapshot backup'); return; }
+    const api = `https://api.github.com/repos/${GITHUB_REPO}/contents/${SNAPSHOT_PATH}?ref=${SNAPSHOT_BRANCH}`;
+    const headers = { Authorization: 'Bearer ' + token, 'Content-Type': 'application/json', 'User-Agent': 'sync-bridge' };
+
+    await ensureSnapshotBranch(headers);
+
+    let sha = null;
+    try {
+      const get = await fetch(api, { headers });
+      if (get.ok) sha = (await get.json()).sha;
+    } catch (_) { /* first push — file does not exist yet */ }
+
+    const content = Buffer.from(JSON.stringify(snapshot)).toString('base64');
+    const put = await fetch(api, {
+      method: 'PUT',
+      headers,
+      body: JSON.stringify({ message: 'snapshot ' + new Date().toISOString(), content, sha, branch: SNAPSHOT_BRANCH }),
+    });
+    if (!put.ok) log('WARN: snapshot backup failed', put.status, (await put.text()).slice(0, 200));
+  } catch (err) {
+    log('WARN: snapshot backup failed:', err.message);
+  }
 }
 
 /**
@@ -104,6 +155,7 @@ async function runOnce() {
   log(`collected ${snapshot.orders.length} orders, ${snapshot.deliveries.length} deliveries in ${Date.now() - started}ms`);
   const result = await push(snapshot);
   log('pushed to', TARGET_URL, '->', JSON.stringify(result.sync && { status: result.sync.status, counts: result.sync.counts }));
+  try { await pushSnapshotToGithub(snapshot); } catch (err) { log('WARN: snapshot backup failed:', err.message); }
   try { await backupRestoreMetadata(); } catch (err) { log('WARN: metadata backup failed:', err.message); }
 }
 

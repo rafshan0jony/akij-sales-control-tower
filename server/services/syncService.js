@@ -16,6 +16,7 @@ let runPromise = null;
 
 const LOOKBACK_DAYS = int(process.env.SYNC_LOOKBACK_DAYS, 730);
 const RECENT_DAYS = int(process.env.SYNC_RECENT_DAYS, 3);
+const GITHUB_SNAPSHOT_URL = process.env.GITHUB_SNAPSHOT_URL || 'https://raw.githubusercontent.com/rafshan0jony/akij-sales-control-tower/snapshot/data/snapshot.json';
 
 function int(v, dflt) {
   const n = parseInt(v, 10);
@@ -265,6 +266,8 @@ async function bootstrap() {
     await refresh();
     return { ok: true };
   } catch (err) {
+    const restored = await loadRemoteSnapshot();
+    if (restored) return { ok: true, source: 'github-snapshot' };
     return { ok: false, error: err.message };
   }
 }
@@ -333,8 +336,28 @@ function loadSnapshot() {
   return false;
 }
 
+/**
+ * Recover the last bridge snapshot from GitHub when the local database is
+ * empty (e.g. after a host redeploy while the office PC is switched off).
+ * The raw snapshot is normalized through applyRemoteSnapshot.
+ */
+async function loadRemoteSnapshot() {
+  try {
+    const res = await fetch(GITHUB_SNAPSHOT_URL, { headers: { 'User-Agent': 'akij-sales-control-tower' } });
+    if (!res.ok) return false;
+    const raw = await res.json();
+    if (!raw || !raw.orders || !raw.deliveries) return false;
+    await applyRemoteSnapshot(raw);
+    logger.info(`[sync] restored snapshot from GitHub (${cache.orders.length} orders, ${cache.deliveries.length} deliveries)`);
+    return true;
+  } catch (err) {
+    logger.warn('[sync] GitHub snapshot restore failed:', err.message);
+    return false;
+  }
+}
+
 function lastUpdated() {
   return cache ? cache.syncedAt : (syncRepo.get() ? syncRepo.get().lastUpdated : null);
 }
 
-module.exports = { refresh, bootstrap, getData, lastUpdated, fullRefresh, incrementalRefresh, applyRemoteSnapshot, loadSnapshot };
+module.exports = { refresh, bootstrap, getData, lastUpdated, fullRefresh, incrementalRefresh, applyRemoteSnapshot, loadSnapshot, loadRemoteSnapshot };
