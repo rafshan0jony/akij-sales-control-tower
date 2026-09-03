@@ -53,6 +53,9 @@ router.post('/metadata', asyncHandler(async (req, res) => {
   if (!checkSecret(req)) return res.status(401).json({ error: 'Invalid sync secret' });
   const meta = req.body || {};
   if (!Array.isArray(meta.users)) throw badRequest('users array is required');
+  // Ensure the territory hierarchy exists before restoring assignments,
+  // otherwise territory codes cannot resolve and assignments are lost.
+  try { await syncService.importTerritories(); } catch (e) { /* non-fatal */ }
   metadataService.importMetadata(meta);
   res.json({ ok: true, users: meta.users.length });
 }));

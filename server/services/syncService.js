@@ -8,6 +8,7 @@ const itemMapping = require('./itemMappingService');
 const territoryTargetService = require('./territoryTargetService');
 const metadataService = require('./metadataService');
 const usersRepo = require('../repos/users');
+const { getDb } = require('../db');
 const logger = require('../logger');
 const config = require('../config');
 const dates = require('../lib/dates');
@@ -371,14 +372,22 @@ async function loadRemoteSnapshot() {
  */
 async function loadRemoteMetadata() {
   try {
-    if (usersRepo.list().length > 1) return false;
     const res = await fetch(GITHUB_METADATA_URL, { headers: { 'User-Agent': 'akij-sales-control-tower' } });
     if (!res.ok) return false;
     const meta = await res.json();
     if (!meta || !Array.isArray(meta.users) || meta.users.length <= 1) return false;
+
+    // Skip only when local users AND their territory assignments are already
+    // intact. A lossy bridge restore can re-seed users without their territory
+    // assignments (territories not yet imported) — in that case re-restore.
+    const localUsers = usersRepo.list().length;
+    const localAssigned = getDb().prepare('SELECT COUNT(DISTINCT user_id) AS c FROM user_territories').get().c;
+    const metaAssigned = Object.keys(meta.userTerritories || {}).length;
+    if (localUsers > 1 && localAssigned >= metaAssigned) return false;
+
     try { await importTerritories(); } catch (e) { logger.warn('[sync] territory import before metadata restore failed:', e.message); }
     metadataService.importMetadata(meta);
-    logger.info(`[sync] restored metadata from GitHub (${meta.users.length} users)`);
+    logger.info(`[sync] restored metadata from GitHub (${meta.users.length} users, ${metaAssigned} with territories)`);
     return true;
   } catch (err) {
     logger.warn('[sync] metadata restore from GitHub failed:', err.message);
@@ -390,4 +399,4 @@ function lastUpdated() {
   return cache ? cache.syncedAt : (syncRepo.get() ? syncRepo.get().lastUpdated : null);
 }
 
-module.exports = { refresh, bootstrap, getData, lastUpdated, fullRefresh, incrementalRefresh, applyRemoteSnapshot, loadSnapshot, loadRemoteSnapshot, loadRemoteMetadata };
+module.exports = { refresh, bootstrap, getData, lastUpdated, fullRefresh, incrementalRefresh, applyRemoteSnapshot, loadSnapshot, loadRemoteSnapshot, loadRemoteMetadata, importTerritories };
