@@ -275,10 +275,9 @@ function dashboardSummary(data, scope, range, opts = {}) {
   const mtdTotals = totals(mtd.orders, mtd.deliveries);
 
   const prog = monthProgress.computeMonthProgress(year, month, now);
-  const targetRows = resolveTargets(scope, monthKey(now));
-  const target = sumTargets(targetRows);
   const selMonth = range.from ? range.from.slice(0, 7) : `${year}-${dates.pad(month)}`;
   const targetMt = scopeTargetMt(scope, selMonth);
+  const target = scopeTargetValue(scope, selMonth);
 
   const basis = (configRepo.get('targetBasis') || 'delivery').toLowerCase();
   const achievement = basis === 'sales' ? mtdTotals.salesValue : mtdTotals.deliveryValue;
@@ -481,6 +480,19 @@ function scopeTargetMt(scope, month) {
     return territoryTargetService.scopeTotalMt(month, scope.territoryNames);
   }
   return territoryTargetService.nationalTotalMt(month);
+}
+
+/** Total target VALUE (৳) for a scope in a month = target MT × 20 × announced 50kg price. */
+function scopeTargetValue(scope, month) {
+  const products = territoryTargetService.productsList();
+  let total = 0;
+  for (const p of products) {
+    const mt = scope && !scope.scopeAll
+      ? territoryTargetService.scopeProductMt(month, p, scope.territoryNames)
+      : territoryTargetService.nationalProductMt(month, p);
+    total += mt * 20 * rateService.priceFor(p);
+  }
+  return total;
 }
 
 /**
