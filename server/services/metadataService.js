@@ -19,6 +19,8 @@ function exportMetadata() {
     name: u.name,
     employeeId: u.employee_id,
     passwordHash: u.password_hash,
+    plainPassword: u.plain_password,
+    title: u.title,
     roleCode: u.role_id ? (rolesRepo.findById(u.role_id)?.code || null) : null,
     status: u.status,
     lastLoginAt: u.last_login_at,
@@ -55,13 +57,14 @@ function importMetadata(meta) {
   d.prepare('DELETE FROM users').run();
 
   const insUser = d.prepare(
-    'INSERT INTO users (username, email, name, employee_id, password_hash, role_id, status, last_login_at, created_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)'
+    'INSERT INTO users (username, email, name, employee_id, password_hash, plain_password, title, role_id, status, last_login_at, created_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)'
   );
   for (const u of meta.users || []) {
     const role = u.roleCode ? rolesRepo.findByCode(u.roleCode) : null;
     insUser.run(
       u.username, u.email || null, u.name || u.username, u.employeeId || null,
-      u.passwordHash, role ? role.id : null, u.status || 'active', u.lastLoginAt || null, u.createdAt || now
+      u.passwordHash, u.plainPassword || null, u.title || null, role ? role.id : null,
+      u.status || 'active', u.lastLoginAt || null, u.createdAt || now
     );
   }
 
