@@ -6,6 +6,8 @@ const territoriesRepo = require('../repos/territories');
 const territoryMapping = require('./territoryMappingService');
 const itemMapping = require('./itemMappingService');
 const territoryTargetService = require('./territoryTargetService');
+const metadataService = require('./metadataService');
+const usersRepo = require('../repos/users');
 const logger = require('../logger');
 const config = require('../config');
 const dates = require('../lib/dates');
@@ -17,6 +19,7 @@ let runPromise = null;
 const LOOKBACK_DAYS = int(process.env.SYNC_LOOKBACK_DAYS, 730);
 const RECENT_DAYS = int(process.env.SYNC_RECENT_DAYS, 3);
 const GITHUB_SNAPSHOT_URL = process.env.GITHUB_SNAPSHOT_URL || 'https://raw.githubusercontent.com/rafshan0jony/akij-sales-control-tower/snapshot/data/snapshot.json';
+const GITHUB_METADATA_URL = process.env.GITHUB_METADATA_URL || 'https://raw.githubusercontent.com/rafshan0jony/akij-sales-control-tower/snapshot/data/metadata-backup.json';
 
 function int(v, dflt) {
   const n = parseInt(v, 10);
@@ -264,10 +267,15 @@ async function refresh() {
 async function bootstrap() {
   try {
     await refresh();
+    await loadRemoteMetadata();
     return { ok: true };
   } catch (err) {
     const restored = await loadRemoteSnapshot();
-    if (restored) return { ok: true, source: 'github-snapshot' };
+    if (restored) {
+      await loadRemoteMetadata();
+      return { ok: true, source: 'github-snapshot' };
+    }
+    await loadRemoteMetadata();
     return { ok: false, error: err.message };
   }
 }
@@ -356,8 +364,30 @@ async function loadRemoteSnapshot() {
   }
 }
 
+/**
+ * Recover user/role/territory-assignment metadata from GitHub when the local
+ * database has been reset (only the seeded admin remains). Runs only after the
+ * territory hierarchy has been imported so assignments resolve by code.
+ */
+async function loadRemoteMetadata() {
+  try {
+    if (usersRepo.list().length > 1) return false;
+    const res = await fetch(GITHUB_METADATA_URL, { headers: { 'User-Agent': 'akij-sales-control-tower' } });
+    if (!res.ok) return false;
+    const meta = await res.json();
+    if (!meta || !Array.isArray(meta.users) || meta.users.length <= 1) return false;
+    try { await importTerritories(); } catch (e) { logger.warn('[sync] territory import before metadata restore failed:', e.message); }
+    metadataService.importMetadata(meta);
+    logger.info(`[sync] restored metadata from GitHub (${meta.users.length} users)`);
+    return true;
+  } catch (err) {
+    logger.warn('[sync] metadata restore from GitHub failed:', err.message);
+    return false;
+  }
+}
+
 function lastUpdated() {
   return cache ? cache.syncedAt : (syncRepo.get() ? syncRepo.get().lastUpdated : null);
 }
 
-module.exports = { refresh, bootstrap, getData, lastUpdated, fullRefresh, incrementalRefresh, applyRemoteSnapshot, loadSnapshot, loadRemoteSnapshot };
+module.exports = { refresh, bootstrap, getData, lastUpdated, fullRefresh, incrementalRefresh, applyRemoteSnapshot, loadSnapshot, loadRemoteSnapshot, loadRemoteMetadata };

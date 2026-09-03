@@ -33,6 +33,7 @@ const GITHUB_TOKEN_FILE = path.join(__dirname, '..', 'data', '.github_token');
 const GITHUB_REPO = 'rafshan0jony/akij-sales-control-tower';
 const SNAPSHOT_BRANCH = 'snapshot';
 const SNAPSHOT_PATH = 'data/snapshot.json';
+const META_PATH = 'data/metadata-backup.json';
 
 function log(...a) {
   console.log(`[${new Date().toISOString()}] [bridge]`, ...a);
@@ -116,6 +117,43 @@ async function pushSnapshotToGithub(snapshot) {
 }
 
 /**
+ * Persist the app's user/role/territory-assignment metadata to GitHub so the
+ * deployed app can restore users (and their territory permissions) on a cold
+ * start even when this bridge is offline.
+ */
+async function pushMetadataToGithub() {
+  if (!TARGET_URL) return;
+  try {
+    const get = await fetch(TARGET_URL + '/api/sync/metadata', { headers: { 'x-sync-secret': SECRET } });
+    if (!get.ok) return;
+    const meta = await get.json();
+
+    const token = fs.readFileSync(GITHUB_TOKEN_FILE, 'utf8').trim();
+    if (!token) return;
+    const api = `https://api.github.com/repos/${GITHUB_REPO}/contents/${META_PATH}?ref=${SNAPSHOT_BRANCH}`;
+    const headers = { Authorization: 'Bearer ' + token, 'Content-Type': 'application/json', 'User-Agent': 'sync-bridge' };
+
+    await ensureSnapshotBranch(headers);
+
+    let sha = null;
+    try {
+      const g = await fetch(api, { headers });
+      if (g.ok) sha = (await g.json()).sha;
+    } catch (_) { /* first push */ }
+
+    const content = Buffer.from(JSON.stringify(meta)).toString('base64');
+    const put = await fetch(api, {
+      method: 'PUT',
+      headers,
+      body: JSON.stringify({ message: 'metadata ' + new Date().toISOString(), content, sha, branch: SNAPSHOT_BRANCH }),
+    });
+    if (!put.ok) log('WARN: metadata GitHub backup failed', put.status, (await put.text()).slice(0, 200));
+  } catch (err) {
+    log('WARN: metadata GitHub backup failed:', err.message);
+  }
+}
+
+/**
  * Backup / restore app metadata (users/roles/territories/targets/config) so
  * created users survive the host's ephemeral-database resets.
  */
@@ -157,6 +195,7 @@ async function runOnce() {
   log('pushed to', TARGET_URL, '->', JSON.stringify(result.sync && { status: result.sync.status, counts: result.sync.counts }));
   try { await pushSnapshotToGithub(snapshot); } catch (err) { log('WARN: snapshot backup failed:', err.message); }
   try { await backupRestoreMetadata(); } catch (err) { log('WARN: metadata backup failed:', err.message); }
+  try { await pushMetadataToGithub(); } catch (err) { log('WARN: metadata GitHub backup failed:', err.message); }
 }
 
 async function main() {
