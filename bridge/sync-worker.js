@@ -128,6 +128,12 @@ async function pushMetadataToGithub() {
     if (!get.ok) return;
     const meta = await get.json();
 
+    // Guard: never overwrite the good GitHub backup with a reset (1 user) or
+    // lossy (users without territory assignments) state.
+    const users = (meta.users || []).length;
+    const assigned = Object.keys(meta.userTerritories || {}).length;
+    if (users <= 1 || assigned <= 1) return;
+
     const token = fs.readFileSync(GITHUB_TOKEN_FILE, 'utf8').trim();
     if (!token) return;
     const api = `https://api.github.com/repos/${GITHUB_REPO}/contents/${META_PATH}?ref=${SNAPSHOT_BRANCH}`;
@@ -167,7 +173,9 @@ async function backupRestoreMetadata() {
   try { backup = JSON.parse(fs.readFileSync(BACKUP_FILE, 'utf8')); } catch (_) {}
 
   const currentUsers = (current.users || []).length;
+  const currentAssigned = Object.keys(current.userTerritories || {}).length;
   const backupUsers = backup && Array.isArray(backup.users) ? backup.users.length : 0;
+  const backupAssigned = backup && backup.userTerritories ? Object.keys(backup.userTerritories).length : 0;
 
   if (currentUsers === 1 && backupUsers > 1) {
     // Host DB was reset (only admin re-seeded) — restore the backup.
@@ -181,7 +189,9 @@ async function backupRestoreMetadata() {
     } else {
       log('WARN: metadata restore failed', res.status);
     }
-  } else {
+  } else if (currentUsers > 1 && currentAssigned >= backupAssigned) {
+    // Healthy state — refresh the local backup. Never overwrite a more-complete
+    // backup with a lossy state (users present but territory assignments lost).
     fs.writeFileSync(BACKUP_FILE, JSON.stringify(current));
   }
 }
