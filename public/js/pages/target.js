@@ -39,6 +39,21 @@ export async function renderTarget(container, state) {
 
   // Product-wise target vs achievement (delivery MT)
   const products = data.byProduct || [];
+  const sum = (arr, k) => arr.reduce((s, r) => s + (Number(r[k]) || 0), 0);
+  const pTgt = sum(products, 'targetMt');
+  const pDel = sum(products, 'deliveryMt');
+  const pDelVal = sum(products, 'deliveryValue');
+  const pSoMt = sum(products, 'salesMt');
+  const pSoVal = sum(products, 'salesValue');
+  const productTotal = {
+    product: 'Total',
+    targetMt: Math.round(pTgt * 10) / 10,
+    deliveryMt: Math.round(pDel * 10) / 10,
+    achievementPct: pTgt > 0 ? Math.round((pDel / pTgt) * 1000) / 10 : 0,
+    deliveryValue: pDelVal,
+    salesMt: Math.round(pSoMt * 10) / 10,
+    salesValue: pSoVal,
+  };
   container.appendChild(card('Product-wise Target vs Achievement (Delivery MT)', dataTable({
     columns: [
       { label: 'Product', key: 'product' },
@@ -49,7 +64,7 @@ export async function renderTarget(container, state) {
       { label: 'Sales Order (MT)', key: 'salesMt' },
       { label: 'Sales Order Value', key: 'salesValue', money: true },
     ],
-    rows: products,
+    rows: products.concat(productTotal),
   })));
 
   // Territory-wise target vs achievement (delivery MT)
