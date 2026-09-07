@@ -46,6 +46,8 @@ export async function renderTarget(container, state) {
       { label: 'Delivery (MT)', key: 'deliveryMt' },
       { label: 'Achievement %', key: 'achievementPct', pct: true },
       { label: 'Delivery Value', key: 'deliveryValue', money: true },
+      { label: 'Sales Order (MT)', key: 'salesMt' },
+      { label: 'Sales Order Value', key: 'salesValue', money: true },
     ],
     rows: products,
   })));
