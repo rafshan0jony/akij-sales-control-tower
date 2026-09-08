@@ -29,6 +29,7 @@ const CHAT_CREDS = path.join(PROJECT_DIR, '..', 'google-chat-credentials.json');
 const CHAT_TOKEN = path.join(PROJECT_DIR, '..', 'token.json');
 const OUT_DIR = path.join(PROJECT_DIR, 'report', 'out');
 const MARKER = path.join(PROJECT_DIR, 'data', 'daily-report-last-run.txt');
+const DASHBOARD_URL = 'https://akij-sales-control-tower.onrender.com';
 
 const log = (...a) => console.log(new Date().toISOString(), ...a);
 
@@ -307,7 +308,8 @@ async function main() {
       } else {
         const space = await findOrCreateDm(at, s.email);
         const sendText = 'Daily Product-wise Target vs Achievement — ' + monthLabel
-          + (announce ? '\n\nFrom tomorrow you will receive this report automatically every day.' : '');
+          + (announce ? '\n\nFrom tomorrow you will receive this report automatically every day.' : '')
+          + '\n\nFor detailed information please visit: ' + DASHBOARD_URL + '\n(log in to see your details)';
         await sendImage(at, space, imgBuf, sendText);
         log('SENT', s.email, '->', space);
       }
