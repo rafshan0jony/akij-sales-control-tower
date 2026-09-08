@@ -574,15 +574,18 @@ function productTargetAchievement(data, scope, range, selMonth) {
       ? territoryTargetService.nationalProductMt(selMonth, p)
       : territoryTargetService.scopeProductMt(selMonth, p, scope.territoryNames);
     const delMt = mtByProduct.get(k) || 0;
+    const salesMt = salesMtByProduct.get(k) || 0;
+    const pendingMt = pendingMtByProduct.get(k) || 0;
+    if (targetMt <= 0 && delMt <= 0 && salesMt <= 0 && pendingMt <= 0) continue;
     rows.push({
       product: p,
       targetMt,
       deliveryMt: round1(delMt),
       achievementPct: targetMt > 0 ? round1((delMt / targetMt) * 100) : 0,
       remainingMt: round1(Math.max(0, targetMt - delMt)),
-      pendingMt: round1(pendingMtByProduct.get(k) || 0),
+      pendingMt: round1(pendingMt),
       deliveryValue: valueByProduct.get(k) || 0,
-      salesMt: round1(salesMtByProduct.get(k) || 0),
+      salesMt: round1(salesMt),
       salesValue: salesValueByProduct.get(k) || 0,
     });
   }
@@ -590,14 +593,15 @@ function productTargetAchievement(data, scope, range, selMonth) {
   for (const [k, display] of seen) {
     const delMt = mtByProduct.get(k) || 0;
     const salesMt = salesMtByProduct.get(k) || 0;
-    if (delMt <= 0 && salesMt <= 0) continue;
+    const pendingMt = pendingMtByProduct.get(k) || 0;
+    if (delMt <= 0 && salesMt <= 0 && pendingMt <= 0) continue;
     rows.push({
       product: display,
       targetMt: 0,
       deliveryMt: round1(delMt),
       achievementPct: 0,
       remainingMt: 0,
-      pendingMt: round1(pendingMtByProduct.get(k) || 0),
+      pendingMt: round1(pendingMt),
       deliveryValue: valueByProduct.get(k) || 0,
       salesMt: round1(salesMt),
       salesValue: salesValueByProduct.get(k) || 0,
