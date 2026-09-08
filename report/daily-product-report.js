@@ -62,6 +62,7 @@ function normalizeOrders(rows) {
       mt: num(r.quantity) * pm.weight / 1000,
       value: num(r.value),
       price: num(r.price),
+      undeliveredQty: r.undeliveredQty == null ? null : num(r.undeliveredQty),
     });
   }
   return out;
@@ -196,9 +197,9 @@ const COLUMNS = [
   { h: 'Target (MT)', w: 82, align: 'right' },
   { h: 'Delivery (MT)', w: 88, align: 'right' },
   { h: 'Achieve %', w: 78, align: 'right' },
-  { h: 'Delivery Value', w: 118, align: 'right' },
+  { h: 'Remaining (MT)', w: 100, align: 'right' },
   { h: 'Sales (MT)', w: 82, align: 'right' },
-  { h: 'Sales Value', w: 118, align: 'right' },
+  { h: 'Pending (MT)', w: 95, align: 'right' },
 ];
 
 function formatRows(byProduct) {
@@ -207,16 +208,15 @@ function formatRows(byProduct) {
     'Target (MT)': Math.round(r.targetMt).toLocaleString('en-IN'),
     'Delivery (MT)': r1(r.deliveryMt).toLocaleString('en-IN'),
     'Achieve %': pct(r.achievementPct),
-    'Delivery Value': money(r.deliveryValue),
+    'Remaining (MT)': r1(r.remainingMt).toLocaleString('en-IN'),
     'Sales (MT)': r1(r.salesMt).toLocaleString('en-IN'),
-    'Sales Value': money(r.salesValue),
+    'Pending (MT)': r1(r.pendingMt).toLocaleString('en-IN'),
   }));
 
   const tgt = byProduct.reduce((s, r) => s + num(r.targetMt), 0);
   const del = byProduct.reduce((s, r) => s + num(r.deliveryMt), 0);
-  const delVal = byProduct.reduce((s, r) => s + num(r.deliveryValue), 0);
   const soMt = byProduct.reduce((s, r) => s + num(r.salesMt), 0);
-  const soVal = byProduct.reduce((s, r) => s + num(r.salesValue), 0);
+  const pendMt = byProduct.reduce((s, r) => s + num(r.pendingMt), 0);
 
   rows.push({
     __total: true,
@@ -224,9 +224,9 @@ function formatRows(byProduct) {
     'Target (MT)': Math.round(tgt).toLocaleString('en-IN'),
     'Delivery (MT)': r1(del).toLocaleString('en-IN'),
     'Achieve %': tgt > 0 ? pct(del / tgt * 100) : '0%',
-    'Delivery Value': money(delVal),
+    'Remaining (MT)': r1(Math.max(0, tgt - del)).toLocaleString('en-IN'),
     'Sales (MT)': r1(soMt).toLocaleString('en-IN'),
-    'Sales Value': money(soVal),
+    'Pending (MT)': r1(pendMt).toLocaleString('en-IN'),
   });
 
   return rows;
@@ -239,6 +239,7 @@ async function main() {
   const args = process.argv.slice(2);
   const dryRun = args.includes('--dry-run');
   const force = args.includes('--force');
+  const announce = args.includes('--announce');
   const userArg = args.find((a) => a.startsWith('--user='));
   const onlyEmail = userArg ? userArg.split('=')[1].toLowerCase() : null;
 
@@ -305,7 +306,9 @@ async function main() {
         log('DRY RUN wrote', s.username + '.jpg', 'for', s.email);
       } else {
         const space = await findOrCreateDm(at, s.email);
-        await sendImage(at, space, imgBuf, 'Daily Product-wise Target vs Achievement — ' + monthLabel);
+        const sendText = 'Daily Product-wise Target vs Achievement — ' + monthLabel
+          + (announce ? '\n\nFrom tomorrow you will receive this report automatically every day.' : '');
+        await sendImage(at, space, imgBuf, sendText);
         log('SENT', s.email, '->', space);
       }
       sent++;

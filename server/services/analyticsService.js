@@ -551,10 +551,14 @@ function productTargetAchievement(data, scope, range, selMonth) {
   }
   const salesMtByProduct = new Map();
   const salesValueByProduct = new Map();
+  const pendingMtByProduct = new Map();
   for (const x of orders) {
     const k = productName(x).toLowerCase();
     salesMtByProduct.set(k, (salesMtByProduct.get(k) || 0) + num(x.mt));
     salesValueByProduct.set(k, (salesValueByProduct.get(k) || 0) + num(x.value));
+    const w = num(x.weight);
+    const undelivered = x.undeliveredQty == null ? 0 : num(x.undeliveredQty);
+    pendingMtByProduct.set(k, (pendingMtByProduct.get(k) || 0) + (w > 0 ? (undelivered * w) / 1000 : 0));
   }
 
   // Products that have sales/delivery in scope but no target row (extra products).
@@ -575,6 +579,8 @@ function productTargetAchievement(data, scope, range, selMonth) {
       targetMt,
       deliveryMt: round1(delMt),
       achievementPct: targetMt > 0 ? round1((delMt / targetMt) * 100) : 0,
+      remainingMt: round1(Math.max(0, targetMt - delMt)),
+      pendingMt: round1(pendingMtByProduct.get(k) || 0),
       deliveryValue: valueByProduct.get(k) || 0,
       salesMt: round1(salesMtByProduct.get(k) || 0),
       salesValue: salesValueByProduct.get(k) || 0,
@@ -590,6 +596,8 @@ function productTargetAchievement(data, scope, range, selMonth) {
       targetMt: 0,
       deliveryMt: round1(delMt),
       achievementPct: 0,
+      remainingMt: 0,
+      pendingMt: round1(pendingMtByProduct.get(k) || 0),
       deliveryValue: valueByProduct.get(k) || 0,
       salesMt: round1(salesMt),
       salesValue: salesValueByProduct.get(k) || 0,

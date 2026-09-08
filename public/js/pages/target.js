@@ -42,17 +42,16 @@ export async function renderTarget(container, state) {
   const sum = (arr, k) => arr.reduce((s, r) => s + (Number(r[k]) || 0), 0);
   const pTgt = sum(products, 'targetMt');
   const pDel = sum(products, 'deliveryMt');
-  const pDelVal = sum(products, 'deliveryValue');
   const pSoMt = sum(products, 'salesMt');
-  const pSoVal = sum(products, 'salesValue');
+  const pPend = sum(products, 'pendingMt');
   const productTotal = {
     product: 'Total',
     targetMt: Math.round(pTgt * 10) / 10,
     deliveryMt: Math.round(pDel * 10) / 10,
     achievementPct: pTgt > 0 ? Math.round((pDel / pTgt) * 1000) / 10 : 0,
-    deliveryValue: pDelVal,
+    remainingMt: Math.round(Math.max(0, pTgt - pDel) * 10) / 10,
     salesMt: Math.round(pSoMt * 10) / 10,
-    salesValue: pSoVal,
+    pendingMt: Math.round(pPend * 10) / 10,
   };
   container.appendChild(card('Product-wise Target vs Achievement (Delivery MT)', dataTable({
     columns: [
@@ -60,9 +59,9 @@ export async function renderTarget(container, state) {
       { label: 'Target (MT)', key: 'targetMt' },
       { label: 'Delivery (MT)', key: 'deliveryMt' },
       { label: 'Achievement %', key: 'achievementPct', pct: true },
-      { label: 'Delivery Value', key: 'deliveryValue', money: true },
+      { label: 'Remaining (MT)', key: 'remainingMt' },
       { label: 'Sales Order (MT)', key: 'salesMt' },
-      { label: 'Sales Order Value', key: 'salesValue', money: true },
+      { label: 'Pending (MT)', key: 'pendingMt' },
     ],
     rows: products.concat(productTotal),
   })));
