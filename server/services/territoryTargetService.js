@@ -43,7 +43,7 @@ function parse(vals) {
   const products = [];
   for (let i = 2; i < header.length; i++) {
     const p = String(header[i] || '').trim();
-    if (p) products.push(p);
+    if (p && p.toLowerCase() !== 'by-product') products.push(p);
   }
   const rows = [];
   for (let i = 1; i < vals.length; i++) {

@@ -545,31 +545,32 @@ function productTargetAchievement(data, scope, range, selMonth) {
   const mtByProduct = new Map();
   const valueByProduct = new Map();
   for (const x of deliveries) {
-    const k = productName(x);
+    const k = productName(x).toLowerCase();
     mtByProduct.set(k, (mtByProduct.get(k) || 0) + num(x.mt));
     valueByProduct.set(k, (valueByProduct.get(k) || 0) + num(x.value));
   }
   const salesMtByProduct = new Map();
   const salesValueByProduct = new Map();
   for (const x of orders) {
-    const k = productName(x);
+    const k = productName(x).toLowerCase();
     salesMtByProduct.set(k, (salesMtByProduct.get(k) || 0) + num(x.mt));
     salesValueByProduct.set(k, (salesValueByProduct.get(k) || 0) + num(x.value));
   }
   const rows = [];
   for (const p of territoryTargetService.productsList()) {
+    const k = p.toLowerCase();
     const targetMt = scope.scopeAll
       ? territoryTargetService.nationalProductMt(selMonth, p)
       : territoryTargetService.scopeProductMt(selMonth, p, scope.territoryNames);
-    const delMt = mtByProduct.get(p) || 0;
+    const delMt = mtByProduct.get(k) || 0;
     rows.push({
       product: p,
       targetMt,
       deliveryMt: round1(delMt),
       achievementPct: targetMt > 0 ? round1((delMt / targetMt) * 100) : 0,
-      deliveryValue: valueByProduct.get(p) || 0,
-      salesMt: round1(salesMtByProduct.get(p) || 0),
-      salesValue: salesValueByProduct.get(p) || 0,
+      deliveryValue: valueByProduct.get(k) || 0,
+      salesMt: round1(salesMtByProduct.get(k) || 0),
+      salesValue: salesValueByProduct.get(k) || 0,
     });
   }
   rows.sort((a, b) => b.targetMt - a.targetMt);

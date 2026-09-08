@@ -35,7 +35,9 @@ function lookup(itemName) {
 function resolveProduct(itemName) {
   const m = lookup(itemName);
   if (!m) return null;
-  const product = (m.variant && String(m.variant).trim()) || String(itemName).trim();
+  const variant = (m.variant && String(m.variant).trim()) || '';
+  if (variant.toLowerCase() === 'by-product') return null; // exclude by-products
+  const product = variant || String(itemName).trim();
   const weight = Number(m.weight);
   return { product, weight: Number.isFinite(weight) ? weight : 0, raw: String(itemName).trim() };
 }
