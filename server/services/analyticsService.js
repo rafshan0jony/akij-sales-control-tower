@@ -556,9 +556,16 @@ function productTargetAchievement(data, scope, range, selMonth) {
     salesMtByProduct.set(k, (salesMtByProduct.get(k) || 0) + num(x.mt));
     salesValueByProduct.set(k, (salesValueByProduct.get(k) || 0) + num(x.value));
   }
+
+  // Products that have sales/delivery in scope but no target row (extra products).
+  const seen = new Map(); // lowercase -> display name
+  for (const x of deliveries) seen.set(productName(x).toLowerCase(), productName(x));
+  for (const x of orders) seen.set(productName(x).toLowerCase(), productName(x));
+
   const rows = [];
   for (const p of territoryTargetService.productsList()) {
     const k = p.toLowerCase();
+    seen.delete(k);
     const targetMt = scope.scopeAll
       ? territoryTargetService.nationalProductMt(selMonth, p)
       : territoryTargetService.scopeProductMt(selMonth, p, scope.territoryNames);
@@ -570,6 +577,21 @@ function productTargetAchievement(data, scope, range, selMonth) {
       achievementPct: targetMt > 0 ? round1((delMt / targetMt) * 100) : 0,
       deliveryValue: valueByProduct.get(k) || 0,
       salesMt: round1(salesMtByProduct.get(k) || 0),
+      salesValue: salesValueByProduct.get(k) || 0,
+    });
+  }
+  // Extra products with no target but with sales/delivery.
+  for (const [k, display] of seen) {
+    const delMt = mtByProduct.get(k) || 0;
+    const salesMt = salesMtByProduct.get(k) || 0;
+    if (delMt <= 0 && salesMt <= 0) continue;
+    rows.push({
+      product: display,
+      targetMt: 0,
+      deliveryMt: round1(delMt),
+      achievementPct: 0,
+      deliveryValue: valueByProduct.get(k) || 0,
+      salesMt: round1(salesMt),
       salesValue: salesValueByProduct.get(k) || 0,
     });
   }
