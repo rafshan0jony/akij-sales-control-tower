@@ -353,3 +353,10 @@ table.data tbody tr { transition: background 0.12s ease; }
 /* Breadcrumb */
 .breadcrumb { letter-spacing: -0.01em; }
 .card-title { letter-spacing: -0.01em; }
+
+/* Brand logo */
+.brand-logo { display: block; width: 150px; height: auto; margin: 0 auto; }
+.sidebar-brand { justify-content: center; padding: 14px 16px; }
+.sidebar-brand .brand-logo { width: 160px; }
+.login-brand { justify-content: center; }
+.login-brand .brand-logo.login { width: 210px; margin-bottom: 2px; }
