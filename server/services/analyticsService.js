@@ -542,6 +542,9 @@ function targetAchievement(data, scope, range, opts = {}) {
 /** Product-wise target (MT) vs achievement (delivery MT) for a month. */
 function productTargetAchievement(data, scope, range, selMonth) {
   const { orders, deliveries } = scopedFacts(data, scope, range.from, range.to);
+  const now = dates.todayStr();
+  // Pending spans the last 4 months (matches the app's Pending module).
+  const pendingOrders = scopedFacts(data, scope, dates.monthsAgoStart(4, now), now).orders;
   const mtByProduct = new Map();
   const valueByProduct = new Map();
   for (const x of deliveries) {
@@ -551,11 +554,14 @@ function productTargetAchievement(data, scope, range, selMonth) {
   }
   const salesMtByProduct = new Map();
   const salesValueByProduct = new Map();
-  const pendingMtByProduct = new Map();
   for (const x of orders) {
     const k = productName(x).toLowerCase();
     salesMtByProduct.set(k, (salesMtByProduct.get(k) || 0) + num(x.mt));
     salesValueByProduct.set(k, (salesValueByProduct.get(k) || 0) + num(x.value));
+  }
+  const pendingMtByProduct = new Map();
+  for (const x of pendingOrders) {
+    const k = productName(x).toLowerCase();
     const w = num(x.weight);
     const undelivered = x.undeliveredQty == null ? 0 : num(x.undeliveredQty);
     pendingMtByProduct.set(k, (pendingMtByProduct.get(k) || 0) + (w > 0 ? (undelivered * w) / 1000 : 0));

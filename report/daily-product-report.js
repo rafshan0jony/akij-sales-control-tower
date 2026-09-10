@@ -271,12 +271,13 @@ async function main() {
   catch (e) { log('WARN territory target fetch failed:', e.message); }
 
   const today = dates.todayStr();
-  const from = today.slice(0, 7) + '-01';
-  log('fetching DWH data for', from, '..', today);
+  const monthFrom = today.slice(0, 7) + '-01';
+  const dataFrom = dates.monthsAgoStart(4, today); // orders cover 4 months so "Pending" matches the app
+  log('fetching DWH data for', dataFrom, '..', today);
 
   const [rawOrders, rawDeliveries] = await Promise.all([
-    mcp.getSalesOrders(from, today),
-    mcp.getDeliveries(from, today),
+    mcp.getSalesOrders(dataFrom, today),
+    mcp.getDeliveries(monthFrom, today),
   ]);
   const data = {
     orders: normalizeOrders(rawOrders),
@@ -291,7 +292,7 @@ async function main() {
   for (const s of scopes) {
     try {
       const scope = { scopeAll: s.scopeAll, territoryNames: s.territoryNames };
-      const range = { from, to: today };
+      const range = { from: monthFrom, to: today };
       const result = analytics.targetAchievement(data, scope, range, {});
       const rows = formatRows(result.byProduct || []);
 
