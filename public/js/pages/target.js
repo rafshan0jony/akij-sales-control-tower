@@ -45,6 +45,7 @@ export async function renderTarget(container, state) {
   const pSoMt = sum(products, 'salesMt');
   const pPend = sum(products, 'pendingMt');
   const productTotal = {
+    __total: true,
     product: 'Total',
     targetMt: Math.round(pTgt * 10) / 10,
     deliveryMt: Math.round(pDel * 10) / 10,
@@ -74,6 +75,7 @@ export async function renderTarget(container, state) {
   const tSales = tSum(territories, 'salesMt');
   const tPend = tSum(territories, 'pendingMt');
   const territoryTotal = {
+    __total: true,
     territory: 'Total',
     targetMt: Math.round(tTgt * 10) / 10,
     deliveryMt: Math.round(tDel * 10) / 10,
