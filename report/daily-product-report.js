@@ -47,6 +47,7 @@ function normalizeOrders(rows) {
     const pm = itemMapping.resolveProduct(r.item);
     if (!pm) continue;
     const tm = territoryMapping.resolve(r.territory);
+    if (!tm) continue;
     out.push({
       date: dates.toDateStr(r.date),
       orderNo: r.orderNo == null ? null : String(r.orderNo),
@@ -75,6 +76,7 @@ function normalizeDeliveries(rows) {
     const pm = itemMapping.resolveProduct(r.item);
     if (!pm) continue;
     const tm = territoryMapping.resolve(r.territory);
+    if (!tm) continue;
     out.push({
       date: dates.toDateStr(r.date),
       customer: r.customer == null ? null : String(r.customer),

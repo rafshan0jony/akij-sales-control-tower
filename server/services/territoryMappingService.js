@@ -27,13 +27,12 @@ function map(systemName) {
   return bySystem.get(String(systemName).trim().toLowerCase()) || null;
 }
 
-/** Return { territory, area, region, systemTerritory } for a raw DWH territory name. */
+/** Return { territory, area, region, systemTerritory } for a raw DWH territory name,
+ *  or null when the territory is not in the mapping (so its data is excluded). */
 function resolve(rawName) {
   const m = map(rawName);
+  if (!m) return null;
   const raw = rawName == null ? null : String(rawName).trim();
-  if (!m) {
-    return { territory: raw || 'Unassigned', area: 'Unassigned', region: 'Unassigned', systemTerritory: raw };
-  }
   return { territory: m.territory, area: m.area, region: m.region, systemTerritory: raw };
 }
 

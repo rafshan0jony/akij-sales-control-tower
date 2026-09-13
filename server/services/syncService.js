@@ -33,6 +33,7 @@ function normalizeOrders(rows) {
     const pm = itemMapping.resolveProduct(r.item);
     if (!pm) continue; // exclude by-products / unmapped items
     const tm = territoryMapping.resolve(r.territory);
+    if (!tm) continue; // exclude territories not in the mapping
     out.push({
       date: dates.toDateStr(r.date),
       orderNo: r.orderNo == null ? null : String(r.orderNo),
@@ -65,6 +66,7 @@ function normalizeDeliveries(rows) {
     const pm = itemMapping.resolveProduct(r.item);
     if (!pm) continue;
     const tm = territoryMapping.resolve(r.territory);
+    if (!tm) continue; // exclude territories not in the mapping
     out.push({
       date: dates.toDateStr(r.date),
       customer: r.customer == null ? null : String(r.customer),
@@ -88,8 +90,10 @@ function normalizeDeliveries(rows) {
 
 function normalizeCredit(rows) {
   const today = dates.todayStr();
-  return (rows || []).map((r) => {
+  const out = [];
+  for (const r of rows || []) {
     const tm = territoryMapping.resolve(r.territory);
+    if (!tm) continue; // exclude territories not in the mapping
     const creditDays = num(r.creditDays);
     const lastDeliveryDate = r.lastDeliveryDate ? dates.toDateStr(r.lastDeliveryDate) : null;
     const lastPaymentDate = r.lastPaymentDate ? dates.toDateStr(r.lastPaymentDate) : null;
@@ -99,7 +103,7 @@ function normalizeCredit(rows) {
     // (fin.tblAccountingJournalArc), matching the ERP customer-ledger report.
     const ledgerBalance = Math.round(num(r.ledgerBalance) * 100) / 100;
     const daysBaseOverdue = Math.round(Math.max(0, ledgerBalance - num(r.deliveryWithinCreditDays)) * 100) / 100;
-    return {
+    out.push({
       partnerCode: r.partnerCode == null ? null : String(r.partnerCode).trim(),
       partnerName: r.partnerName == null ? null : String(r.partnerName).trim(),
       creditDays,
@@ -112,8 +116,9 @@ function normalizeCredit(rows) {
       deliveryGap,
       paymentGap,
       daysBaseOverdue,
-    };
-  });
+    });
+  }
+  return out;
 }
 
 function num(v) {
