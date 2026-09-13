@@ -11,8 +11,8 @@ const mapping = require('../data/territoryMapping.json');
 // (Bogura Metro / Naogaon live in DWH "North Region > Rajshahi".)
 // Confirm with the user and remove once the sheet is updated.
 const FALLBACK = [
-  { system: 'Bogura Metro', territory: 'Bogura Metro', area: 'Rajshahi Area', region: 'South & North Region' },
-  { system: 'Naogaon', territory: 'Naogaon', area: 'Rajshahi Area', region: 'South & North Region' },
+  { system: 'Bogura Metro', territory: 'Bogura Metro', area: 'Rajshahi Area', region: 'Dhaka West & North Region' },
+  { system: 'Naogaon', territory: 'Naogaon', area: 'Rajshahi Area', region: 'Dhaka West & North Region' },
 ];
 
 const allRows = [...mapping.rows, ...FALLBACK];

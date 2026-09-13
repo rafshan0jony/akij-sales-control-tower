@@ -42,6 +42,7 @@ const ROLE_MAP = {
   'Area Manager': 'AREA',
   'Regional Manager': 'REGION',
   'Manager': 'REGION',
+  'Head of Sales': 'NATIONAL',
 };
 
 async function readUsers() {

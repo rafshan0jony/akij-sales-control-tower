@@ -148,6 +148,7 @@ function importTerritories() {
   const mappingRows = territoryMapping.list();
   const regionMap = new Map();
   const areaMap = new Map();
+  const validCodes = new Set();
   let count = 0;
 
   for (const r of mappingRows) {
@@ -155,17 +156,25 @@ function importTerritories() {
     if (!region) {
       region = territoriesRepo.upsertByCode({ code: 'R:' + r.region, name: r.region, level: 1, parentId: national.id, channelId: config.app.channelId });
       regionMap.set(r.region, region);
+      validCodes.add('R:' + r.region);
       count++;
     }
     let area = areaMap.get(r.area);
     if (!area) {
       area = territoriesRepo.upsertByCode({ code: 'A:' + r.area, name: r.area, level: 2, parentId: region.id, channelId: config.app.channelId });
       areaMap.set(r.area, area);
+      validCodes.add('A:' + r.area);
       count++;
     }
     territoriesRepo.upsertByCode({ code: 'T:' + r.territory, name: r.territory, level: 4, parentId: area.id, channelId: config.app.channelId });
+    validCodes.add('T:' + r.territory);
     count++;
   }
+
+  // Remove stale mapping nodes (R:/A:/T: codes no longer in the sheet) so
+  // renamed/merged regions and areas don't linger in the hierarchy.
+  const removed = territoriesRepo.removeStaleMapping(validCodes);
+  if (removed) logger.info('[sync] removed ' + removed + ' stale territory nodes');
   return count;
 }
 

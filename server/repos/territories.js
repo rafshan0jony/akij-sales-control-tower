@@ -78,6 +78,25 @@ function removeNonMapping() {
   return toRemove.length;
 }
 
+/**
+ * Remove mapping-based nodes (R:/A:/T: codes) that are NOT in `validCodes`
+ * (i.e. no longer present in the territory mapping sheet). Also clears their
+ * user assignments.
+ */
+function removeStaleMapping(validCodes) {
+  const db = getDb();
+  const all = db.prepare('SELECT id, code, level FROM territories WHERE level > 0').all();
+  const toRemove = all.filter((t) => t.code && /^(R:|A:|T:)/.test(t.code) && !validCodes.has(t.code));
+  if (!toRemove.length) return 0;
+  const delUt = db.prepare('DELETE FROM user_territories WHERE territory_id = ?');
+  const delT = db.prepare('DELETE FROM territories WHERE id = ?');
+  for (const t of toRemove) {
+    delUt.run(t.id);
+    delT.run(t.id);
+  }
+  return toRemove.length;
+}
+
 /** Upsert a DWH-sourced territory by its stable code (the DWH id). */
 function upsertByCode(data) {
   const db = getDb();
@@ -137,4 +156,4 @@ function tree() {
   return roots;
 }
 
-module.exports = { list, findById, findByCode, findByName, create, update, remove, upsertByCode, removeNonMapping, children, descendants, ancestors, tree };
+module.exports = { list, findById, findByCode, findByName, create, update, remove, upsertByCode, removeNonMapping, removeStaleMapping, children, descendants, ancestors, tree };
