@@ -68,6 +68,20 @@ export async function renderTarget(container, state) {
 
   // Territory-wise target vs achievement (delivery MT)
   const territories = data.byTerritory || [];
+  const tSum = (arr, k) => arr.reduce((s, r) => s + (Number(r[k]) || 0), 0);
+  const tTgt = tSum(territories, 'targetMt');
+  const tDel = tSum(territories, 'deliveryMt');
+  const tSales = tSum(territories, 'salesMt');
+  const tPend = tSum(territories, 'pendingMt');
+  const territoryTotal = {
+    territory: 'Total',
+    targetMt: Math.round(tTgt * 10) / 10,
+    deliveryMt: Math.round(tDel * 10) / 10,
+    achievementPct: tTgt > 0 ? Math.round((tDel / tTgt) * 1000) / 10 : 0,
+    remainingMt: Math.round(Math.max(0, tTgt - tDel) * 10) / 10,
+    salesMt: Math.round(tSales * 10) / 10,
+    pendingMt: Math.round(tPend * 10) / 10,
+  };
   container.appendChild(card('Territory Target vs Achievement', dataTable({
     columns: [
       { label: 'Territory', key: 'territory' },
@@ -78,7 +92,7 @@ export async function renderTarget(container, state) {
       { label: 'Sales Order (MT)', key: 'salesMt' },
       { label: 'Pending (MT)', key: 'pendingMt' },
     ],
-    rows: territories,
+    rows: territories.concat(territoryTotal),
   })));
 }
 
