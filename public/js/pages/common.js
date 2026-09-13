@@ -1,7 +1,7 @@
 import { el } from '../ui.js';
 
 export function kpiCard(label, value, opts = {}) {
-  return el('div', { class: 'kpi-card' }, [
+  return el('div', { class: 'kpi-card' + (opts.highlight ? ' kpi-card-highlight' : '') }, [
     el('div', { class: 'kpi-label', text: label }),
     el('div', { class: 'kpi-value', style: opts.color ? `color:${opts.color}` : '', text: value }),
     opts.sub ? el('div', { class: 'kpi-sub', text: opts.sub }) : null,

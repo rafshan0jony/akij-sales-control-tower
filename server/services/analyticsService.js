@@ -619,7 +619,9 @@ function productTargetAchievement(data, scope, range, selMonth) {
 
 /** Territory target vs achievement (delivery MT) for a month. */
 function territoryTargetAchievement(data, scope, range, selMonth) {
-  const { deliveries } = scopedFacts(data, scope, range.from, range.to);
+  const { orders, deliveries } = scopedFacts(data, scope, range.from, range.to);
+  const now = dates.todayStr();
+  const pendingOrders = scopedFacts(data, scope, dates.monthsAgoStart(4, now), now).orders;
   const delMtByTerr = new Map();
   const delValByTerr = new Map();
   for (const d of deliveries) {
@@ -627,14 +629,29 @@ function territoryTargetAchievement(data, scope, range, selMonth) {
     delMtByTerr.set(k, (delMtByTerr.get(k) || 0) + num(d.mt));
     delValByTerr.set(k, (delValByTerr.get(k) || 0) + num(d.value));
   }
+  const salesMtByTerr = new Map();
+  for (const o of orders) {
+    const k = territoryName(o);
+    salesMtByTerr.set(k, (salesMtByTerr.get(k) || 0) + num(o.mt));
+  }
+  const pendingMtByTerr = new Map();
+  for (const o of pendingOrders) {
+    const k = territoryName(o);
+    const w = num(o.weight);
+    const undelivered = o.undeliveredQty == null ? 0 : num(o.undeliveredQty);
+    pendingMtByTerr.set(k, (pendingMtByTerr.get(k) || 0) + (w > 0 ? (undelivered * w) / 1000 : 0));
+  }
   return territoryTargetService.territoryTargetsForScope(selMonth, scope).map((tt) => {
     const delMt = delMtByTerr.get(tt.territory) || 0;
     return {
       territory: tt.territory,
       targetMt: round1(tt.targetMt),
       deliveryMt: round1(delMt),
-      deliveryValue: delValByTerr.get(tt.territory) || 0,
       achievementPct: tt.targetMt > 0 ? round1((delMt / tt.targetMt) * 100) : 0,
+      remainingMt: round1(Math.max(0, tt.targetMt - delMt)),
+      deliveryValue: delValByTerr.get(tt.territory) || 0,
+      salesMt: round1(salesMtByTerr.get(tt.territory) || 0),
+      pendingMt: round1(pendingMtByTerr.get(tt.territory) || 0),
     };
   }).sort((a, b) => b.targetMt - a.targetMt);
 }

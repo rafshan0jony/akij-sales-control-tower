@@ -360,3 +360,13 @@ table.data tbody tr { transition: background 0.12s ease; }
 .sidebar-brand .brand-logo { width: 160px; }
 .login-brand { justify-content: center; }
 .login-brand .brand-logo.login { width: 210px; margin-bottom: 2px; }
+
+/* Highlighted KPI card (yellow) */
+.kpi-card-highlight {
+  background: linear-gradient(135deg, #fff7d6, #ffe28a);
+  border-color: #eab308;
+}
+.kpi-card-highlight::before { background: linear-gradient(90deg, #f59e0b, #eab308); }
+.kpi-card-highlight .kpi-label { color: #92400e; }
+.kpi-card-highlight .kpi-value { color: #854d0e; }
+.kpi-card-highlight .kpi-sub { color: #a16207; }

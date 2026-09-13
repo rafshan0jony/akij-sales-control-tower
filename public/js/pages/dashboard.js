@@ -17,7 +17,7 @@ export async function renderDashboard(container, state) {
       { label: 'Achievement %', value: pct(achPct), opts: { color: achColor } },
       { label: 'Pending', value: fmt(k.pendingTargetMt, 0) + ' MT' },
       { label: 'Sales (Booked)', value: fmt(k.mtdSalesMt, 0) + ' MT' },
-      { label: 'Pending Order', value: fmt(k.pendingOrderMt, 0) + ' MT', opts: { sub: `${k.pendingOrders} orders` } },
+      { label: 'Pending Order', value: fmt(k.pendingOrderMt, 0) + ' MT', opts: { sub: `${k.pendingOrders} orders`, highlight: true } },
       { label: 'Active Customers', value: fmt(k.activeCustomers) },
       { label: 'Run Rate', value: pct(k.runRatePct) },
       { label: 'Month Progress', value: pct(k.monthProgressPct) },
