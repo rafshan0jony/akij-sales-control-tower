@@ -90,6 +90,7 @@ async function main() {
 
   const existing = (await (await fetch(BASE + '/api/admin/users', { headers: auth })).json()).users || [];
   const userByUsername = new Map(existing.map((u) => [u.username, u]));
+  const userByEmail = new Map(existing.filter((u) => u.email).map((u) => [u.email.toLowerCase(), u]));
 
   let created = 0, updated = 0, assigned = 0, failed = 0;
 
@@ -98,7 +99,7 @@ async function main() {
     const roleId = roleCode ? roleIdByCode[roleCode] : null;
     const username = u.email.split('@')[0].toLowerCase();
 
-    let found = userByUsername.get(username);
+    let found = userByUsername.get(username) || userByEmail.get(u.email);
 
     if (found) {
       const res = await fetch(BASE + '/api/admin/users/' + found.id, {
