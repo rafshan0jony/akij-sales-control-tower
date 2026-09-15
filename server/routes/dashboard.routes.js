@@ -84,7 +84,7 @@ router.post('/tour-plan/entry', asyncHandler(async (req, res) => {
   const isAdmin = permissionService.hasPermission(req.user, 'SYSTEM_ADMIN');
 
   if (dayNum < todayNum && !isAdmin) throw forbidden('Past dates can only be changed by an admin');
-  if (visitPlanChange != null && String(visitPlanChange).trim() !== '' && dayNum === todayNum && hour >= 14) {
+  if (visitPlanChange != null && String(visitPlanChange).trim() !== '' && dayNum === todayNum && hour >= 14 && !isAdmin) {
     throw forbidden('Visit plan change is locked after 2 PM');
   }
 
