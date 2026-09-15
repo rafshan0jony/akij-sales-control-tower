@@ -72,7 +72,9 @@ router.get('/territory-list', asyncHandler(async (req, res) => {
   const territories = scope.scopeAll
     ? detailed
     : detailed.filter((t) => scope.territoryNames.has(t.territory.toLowerCase()));
-  res.json({ scopeAll: scope.scopeAll, level: scope.level, territories });
+  const regions = [...new Set(territories.map((t) => t.region))].sort();
+  const areas = [...new Set(territories.map((t) => t.area))].sort();
+  res.json({ scopeAll: scope.scopeAll, level: scope.level, territories, regions, areas });
 }));
 
 module.exports = router;

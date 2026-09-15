@@ -135,11 +135,29 @@ function renderFilter() {
 async function renderTerritoryFilter() {
   const sel = document.getElementById('territory-select');
   if (sel.options.length > 0) { sel.value = state.territory; return; }
-  let list = [];
-  try { const d = await api.get('/dashboard/territory-list'); list = d.territories || []; } catch (_) {}
+  let territories = [], regions = [], areas = [];
+  try {
+    const d = await api.get('/dashboard/territory-list');
+    territories = d.territories || [];
+    regions = d.regions || [];
+    areas = d.areas || [];
+  } catch (_) {}
+
   sel.appendChild(ui.el('option', { value: 'All', text: 'All Territories' }));
+
+  if (regions.length) {
+    const rg = ui.el('optgroup', { label: 'Regions' });
+    for (const r of regions) rg.appendChild(ui.el('option', { value: r, text: r }));
+    sel.appendChild(rg);
+  }
+  if (areas.length) {
+    const ag = ui.el('optgroup', { label: 'Areas' });
+    for (const a of areas) ag.appendChild(ui.el('option', { value: a, text: a }));
+    sel.appendChild(ag);
+  }
+
   const byRegion = new Map();
-  for (const t of list) {
+  for (const t of territories) {
     const r = t.region || 'Unassigned';
     if (!byRegion.has(r)) byRegion.set(r, []);
     byRegion.get(r).push(t);

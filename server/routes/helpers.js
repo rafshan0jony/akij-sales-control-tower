@@ -2,19 +2,32 @@
 
 const dates = require('../lib/dates');
 const syncRepo = require('../repos/sync');
+const territoryMappingService = require('../services/territoryMappingService');
 
-/** Narrow a user's scope to a single territory (when a territory is selected). */
+/**
+ * Narrow a user's scope to the selected region / area / territory.
+ * The selection resolves to the set of territory names under it (a region or
+ * area expands to all its territories).
+ */
 function narrowScope(scope, territory) {
   if (!scope) return scope;
   if (!territory || territory === 'All' || territory === '') return scope;
-  const name = String(territory).toLowerCase().trim();
+  const sel = String(territory).toLowerCase().trim();
+
+  const terrNames = new Set();
+  for (const r of territoryMappingService.list()) {
+    const terr = String(r.territory).toLowerCase();
+    const area = String(r.area).toLowerCase();
+    const region = String(r.region).toLowerCase();
+    if (sel === region || sel === area || sel === terr) terrNames.add(terr);
+  }
+  if (!terrNames.size) terrNames.add(sel); // fallback: treat as a plain territory name
+
   if (scope.scopeAll) {
-    return { ...scope, scopeAll: false, territoryNames: new Set([name]) };
+    return { ...scope, scopeAll: false, territoryNames: terrNames };
   }
-  if (scope.territoryNames.has(name)) {
-    return { ...scope, scopeAll: false, territoryNames: new Set([name]) };
-  }
-  return scope;
+  const permitted = new Set([...terrNames].filter((t) => scope.territoryNames.has(t)));
+  return { ...scope, scopeAll: false, territoryNames: permitted };
 }
 
 /** Parse ?filter= and ?from=&to= into a resolved date range. */
