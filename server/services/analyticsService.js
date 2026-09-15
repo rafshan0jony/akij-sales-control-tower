@@ -653,7 +653,7 @@ function territoryTargetAchievement(data, scope, range, selMonth) {
       salesMt: round1(salesMtByTerr.get(tt.territory) || 0),
       pendingMt: round1(pendingMtByTerr.get(tt.territory) || 0),
     };
-  }).sort((a, b) => b.targetMt - a.targetMt);
+  });
 }
 
 function territoryPerformance(data, scope, range) {

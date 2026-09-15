@@ -54,4 +54,24 @@ export async function renderInsights(container, state, view) {
     ],
     rows,
   })));
+
+  // Sales team tour plan (from the Google Sheet)
+  const sheetPlans = data.sheetTourPlan || [];
+  const todayNum = new Date().getDate();
+  container.appendChild(card('Sales Team Tour Plan (' + sheetPlans.length + ')', sheetPlans.length
+    ? el('div', { class: 'stack' }, sheetPlans.map((p) => {
+        const dayEntries = p.days
+          .map((loc, i) => (loc ? 'Day ' + (i + 1) + ': ' + loc : null))
+          .filter(Boolean);
+        const todayLoc = p.days[todayNum - 1] || '';
+        return el('div', { class: 'insight-card sev-INFO' }, [
+          el('div', { style: 'display:flex;justify-content:space-between;gap:10px;' }, [
+            el('div', { class: 'insight-title', text: p.name }),
+            el('span', { class: 'muted', text: (p.territories || []).join(', ') || '—' }),
+          ]),
+          todayLoc ? el('div', { class: 'insight-desc', style: 'margin-top:4px;font-weight:600;', text: 'Today (Day ' + todayNum + '): ' + todayLoc }) : null,
+          el('div', { class: 'muted', style: 'font-size:12px;margin-top:4px;max-height:120px;overflow:auto;', text: dayEntries.join(' · ') }),
+        ]);
+      }))
+    : emptyState('No tour plan submitted yet')));
 }

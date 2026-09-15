@@ -21,6 +21,7 @@ const config = require('../server/config');
 const mcp = require('../server/mcp/client');
 const dates = require('../server/lib/dates');
 const territoryTargetService = require('../server/services/territoryTargetService');
+const tourPlanSheetService = require('../server/services/tourPlanSheetService');
 const fs = require('node:fs');
 const path = require('node:path');
 
@@ -42,14 +43,15 @@ function log(...a) {
 async function collectSnapshot() {
   const today = dates.todayStr();
   const from = dates.addDays(today, -LOOKBACK_DAYS);
-  const [orders, deliveries, territories, credit, territoryTarget] = await Promise.all([
+  const [orders, deliveries, territories, credit, territoryTarget, tourPlan] = await Promise.all([
     mcp.getSalesOrders(from, today),
     mcp.getDeliveries(from, today),
     mcp.getTerritoryHierarchy(),
     mcp.getCreditStatus(),
     territoryTargetService.fetchFromSheet().catch((e) => { log('WARN: territory target fetch failed:', e.message); return null; }),
+    tourPlanSheetService.fetchFromSheet().catch((e) => { log('WARN: tour plan fetch failed:', e.message); return null; }),
   ]);
-  return { orders, deliveries, territories, credit, territoryTarget };
+  return { orders, deliveries, territories, credit, territoryTarget, tourPlan };
 }
 
 async function push(snapshot) {

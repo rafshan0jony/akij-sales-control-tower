@@ -6,6 +6,7 @@ const territoriesRepo = require('../repos/territories');
 const territoryMapping = require('./territoryMappingService');
 const itemMapping = require('./itemMappingService');
 const territoryTargetService = require('./territoryTargetService');
+const tourPlanSheetService = require('./tourPlanSheetService');
 const metadataService = require('./metadataService');
 const usersRepo = require('../repos/users');
 const { getDb } = require('../db');
@@ -305,12 +306,13 @@ function getData() {
  * not reachable from the app host, e.g. on Vercel). Normalizes raw rows,
  * imports territories and updates sync status.
  */
-async function applyRemoteSnapshot({ orders, deliveries, territories, credit, territoryTarget }) {
+async function applyRemoteSnapshot({ orders, deliveries, territories, credit, territoryTarget, tourPlan }) {
   const today = dates.todayStr();
   const normOrders = normalizeOrders(orders || []);
   const normDeliveries = normalizeDeliveries(deliveries || []);
   const normCredit = normalizeCredit(credit || []);
   if (territoryTarget && territoryTarget.rows) territoryTargetService.setData(territoryTarget);
+  if (tourPlan && Array.isArray(tourPlan.plans)) tourPlanSheetService.setData(tourPlan);
   let from = today;
   for (const o of normOrders) if (o.date < from) from = o.date;
   for (const d of normDeliveries) if (d.date < from) from = d.date;

@@ -9,6 +9,7 @@ const analytics = require('../services/analyticsService');
 const insightService = require('../services/insightService');
 const recommendationService = require('../services/recommendationService');
 const tourPlanService = require('../services/tourPlanService');
+const tourPlanSheetService = require('../services/tourPlanSheetService');
 const syncRepo = require('../repos/sync');
 const permissionService = require('../services/permissionService');
 const territoryMappingService = require('../services/territoryMappingService');
@@ -53,7 +54,11 @@ router.get('/recommendations', asyncHandler(async (req, res) => {
 router.get('/tour-plan', asyncHandler(async (req, res) => {
   const { range, scope } = parseRange(req);
   const data = syncService.getData();
-  res.json({ tourPlan: tourPlanService.generateTourPlan(data, scope, range), ...freshness() });
+  res.json({
+    tourPlan: tourPlanService.generateTourPlan(data, scope, range),
+    sheetTourPlan: tourPlanSheetService.plansForScope(scope),
+    ...freshness(),
+  });
 }));
 
 router.get('/sync-status', asyncHandler(async (req, res) => {
