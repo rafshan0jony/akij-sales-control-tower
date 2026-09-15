@@ -15,6 +15,7 @@ const path = require('path');
 
 const usersRepo = require('../repos/users');
 const userTerritoriesRepo = require('../repos/userTerritories');
+const tourPlanEntriesRepo = require('../repos/tourPlanEntries');
 
 const SHEET_ID = '1ZmJ8KY5IO3OIVQvGADHMdi8Srf6OcQPYfr1At8S977U';
 const TOKEN_PATH = path.join(os.homedir(), '.local', 'share', 'google-workspace-mcp', 'credentials', 'rafshan_at_akijresource_dot_com.json');
@@ -84,16 +85,40 @@ function buildEmailTerritoryMap() {
 }
 
 /**
- * Return the tour plans for a scope + month.
- * Each plan resolves to a territory via its employee email (then supervisor
- * email) mapped against the app's user-territory assignments.
+ * Build email (lowercase) -> user id from the app's users.
+ */
+function buildEmailUserMap() {
+  const map = new Map();
+  for (const u of usersRepo.list()) {
+    if (u.email) map.set(u.email.toLowerCase(), u.id);
+  }
+  return map;
+}
+
+/** Current month key (YYYY-MM) and name ("September") in Asia/Dhaka. */
+function currentMonthKey() {
+  const now = new Date();
+  const y = now.getFullYear();
+  const m = now.getMonth() + 1;
+  return { key: `${y}-${String(m).padStart(2, '0')}`, name: now.toLocaleString('en-US', { month: 'long', timeZone: 'Asia/Dhaka' }) };
+}
+
+/**
+ * Return the tour plans for a scope + month, joined with the employee's
+ * submitted entries (sales order MT, visit plan change, TA/DA details, TA/DA bill).
  */
 function plansForScope(scope, month) {
   const { plans } = load();
   const emailMap = buildEmailTerritoryMap();
-  const now = new Date();
-  const currentMonth = now.toLocaleString('en-US', { month: 'long', timeZone: 'Asia/Dhaka' });
+  const emailUserMap = buildEmailUserMap();
+  const { key: monthKey, name: currentMonth } = currentMonthKey();
   const targetMonth = month || currentMonth;
+
+  const entriesByUser = new Map();
+  for (const e of tourPlanEntriesRepo.listForMonth(monthKey)) {
+    if (!entriesByUser.has(e.userId)) entriesByUser.set(e.userId, new Map());
+    entriesByUser.get(e.userId).set(e.day, e);
+  }
 
   const out = [];
   for (const p of plans) {
@@ -108,6 +133,9 @@ function plansForScope(scope, month) {
       if (!match) continue;
     }
 
+    const userId = emailUserMap.get(p.email) || null;
+    const entries = userId && entriesByUser.has(userId) ? [...entriesByUser.get(userId).values()] : [];
+
     out.push({
       name: p.name,
       email: p.email,
@@ -115,6 +143,8 @@ function plansForScope(scope, month) {
       remarks: p.remarks,
       days: p.days,
       territories: [...terrNames],
+      userId,
+      entries,
     });
   }
 
@@ -122,4 +152,4 @@ function plansForScope(scope, month) {
   return out;
 }
 
-module.exports = { fetchFromSheet, setData, load, plansForScope };
+module.exports = { fetchFromSheet, setData, load, plansForScope, currentMonthKey };

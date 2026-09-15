@@ -1,5 +1,5 @@
 import { api, qs } from '../api.js';
-import { el, money, compactMoney, fmt, badge, emptyState } from '../ui.js';
+import { el, money, compactMoney, fmt, badge, emptyState, toast } from '../ui.js';
 import { card } from './common.js';
 import { dataTable } from '../ui.js';
 
@@ -55,23 +55,82 @@ export async function renderInsights(container, state, view) {
     rows,
   })));
 
-  // Sales team tour plan (from the Google Sheet)
+  // Sales team tour plan (sheet + employee submissions)
   const sheetPlans = data.sheetTourPlan || [];
-  const todayNum = new Date().getDate();
-  container.appendChild(card('Sales Team Tour Plan (' + sheetPlans.length + ')', sheetPlans.length
-    ? el('div', { class: 'stack' }, sheetPlans.map((p) => {
-        const dayEntries = p.days
-          .map((loc, i) => (loc ? 'Day ' + (i + 1) + ': ' + loc : null))
-          .filter(Boolean);
-        const todayLoc = p.days[todayNum - 1] || '';
-        return el('div', { class: 'insight-card sev-INFO' }, [
-          el('div', { style: 'display:flex;justify-content:space-between;gap:10px;' }, [
-            el('div', { class: 'insight-title', text: p.name }),
-            el('span', { class: 'muted', text: (p.territories || []).join(', ') || '—' }),
-          ]),
-          todayLoc ? el('div', { class: 'insight-desc', style: 'margin-top:4px;font-weight:600;', text: 'Today (Day ' + todayNum + '): ' + todayLoc }) : null,
-          el('div', { class: 'muted', style: 'font-size:12px;margin-top:4px;max-height:120px;overflow:auto;', text: dayEntries.join(' · ') }),
-        ]);
-      }))
-    : emptyState('No tour plan submitted yet')));
+  const todayNum = data.today || new Date().getDate();
+  const hour = data.hour;
+  const isAdmin = !!data.isAdmin;
+  const currentUserId = data.currentUserId;
+
+  container.appendChild(el('div', { class: 'card', style: 'margin-top:18px;' }, [
+    el('div', { class: 'card-head' }, [el('div', { class: 'card-title', text: 'Sales Team Tour Plan (' + sheetPlans.length + ')' })]),
+    el('div', { class: 'card-body p0' }, sheetPlans.length
+      ? el('div', { class: 'stack' }, sheetPlans.map((p) => buildPlanCard(p, { todayNum, hour, isAdmin, currentUserId })))
+      : emptyState('No tour plan submitted yet')),
+  ]));
+}
+
+function buildPlanCard(p, opts) {
+  const { todayNum, hour, isAdmin, currentUserId } = opts;
+  const isSelf = p.userId === currentUserId;
+  const entryByDay = new Map((p.entries || []).map((e) => [e.day, e]));
+
+  const head = el('tr', {}, [
+    el('th', { text: 'Date' }),
+    el('th', { text: 'Visit Plan' }),
+    el('th', { text: 'Sales Order (MT)' }),
+    el('th', { text: 'Visit Plan Change' }),
+    el('th', { text: 'TA/DA Details' }),
+    el('th', { text: 'TA/DA Bill' }),
+  ]);
+
+  const bodyRows = [];
+  for (let d = 1; d <= 31; d++) {
+    const visitPlan = p.days[d - 1] || '';
+    const entry = entryByDay.get(d) || {};
+    const editable = (isSelf && d === todayNum) || (isAdmin && d <= todayNum);
+    const vpcLocked = d === todayNum && hour >= 14 && !isAdmin;
+
+    bodyRows.push(el('tr', {}, [
+      el('td', { text: 'Day ' + d }),
+      el('td', { class: 'muted', text: visitPlan }),
+      editable ? entryInput(d, 'salesOrderMt', 'number', entry.salesOrderMt, false) : entryValue(entry.salesOrderMt),
+      editable ? entryInput(d, 'visitPlanChange', 'text', entry.visitPlanChange, vpcLocked) : entryValue(entry.visitPlanChange),
+      editable ? entryInput(d, 'taDaDetails', 'text', entry.taDaDetails, false) : entryValue(entry.taDaDetails),
+      editable ? entryInput(d, 'taDaBill', 'text', entry.taDaBill, false) : entryValue(entry.taDaBill),
+    ]));
+  }
+
+  return el('div', { class: 'card', style: 'margin-bottom:12px;' }, [
+    el('div', { class: 'card-head' }, [
+      el('div', { class: 'card-title', text: p.name }),
+      el('span', { class: 'muted', text: (p.territories || []).join(', ') || '—' }),
+    ]),
+    el('div', { class: 'table-wrap' }, [el('table', { class: 'data' }, [el('thead', {}, [head]), el('tbody', {}, bodyRows)])]),
+  ]);
+}
+
+function entryInput(day, field, type, val, locked) {
+  const input = el('input', { type, value: val == null ? '' : val, 'data-field': field, disabled: locked ? '' : null, style: 'width:120px;padding:6px;' });
+  input.addEventListener('change', async () => {
+    const tr = input.closest('tr');
+    const body = {
+      day,
+      salesOrderMt: tr.querySelector('[data-field="salesOrderMt"]').value,
+      visitPlanChange: tr.querySelector('[data-field="visitPlanChange"]').value,
+      taDaDetails: tr.querySelector('[data-field="taDaDetails"]').value,
+      taDaBill: tr.querySelector('[data-field="taDaBill"]').value,
+    };
+    try {
+      await api.post('/dashboard/tour-plan/entry', body);
+      toast('Saved', 'success');
+    } catch (err) {
+      toast(err.message, 'error');
+    }
+  });
+  return el('td', {}, [input]);
+}
+
+function entryValue(val) {
+  return el('td', { text: val == null || val === '' ? '—' : val });
 }

@@ -122,6 +122,19 @@ function migrate(db) {
       payload TEXT NOT NULL,
       updated_at TEXT NOT NULL
     );
+
+    CREATE TABLE IF NOT EXISTS tour_plan_entries (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      user_id INTEGER NOT NULL,
+      month TEXT NOT NULL,
+      day INTEGER NOT NULL,
+      sales_order_mt REAL,
+      visit_plan_change TEXT,
+      ta_da_details TEXT,
+      ta_da_bill TEXT,
+      updated_at TEXT NOT NULL,
+      UNIQUE (user_id, month, day)
+    );
   `);
 
   // Admin-visible plaintext password (for the admin user panel).
