@@ -104,11 +104,13 @@ function normalizeCredit(rows) {
     // (fin.tblAccountingJournalArc), matching the ERP customer-ledger report.
     const ledgerBalance = Math.round(num(r.ledgerBalance) * 100) / 100;
     const daysBaseOverdue = Math.round(Math.max(0, ledgerBalance - num(r.deliveryWithinCreditDays)) * 100) / 100;
+    const overdue = Math.round(num(r.overdue) * 100) / 100;
     out.push({
       partnerCode: r.partnerCode == null ? null : String(r.partnerCode).trim(),
       partnerName: r.partnerName == null ? null : String(r.partnerName).trim(),
       creditDays,
       ledgerBalance,
+      overdue,
       territory: tm.territory,
       area: tm.area,
       region: tm.region,

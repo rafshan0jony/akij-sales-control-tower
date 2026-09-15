@@ -214,6 +214,9 @@ async function getCreditStatus(channelId = config.app.channelId) {
       p.strBusinessPartnerName AS partnerName,
       s.numRunningDayLimit AS creditDays,
       gl.ledgerBalance AS ledgerBalance,
+      CASE WHEN gl.ledgerBalance > ISNULL(rd.recentDebits, 0)
+           THEN gl.ledgerBalance - ISNULL(rd.recentDebits, 0)
+           ELSE 0 END AS overdue,
       terr.strTerritoryName AS territory,
       d.lastDeliveryDate,
       pc.lastPaymentDate,
@@ -234,6 +237,24 @@ async function getCreditStatus(channelId = config.app.channelId) {
         AND isActive = 1
       GROUP BY strSubGlCode
     ) gl ON gl.strSubGlCode = p.strBusinessPartnerCode
+    LEFT JOIN (
+      SELECT aj.strSubGlCode, SUM(aj.numAmount) AS recentDebits
+      FROM fin.tblAccountingJournalArc aj
+      INNER JOIN prt.tblBusinessPartnerArc bp ON bp.strBusinessPartnerCode = aj.strSubGlCode
+      INNER JOIN prt.tblBusinessPartnerSalesArc sc ON sc.intBusinessPartnerId = bp.intBusinessPartnerId
+      WHERE aj.isActive = 1
+        AND aj.intGeneralLedgerId = (
+          SELECT TOP 1 intGeneralLedgerId
+          FROM fin.tblGeneralLedgerArc
+          WHERE strGeneralLedgerCode = '1120001'
+            AND strGeneralLedgerName = 'Trade Receivable (Local)'
+            AND isActive = 1
+          ORDER BY intGeneralLedgerId
+        )
+        AND aj.numAmount > 0
+        AND aj.dteTransactionDate > DATEADD(day, -ISNULL(sc.numRunningDayLimit, 0), CAST(GETDATE() AS date))
+      GROUP BY aj.strSubGlCode
+    ) rd ON rd.strSubGlCode = p.strBusinessPartnerCode
     LEFT JOIN (
       SELECT intSoldToPartnerId, MAX(dteLastActionDateTime) AS lastDeliveryDate
       FROM sms.tblDeliveryHeaderArc
