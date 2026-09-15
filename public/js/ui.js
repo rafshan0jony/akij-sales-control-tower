@@ -118,7 +118,7 @@ export function dataTable({ columns, rows, onSort, sort, order, onPage, page, to
     tbody.appendChild(el('tr', {}, [td]));
   } else {
     for (const row of rows) {
-      const r = el('tr', row.__total ? { class: 'total-row' } : {});
+      const r = el('tr', row.__total ? { class: 'total-row' } : row.__warn ? { class: 'warn-row' } : {});
       for (const c of columns) {
         let v = row[c.key];
         if (c.format) v = c.format(v, row);

@@ -69,6 +69,8 @@ export async function renderTarget(container, state) {
 
   // Territory-wise target vs achievement (delivery MT)
   const territories = data.byTerritory || [];
+  const mpct = m.monthProgressPct || 0;
+  const terrRows = territories.map((t) => ({ ...t, __warn: t.targetMt > 0 && t.achievementPct < mpct }));
   const tSum = (arr, k) => arr.reduce((s, r) => s + (Number(r[k]) || 0), 0);
   const tTgt = tSum(territories, 'targetMt');
   const tDel = tSum(territories, 'deliveryMt');
@@ -82,20 +84,52 @@ export async function renderTarget(container, state) {
     achievementPct: tTgt > 0 ? Math.round((tDel / tTgt) * 1000) / 10 : 0,
     remainingMt: Math.round(Math.max(0, tTgt - tDel) * 10) / 10,
     salesMt: Math.round(tSales * 10) / 10,
+    orderAchievementPct: tTgt > 0 ? Math.round((tSales / tTgt) * 1000) / 10 : 0,
     pendingMt: Math.round(tPend * 10) / 10,
   };
-  container.appendChild(card('Territory Target vs Achievement', dataTable({
-    columns: [
-      { label: 'Territory', key: 'territory' },
-      { label: 'Target (MT)', key: 'targetMt' },
-      { label: 'Delivery (MT)', key: 'deliveryMt' },
-      { label: 'Achievement %', key: 'achievementPct', pct: true },
-      { label: 'Remaining (MT)', key: 'remainingMt' },
-      { label: 'Sales Order (MT)', key: 'salesMt' },
-      { label: 'Pending (MT)', key: 'pendingMt' },
-    ],
-    rows: territories.concat(territoryTotal),
-  })));
+
+  const roleCode = state.user && state.user.role ? state.user.role.code : '';
+  const canDownload = roleCode === 'ADMIN' || roleCode === 'NATIONAL';
+
+  const terrCard = el('div', { class: 'card', id: 'territory-report' }, [
+    el('div', { class: 'card-head' }, [
+      el('div', { class: 'card-title', text: 'Territory Target vs Achievement' }),
+      canDownload ? el('div', {}, [el('button', { class: 'btn btn-sm', text: '⬇ Download Image', onclick: () => downloadTerritoryReport(m) })]) : null,
+    ]),
+    el('div', { class: 'card-body' }, [dataTable({
+      columns: [
+        { label: 'Territory', key: 'territory' },
+        { label: 'Target (MT)', key: 'targetMt' },
+        { label: 'Delivery (MT)', key: 'deliveryMt' },
+        { label: 'Achievement %', key: 'achievementPct', pct: true },
+        { label: 'Remaining (MT)', key: 'remainingMt' },
+        { label: 'Sales Order (MT)', key: 'salesMt' },
+        { label: 'Achievement from Order', key: 'orderAchievementPct', pct: true },
+        { label: 'Pending (MT)', key: 'pendingMt' },
+      ],
+      rows: terrRows.concat(territoryTotal),
+    })]),
+  ]);
+  container.appendChild(terrCard);
+}
+
+async function downloadTerritoryReport(m) {
+  const cardEl = document.getElementById('territory-report');
+  if (!cardEl || typeof html2canvas === 'undefined') return;
+  const header = el('div', { style: 'padding:10px 16px;border-bottom:1px solid #e5e9f0;' }, [
+    el('div', { style: 'font-weight:700;', text: 'Download Date: ' + new Date().toLocaleString('en-GB') }),
+    el('div', { style: 'font-size:12px;color:#64748b;margin-top:2px;', text: 'Month Progress: ' + pct(m.monthProgressPct) }),
+  ]);
+  cardEl.insertBefore(header, cardEl.firstChild);
+  try {
+    const canvas = await html2canvas(cardEl, { scale: 2, backgroundColor: '#ffffff' });
+    const link = document.createElement('a');
+    link.download = 'territory-target-achievement-' + new Date().toISOString().slice(0, 10) + '.png';
+    link.href = canvas.toDataURL('image/png');
+    link.click();
+  } finally {
+    cardEl.removeChild(header);
+  }
 }
 
 function achColor(p) {

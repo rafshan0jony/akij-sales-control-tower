@@ -643,6 +643,7 @@ function territoryTargetAchievement(data, scope, range, selMonth) {
   }
   return territoryTargetService.territoryTargetsForScope(selMonth, scope).map((tt) => {
     const delMt = delMtByTerr.get(tt.territory) || 0;
+    const salesMt = salesMtByTerr.get(tt.territory) || 0;
     return {
       territory: tt.territory,
       targetMt: round1(tt.targetMt),
@@ -650,7 +651,8 @@ function territoryTargetAchievement(data, scope, range, selMonth) {
       achievementPct: tt.targetMt > 0 ? round1((delMt / tt.targetMt) * 100) : 0,
       remainingMt: round1(Math.max(0, tt.targetMt - delMt)),
       deliveryValue: delValByTerr.get(tt.territory) || 0,
-      salesMt: round1(salesMtByTerr.get(tt.territory) || 0),
+      salesMt: round1(salesMt),
+      orderAchievementPct: tt.targetMt > 0 ? round1((salesMt / tt.targetMt) * 100) : 0,
       pendingMt: round1(pendingMtByTerr.get(tt.territory) || 0),
     };
   });
