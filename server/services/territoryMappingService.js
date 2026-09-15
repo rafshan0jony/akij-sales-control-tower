@@ -7,15 +7,7 @@
  */
 const mapping = require('../data/territoryMapping.json');
 
-// Fallback for DWH territories present in the data but missing from the sheet.
-// (Bogura Metro / Naogaon live in DWH "North Region > Rajshahi".)
-// Confirm with the user and remove once the sheet is updated.
-const FALLBACK = [
-  { system: 'Bogura Metro', territory: 'Bogura Metro', area: 'Rajshahi Area', region: 'Dhaka West & North Region' },
-  { system: 'Naogaon', territory: 'Naogaon', area: 'Rajshahi Area', region: 'Dhaka West & North Region' },
-];
-
-const allRows = [...mapping.rows, ...FALLBACK];
+const allRows = mapping.rows;
 
 const bySystem = new Map();
 for (const r of allRows) {
