@@ -697,7 +697,17 @@ function areaPerformance(data, scope, range) {
 function creditStatus(data, scope) {
   if (!data || !data.credit) return [];
   const filter = permissionService.makeFactFilter(scope);
-  return data.credit.filter((c) => filter({ territory: c.territory }));
+  const rows = data.credit.filter((c) => filter({ territory: c.territory }));
+  // Sort by the target sheet's territory order, then by ledger balance desc.
+  const order = new Map();
+  territoryTargetService.territoriesInOrder().forEach((t, i) => order.set(String(t).toLowerCase(), i));
+  rows.sort((a, b) => {
+    const ia = order.has(String(a.territory).toLowerCase()) ? order.get(String(a.territory).toLowerCase()) : 9999;
+    const ib = order.has(String(b.territory).toLowerCase()) ? order.get(String(b.territory).toLowerCase()) : 9999;
+    if (ia !== ib) return ia - ib;
+    return num(b.ledgerBalance) - num(a.ledgerBalance);
+  });
+  return rows;
 }
 
 function customerSummary(data, scope, range) {  const { orders, deliveries } = scopedFacts(data, scope, range.from, range.to);

@@ -19,5 +19,33 @@ export async function renderCreditStatus(container, state) {
       { label: 'Territory', key: 'territory' },
     ],
     rows: credit,
-  })));
+  }), {
+    actions: el('button', { class: 'btn btn-sm', text: '⬇ Download Excel', onclick: () => downloadCreditExcel(credit) }),
+  }));
+}
+
+function downloadCreditExcel(credit) {
+  const headers = ['Partner Code', 'Partner Name', 'Credit Days', 'Ledger Balance', 'Overdue', 'Product Delivery Gap (Day)', 'Payment Gap (Day)', 'Territory'];
+  const lines = [headers.map(esc).join(',')];
+  for (const c of credit) {
+    lines.push([
+      c.partnerCode, c.partnerName, c.creditDays, c.ledgerBalance, c.overdue,
+      c.deliveryGap, c.paymentGap, c.territory,
+    ].map(esc).join(','));
+  }
+  const csv = '\ufeff' + lines.join('\r\n');
+  const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = 'credit-status-' + new Date().toISOString().slice(0, 10) + '.csv';
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  URL.revokeObjectURL(url);
+}
+
+function esc(v) {
+  const s = String(v == null ? '' : v);
+  return /[",\n]/.test(s) ? '"' + s.replace(/"/g, '""') + '"' : s;
 }

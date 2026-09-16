@@ -170,6 +170,11 @@ function territoryTargetsForScope(month, scope) {
   return all;
 }
 
+/** Distinct territory names in the target sheet's order (latest month). */
+function territoriesInOrder() {
+  return [...new Set(rowsForMonth(latestMonth()).map((r) => r.territory))];
+}
+
 module.exports = {
   fetchFromSheet,
   setData,
@@ -185,4 +190,5 @@ module.exports = {
   scopeTotalMt,
   scopeProductMt,
   territoryTargetsForScope,
+  territoriesInOrder,
 };
