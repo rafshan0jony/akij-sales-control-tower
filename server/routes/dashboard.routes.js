@@ -13,6 +13,8 @@ const recommendationService = require('../services/recommendationService');
 const tourPlanService = require('../services/tourPlanService');
 const tourPlanSheetService = require('../services/tourPlanSheetService');
 const tourPlanEntriesRepo = require('../repos/tourPlanEntries');
+const usersRepo = require('../repos/users');
+const userTerritoriesRepo = require('../repos/userTerritories');
 const syncRepo = require('../repos/sync');
 const permissionService = require('../services/permissionService');
 const territoryMappingService = require('../services/territoryMappingService');
@@ -58,22 +60,26 @@ router.get('/tour-plan', asyncHandler(async (req, res) => {
   const { range, scope } = parseRange(req);
   const data = syncService.getData();
   const t = dates.tzParts();
+  const isAdmin = permissionService.hasPermission(req.user, 'SYSTEM_ADMIN');
+  const isManager = isAdmin || (req.scope.level != null && req.scope.level <= 2);
   res.json({
     tourPlan: tourPlanService.generateTourPlan(data, scope, range),
     sheetTourPlan: tourPlanSheetService.plansForScope(scope),
     today: t.d,
     hour: t.hour,
-    isAdmin: permissionService.hasPermission(req.user, 'SYSTEM_ADMIN'),
+    isAdmin,
+    isManager,
     currentUserId: req.user.id,
     ...freshness(),
   });
 }));
 
 // Employee submits/updates their daily tour-plan entry (sales order MT, visit
-// plan change, TA/DA details, TA/DA bill). Past dates are admin-only; visit
-// plan change is locked after 2 PM (Asia/Dhaka).
+// plan change, TA/DA details, TA/DA bill). Employees edit their own entry for
+// today; managers (national/region/area) and admins may also edit subordinates
+// (and past dates). Visit plan change is locked after 2 PM for non-admins.
 router.post('/tour-plan/entry', asyncHandler(async (req, res) => {
-  const { day, salesOrderMt, visitPlanChange, taDaDetails, taDaBill } = req.body || {};
+  const { day, userId, salesOrderMt, visitPlanChange, taDaDetails, taDaBill } = req.body || {};
   const dayNum = Number(day);
   if (!Number.isInteger(dayNum) || dayNum < 1 || dayNum > 31) throw badRequest('day must be 1-31');
 
@@ -81,14 +87,30 @@ router.post('/tour-plan/entry', asyncHandler(async (req, res) => {
   const todayNum = t.d;
   const hour = t.hour;
   const monthKey = `${t.y}-${String(t.m).padStart(2, '0')}`;
-  const isAdmin = permissionService.hasPermission(req.user, 'SYSTEM_ADMIN');
 
-  if (dayNum < todayNum && !isAdmin) throw forbidden('Past dates can only be changed by an admin');
+  const currentUser = req.user;
+  const isAdmin = permissionService.hasPermission(currentUser, 'SYSTEM_ADMIN');
+  const isManager = isAdmin || (req.scope.level != null && req.scope.level <= 2);
+
+  let targetUserId = currentUser.id;
+  if (userId != null && userId !== '' && Number(userId) !== currentUser.id) {
+    if (!isManager) throw forbidden('Only a manager or admin can edit another employee\'s entry');
+    const target = usersRepo.findById(Number(userId));
+    if (!target) throw badRequest('Target employee not found');
+    if (!isAdmin && !req.scope.scopeAll) {
+      const targetTerrs = userTerritoriesRepo.listForUser(target.id).map((x) => String(x.name).toLowerCase());
+      const inScope = targetTerrs.some((name) => req.scope.territoryNames.has(name));
+      if (!inScope) throw forbidden('Target employee is outside your territory scope');
+    }
+    targetUserId = target.id;
+  }
+
+  if (dayNum < todayNum && !isManager) throw forbidden('Past dates can only be changed by an admin or manager');
   if (visitPlanChange != null && String(visitPlanChange).trim() !== '' && dayNum === todayNum && hour >= 14 && !isAdmin) {
     throw forbidden('Visit plan change is locked after 2 PM');
   }
 
-  const entry = tourPlanEntriesRepo.upsert(req.user.id, monthKey, dayNum, {
+  const entry = tourPlanEntriesRepo.upsert(targetUserId, monthKey, dayNum, {
     salesOrderMt: salesOrderMt == null || salesOrderMt === '' ? null : Number(salesOrderMt),
     visitPlanChange: visitPlanChange == null || visitPlanChange === '' ? null : String(visitPlanChange),
     taDaDetails: taDaDetails == null ? null : String(taDaDetails),

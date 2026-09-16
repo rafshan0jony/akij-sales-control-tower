@@ -60,18 +60,19 @@ export async function renderInsights(container, state, view) {
   const todayNum = data.today || new Date().getDate();
   const hour = data.hour;
   const isAdmin = !!data.isAdmin;
+  const isManager = !!data.isManager;
   const currentUserId = data.currentUserId;
 
   container.appendChild(el('div', { class: 'card', style: 'margin-top:18px;' }, [
     el('div', { class: 'card-head' }, [el('div', { class: 'card-title', text: 'Sales Team Tour Plan (' + sheetPlans.length + ')' })]),
     el('div', { class: 'card-body p0' }, sheetPlans.length
-      ? el('div', { class: 'stack' }, sheetPlans.map((p) => buildPlanCard(p, { todayNum, hour, isAdmin, currentUserId })))
+      ? el('div', { class: 'stack' }, sheetPlans.map((p) => buildPlanCard(p, { todayNum, hour, isAdmin, isManager, currentUserId })))
       : emptyState('No tour plan submitted yet')),
   ]));
 }
 
 function buildPlanCard(p, opts) {
-  const { todayNum, hour, isAdmin, currentUserId } = opts;
+  const { todayNum, hour, isAdmin, isManager, currentUserId } = opts;
   const isSelf = p.userId === currentUserId;
   const entryByDay = new Map((p.entries || []).map((e) => [e.day, e]));
 
@@ -88,16 +89,16 @@ function buildPlanCard(p, opts) {
   for (let d = 1; d <= 31; d++) {
     const visitPlan = p.days[d - 1] || '';
     const entry = entryByDay.get(d) || {};
-    const editable = (isSelf && d === todayNum) || (isAdmin && d <= todayNum);
+    const editable = (isSelf && d === todayNum) || (isManager && d <= todayNum);
     const vpcLocked = d === todayNum && hour >= 14 && !isAdmin;
 
     bodyRows.push(el('tr', {}, [
       el('td', { text: 'Day ' + d }),
       el('td', { class: 'muted', text: visitPlan }),
-      editable ? entryInput(d, 'salesOrderMt', 'number', entry.salesOrderMt, false) : entryValue(entry.salesOrderMt),
-      editable ? entryInput(d, 'visitPlanChange', 'text', entry.visitPlanChange, vpcLocked) : entryValue(entry.visitPlanChange),
-      editable ? entryInput(d, 'taDaDetails', 'text', entry.taDaDetails, false) : entryValue(entry.taDaDetails),
-      editable ? entryInput(d, 'taDaBill', 'text', entry.taDaBill, false) : entryValue(entry.taDaBill),
+      editable ? entryInput(d, 'salesOrderMt', 'number', entry.salesOrderMt, false, p.userId) : entryValue(entry.salesOrderMt),
+      editable ? entryInput(d, 'visitPlanChange', 'text', entry.visitPlanChange, vpcLocked, p.userId) : entryValue(entry.visitPlanChange),
+      editable ? entryInput(d, 'taDaDetails', 'text', entry.taDaDetails, false, p.userId) : entryValue(entry.taDaDetails),
+      editable ? entryInput(d, 'taDaBill', 'text', entry.taDaBill, false, p.userId) : entryValue(entry.taDaBill),
     ]));
   }
 
@@ -110,12 +111,13 @@ function buildPlanCard(p, opts) {
   ]);
 }
 
-function entryInput(day, field, type, val, locked) {
+function entryInput(day, field, type, val, locked, userId) {
   const input = el('input', { type, value: val == null ? '' : val, 'data-field': field, disabled: locked ? '' : null, style: 'width:120px;padding:6px;' });
   input.addEventListener('change', async () => {
     const tr = input.closest('tr');
     const body = {
       day,
+      userId,
       salesOrderMt: tr.querySelector('[data-field="salesOrderMt"]').value,
       visitPlanChange: tr.querySelector('[data-field="visitPlanChange"]').value,
       taDaDetails: tr.querySelector('[data-field="taDaDetails"]').value,
