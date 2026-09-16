@@ -105,8 +105,8 @@ router.post('/tour-plan/entry', asyncHandler(async (req, res) => {
     targetUserId = target.id;
   }
 
-  if (dayNum < todayNum && !isManager) throw forbidden('Past dates can only be changed by an admin or manager');
-  if (visitPlanChange != null && String(visitPlanChange).trim() !== '' && dayNum === todayNum && hour >= 14 && !isAdmin) {
+  if (dayNum !== todayNum) throw forbidden('Only the current date can be edited');
+  if (visitPlanChange != null && String(visitPlanChange).trim() !== '' && hour >= 14) {
     throw forbidden('Visit plan change is locked after 2 PM');
   }
 

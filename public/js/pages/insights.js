@@ -89,8 +89,8 @@ function buildPlanCard(p, opts) {
   for (let d = 1; d <= 31; d++) {
     const visitPlan = p.days[d - 1] || '';
     const entry = entryByDay.get(d) || {};
-    const editable = (isSelf && d === todayNum) || (isManager && d <= todayNum);
-    const vpcLocked = d === todayNum && hour >= 14 && !isAdmin;
+    const editable = (isSelf || isManager) && d === todayNum;
+    const vpcLocked = d === todayNum && hour >= 14;
 
     bodyRows.push(el('tr', {}, [
       el('td', { text: 'Day ' + d }),
