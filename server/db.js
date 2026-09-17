@@ -135,6 +135,23 @@ function migrate(db) {
       updated_at TEXT NOT NULL,
       UNIQUE (user_id, month, day)
     );
+
+    CREATE TABLE IF NOT EXISTS sales_reports (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      user_id INTEGER NOT NULL,
+      date TEXT NOT NULL,
+      visit_schedule TEXT,
+      actual_visit_plan TEXT,
+      sales_projection_mt REAL,
+      deposit_projection_bdt REAL,
+      actual_sales_mt REAL,
+      actual_collection_bdt REAL,
+      projection_submitted_at TEXT,
+      actual_submitted_at TEXT,
+      created_at TEXT NOT NULL,
+      updated_at TEXT,
+      UNIQUE (user_id, date)
+    );
   `);
 
   // Admin-visible plaintext password (for the admin user panel).

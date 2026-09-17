@@ -125,6 +125,17 @@ function currentMonthKey() {
   return { key: `${y}-${String(m).padStart(2, '0')}`, name: now.toLocaleString('en-US', { month: 'long', timeZone: 'Asia/Dhaka' }) };
 }
 
+/** Visit schedule (location) for an employee's email on a day of the current month. */
+function visitScheduleForEmail(email, day) {
+  const { plans } = load();
+  const { name: currentMonth } = currentMonthKey();
+  const emailLower = String(email || '').toLowerCase();
+  const list = plans.filter((p) => p.email === emailLower && p.month.toLowerCase() === currentMonth.toLowerCase());
+  if (!list.length) return '';
+  const latest = list[list.length - 1];
+  return (latest.days && latest.days[day - 1]) || '';
+}
+
 /**
  * Return the tour plans for a scope + month, joined with the employee's
  * submitted entries (sales order MT, visit plan change, TA/DA details, TA/DA bill).
@@ -185,4 +196,4 @@ function plansForScope(scope, month) {
   return out;
 }
 
-module.exports = { fetchFromSheet, setData, load, plansForScope, currentMonthKey };
+module.exports = { fetchFromSheet, setData, load, plansForScope, currentMonthKey, visitScheduleForEmail };

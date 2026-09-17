@@ -13,6 +13,7 @@ const recommendationService = require('../services/recommendationService');
 const tourPlanService = require('../services/tourPlanService');
 const tourPlanSheetService = require('../services/tourPlanSheetService');
 const tourPlanEntriesRepo = require('../repos/tourPlanEntries');
+const salesReportsRepo = require('../repos/salesReports');
 const usersRepo = require('../repos/users');
 const userTerritoriesRepo = require('../repos/userTerritories');
 const syncRepo = require('../repos/sync');
@@ -119,6 +120,70 @@ router.post('/tour-plan/entry', asyncHandler(async (req, res) => {
   });
   res.json({ entry });
 }));
+
+// Sales report (daily projection vs actual). Territory officers enter their
+// own report for today; managers/admin view their scope's reports.
+router.get('/sales-report', asyncHandler(async (req, res) => {
+  const t = dates.tzParts();
+  const today = `${t.y}-${String(t.m).padStart(2, '0')}-${String(t.d).padStart(2, '0')}`;
+  const isAdmin = permissionService.hasPermission(req.user, 'SYSTEM_ADMIN');
+  const canEnter = req.scope.level === 4;
+
+  const own = salesReportsRepo.get(req.user.id, today);
+  const users = usersRepo.list();
+  const userById = new Map(users.map((u) => [u.id, u]));
+
+  let reports = [];
+  if (canEnter) {
+    reports = own ? [{ ...own, userName: req.user.name, territory: territoryNamesForUser(req.user.id) }] : [];
+  } else {
+    const all = salesReportsRepo.listForDate(today);
+    reports = all
+      .filter((r) => {
+        if (isAdmin || req.scope.scopeAll) return true;
+        return territoryNamesForUser(r.userId).some((name) => req.scope.territoryNames.has(name));
+      })
+      .map((r) => {
+        const u = userById.get(r.userId);
+        return { ...r, userName: u ? u.name : '', territory: territoryNamesForUser(r.userId) };
+      });
+  }
+
+  res.json({ today, canEnter, own, reports });
+}));
+
+router.post('/sales-report', asyncHandler(async (req, res) => {
+  const t = dates.tzParts();
+  const today = `${t.y}-${String(t.m).padStart(2, '0')}-${String(t.d).padStart(2, '0')}`;
+  if (req.scope.level !== 4) throw forbidden('Only territory officers can enter a sales report');
+
+  const { actualVisitPlan, salesProjectionMt, depositProjectionBdt, actualSalesMt, actualCollectionBdt, submitProjection, submitActual } = req.body || {};
+  const numOrNull = (v) => (v == null || v === '' ? null : Number(v));
+
+  const existing = salesReportsRepo.get(req.user.id, today);
+  let visitSchedule = existing ? existing.visitSchedule : null;
+  if (!existing) {
+    const user = usersRepo.findById(req.user.id);
+    visitSchedule = user && user.email ? tourPlanSheetService.visitScheduleForEmail(user.email, t.d) : '';
+  }
+
+  const now = new Date().toISOString();
+  const report = salesReportsRepo.upsert(req.user.id, today, {
+    visitSchedule,
+    actualVisitPlan: actualVisitPlan == null ? null : String(actualVisitPlan),
+    salesProjectionMt: numOrNull(salesProjectionMt),
+    depositProjectionBdt: numOrNull(depositProjectionBdt),
+    actualSalesMt: numOrNull(actualSalesMt),
+    actualCollectionBdt: numOrNull(actualCollectionBdt),
+    projectionSubmittedAt: submitProjection ? now : (existing ? existing.projectionSubmittedAt : null),
+    actualSubmittedAt: submitActual ? now : (existing ? existing.actualSubmittedAt : null),
+  });
+  res.json({ report });
+}));
+
+function territoryNamesForUser(userId) {
+  return userTerritoriesRepo.listForUser(userId).map((t) => String(t.name).toLowerCase());
+}
 
 router.get('/sync-status', asyncHandler(async (req, res) => {
   const status = syncRepo.get();

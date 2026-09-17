@@ -3,6 +3,7 @@ import * as ui from './ui.js';
 import * as charts from './charts.js';
 
 import { renderDashboard } from './pages/dashboard.js';
+import { renderSalesReport } from './pages/salesReport.js';
 import { renderSales } from './pages/sales.js';
 import { renderDelivery } from './pages/delivery.js';
 import { renderPending } from './pages/pending.js';
@@ -39,6 +40,7 @@ const FILTERS = buildFilters();
 const NAV = [
   { section: 'Overview' },
   { label: 'Dashboard', hash: '#/dashboard', ico: '▦' },
+  { label: 'Sales Report', hash: '#/sales-report', ico: '📊' },
   { section: 'Sales' },
   { label: 'Sales Order', hash: '#/sales', ico: '🧾', perm: 'VIEW_SALES_ORDER' },
   { label: 'Delivery', hash: '#/delivery', ico: '🚚', perm: 'VIEW_DELIVERY' },
@@ -201,6 +203,7 @@ function setBreadcrumb(label) {
 
 const ROUTES = [
   ['#/dashboard', 'Dashboard', renderDashboard],
+  ['#/sales-report', 'Sales Report', renderSalesReport],
   ['#/sales', 'Sales Order', renderSales],
   ['#/delivery', 'Delivery', renderDelivery],
   ['#/pending', 'Pending', renderPending],
