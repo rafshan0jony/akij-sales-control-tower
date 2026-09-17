@@ -129,14 +129,22 @@ router.get('/sales-report', asyncHandler(async (req, res) => {
   const t = dates.tzParts();
   const today = `${t.y}-${String(t.m).padStart(2, '0')}-${String(t.d).padStart(2, '0')}`;
   const month = range.from ? range.from.slice(0, 7) : today.slice(0, 7);
+  const dateParam = req.query.date || '';
   const isAdmin = permissionService.hasPermission(req.user, 'SYSTEM_ADMIN');
   const canEnter = req.scope.level === 4;
 
-  const own = salesReportsRepo.get(req.user.id, today);
   const users = usersRepo.list();
   const userById = new Map(users.map((u) => [u.id, u]));
 
-  const all = salesReportsRepo.listForMonth(month);
+  let own = salesReportsRepo.get(req.user.id, today);
+  if (own) {
+    const m = today.slice(0, 7);
+    const d = Number(today.slice(8, 10));
+    const entry = tourPlanEntriesRepo.get(req.user.id, m, d);
+    own = { ...own, taDaDetails: entry ? entry.taDaDetails : null, taDaBill: entry ? entry.taDaBill : null };
+  }
+
+  const all = dateParam ? salesReportsRepo.listForDate(dateParam) : salesReportsRepo.listForMonth(month);
   const reports = all
     .filter((r) => {
       if (isAdmin || scope.scopeAll) return true;
@@ -144,7 +152,16 @@ router.get('/sales-report', asyncHandler(async (req, res) => {
     })
     .map((r) => {
       const u = userById.get(r.userId);
-      return { ...r, userName: u ? u.name : '', territory: territoryNamesForUser(r.userId) };
+      const m = r.date.slice(0, 7);
+      const d = Number(r.date.slice(8, 10));
+      const entry = tourPlanEntriesRepo.get(r.userId, m, d);
+      return {
+        ...r,
+        userName: u ? u.name : '',
+        territory: territoryNamesForUser(r.userId),
+        taDaDetails: entry ? entry.taDaDetails : null,
+        taDaBill: entry ? entry.taDaBill : null,
+      };
     });
 
   res.json({ today, canEnter, own, reports });

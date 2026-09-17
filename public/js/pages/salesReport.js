@@ -1,8 +1,11 @@
 import { api, qs } from '../api.js';
 import { el, money, fmt, toast } from '../ui.js';
 
+let selectedDate = null;
+
 export async function renderSalesReport(container, state) {
-  const data = await api.get('/dashboard/sales-report?' + qs(state.query()));
+  const q = qs(state.query()) + (selectedDate ? '&date=' + selectedDate : '');
+  const data = await api.get('/dashboard/sales-report?' + q);
   const today = data.today || '';
   const canEnter = !!data.canEnter;
   const own = data.own || null;
@@ -15,17 +18,24 @@ export async function renderSalesReport(container, state) {
       } })
     : null;
 
+  // Calendar filter: disabled (today) for territory officers, selectable for managers.
+  const dateInput = el('input', {
+    type: 'date',
+    value: selectedDate || today,
+    disabled: canEnter ? '' : null,
+    onchange: (e) => { selectedDate = e.target.value; container.innerHTML = ''; renderSalesReport(container, state); },
+  });
+
   const isManager = !canEnter;
   const columns = isManager
-    ? ['Employee', 'Territory', 'Date', 'Visit Schedule', 'Actual Visit Plan', 'Sales Proj. (MT)', 'Deposit Proj. (BDT)', 'Actual Sales (MT)', 'Actual Collect. (BDT)', 'Projection', 'Actual']
-    : ['Date', 'Visit Schedule', 'Actual Visit Plan', 'Sales Proj. (MT)', 'Deposit Proj. (BDT)', 'Actual Sales (MT)', 'Actual Collect. (BDT)', 'Submit Projection', 'Submit Actual'];
+    ? ['Employee', 'Territory', 'Date', 'Visit Schedule', 'Actual Visit Plan', 'Sales Proj. (MT)', 'Deposit Proj. (BDT)', 'Actual Sales (MT)', 'Actual Collect. (BDT)', 'TA/DA Details', 'Total TA/DA Bill', 'Projection', 'Actual']
+    : ['Date', 'Visit Schedule', 'Actual Visit Plan', 'Sales Proj. (MT)', 'Deposit Proj. (BDT)', 'Actual Sales (MT)', 'Actual Collect. (BDT)', 'TA/DA Details', 'Total TA/DA Bill', 'Submit Projection', 'Submit Actual'];
 
   const thead = el('tr', {}, columns.map((c) => el('th', { text: c })));
 
   const rows = [];
   if (canEnter) {
     if (own) rows.push(buildEditableRow(own));
-    // past reports (read-only) for the selected month, excluding today
     reports.filter((r) => r.date !== today).forEach((r) => rows.push(buildReadonlyRow(r)));
   } else {
     reports.forEach((r) => rows.push(buildReadonlyRow(r)));
@@ -39,11 +49,11 @@ export async function renderSalesReport(container, state) {
     el('div', { class: 'card-head' }, [
       el('div', { class: 'card-title', text: 'Daily Sales Report' }),
       el('div', { style: 'margin-left:auto;display:flex;gap:10px;align-items:center;' }, [
-        el('input', { type: 'date', value: today, disabled: '' }),
+        dateInput,
         addBtn,
       ]),
     ]),
-    el('div', { class: 'table-wrap' }, [el('table', { class: 'data' }, [el('thead', {}, [thead]), el('tbody', {}, tbody)])]),
+    el('div', { class: 'table-wrap' }, [el('table', { class: 'data sales-report-table' }, [el('thead', {}, [thead]), el('tbody', {}, tbody)])]),
   ]));
 }
 
@@ -91,6 +101,8 @@ function buildEditableRow(own) {
     makeInput('depositProjectionBdt', 'number', own.depositProjectionBdt, projLocked),
     makeInput('actualSalesMt', 'number', own.actualSalesMt, actLocked),
     makeInput('actualCollectionBdt', 'number', own.actualCollectionBdt, actLocked),
+    el('td', { class: 'wrap-cell', text: own.taDaDetails || '—' }),
+    el('td', { text: own.taDaBill == null ? '—' : money(own.taDaBill) }),
     el('td', {}, [submitProjBtn]),
     el('td', {}, [submitActBtn]),
   ]);
@@ -107,6 +119,8 @@ function buildReadonlyRow(r) {
     el('td', { text: r.depositProjectionBdt == null ? '—' : money(r.depositProjectionBdt) }),
     el('td', { text: r.actualSalesMt == null ? '—' : fmt(r.actualSalesMt, 2) }),
     el('td', { text: r.actualCollectionBdt == null ? '—' : money(r.actualCollectionBdt) }),
+    el('td', { class: 'wrap-cell', text: r.taDaDetails || '—' }),
+    el('td', { text: r.taDaBill == null ? '—' : money(r.taDaBill) }),
     el('td', { text: r.projectionSubmittedAt ? '✓ ' + r.projectionSubmittedAt.slice(11, 16) : '—' }),
     el('td', { text: r.actualSubmittedAt ? '✓ ' + r.actualSubmittedAt.slice(11, 16) : '—' }),
   ]);
