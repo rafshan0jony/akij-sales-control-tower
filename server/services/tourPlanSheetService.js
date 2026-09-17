@@ -84,6 +84,20 @@ function buildEmailTerritoryMap() {
   return map;
 }
 
+function buildNameTerritoryMap() {
+  const map = new Map();
+  const users = usersRepo.list();
+  for (const u of users) {
+    if (!u.name) continue;
+    const names = new Set();
+    for (const t of userTerritoriesRepo.listForUser(u.id)) {
+      if (t.name) names.add(String(t.name).toLowerCase());
+    }
+    if (names.size) map.set(String(u.name).toLowerCase(), names);
+  }
+  return map;
+}
+
 /**
  * Build email (lowercase) -> user id from the app's users.
  */
@@ -91,6 +105,14 @@ function buildEmailUserMap() {
   const map = new Map();
   for (const u of usersRepo.list()) {
     if (u.email) map.set(u.email.toLowerCase(), u.id);
+  }
+  return map;
+}
+
+function buildNameUserMap() {
+  const map = new Map();
+  for (const u of usersRepo.list()) {
+    if (u.name) map.set(String(u.name).toLowerCase(), u.id);
   }
   return map;
 }
@@ -106,11 +128,15 @@ function currentMonthKey() {
 /**
  * Return the tour plans for a scope + month, joined with the employee's
  * submitted entries (sales order MT, visit plan change, TA/DA details, TA/DA bill).
+ * Deduplicates repeated submissions (keeps the latest) and matches employees
+ * by email first, then by name.
  */
 function plansForScope(scope, month) {
   const { plans } = load();
   const emailMap = buildEmailTerritoryMap();
+  const nameMap = buildNameTerritoryMap();
   const emailUserMap = buildEmailUserMap();
+  const nameUserMap = buildNameUserMap();
   const { key: monthKey, name: currentMonth } = currentMonthKey();
   const targetMonth = month || currentMonth;
 
@@ -120,10 +146,17 @@ function plansForScope(scope, month) {
     entriesByUser.get(e.userId).set(e.day, e);
   }
 
-  const out = [];
+  // Deduplicate repeated submissions: keep the latest row per employee.
+  const byKey = new Map();
   for (const p of plans) {
     if (p.month.toLowerCase() !== targetMonth.toLowerCase()) continue;
-    let terrNames = emailMap.get(p.email);
+    byKey.set((p.email || p.name).toLowerCase(), p);
+  }
+
+  const out = [];
+  for (const p of byKey.values()) {
+    const nameLower = String(p.name).toLowerCase();
+    let terrNames = emailMap.get(p.email) || nameMap.get(nameLower);
     if (!terrNames || !terrNames.size) terrNames = emailMap.get(p.supervisor);
     if (!terrNames || !terrNames.size) terrNames = emailMap.get(p.lineManager);
     if (!terrNames) terrNames = new Set();
@@ -133,7 +166,7 @@ function plansForScope(scope, month) {
       if (!match) continue;
     }
 
-    const userId = emailUserMap.get(p.email) || null;
+    const userId = emailUserMap.get(p.email) || nameUserMap.get(nameLower) || null;
     const entries = userId && entriesByUser.has(userId) ? [...entriesByUser.get(userId).values()] : [];
 
     out.push({
