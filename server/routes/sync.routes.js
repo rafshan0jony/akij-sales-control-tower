@@ -23,7 +23,7 @@ function checkSecret(req) {
  */
 router.post('/ingest', asyncHandler(async (req, res) => {
   if (!checkSecret(req)) return res.status(401).json({ error: 'Invalid sync secret' });
-  const { orders, deliveries, territories, credit, territoryTarget } = req.body || {};
+  const { orders, deliveries, territories, credit, territoryTarget, tourPlan } = req.body || {};
   if (!Array.isArray(orders) || !Array.isArray(deliveries)) {
     throw badRequest('orders and deliveries arrays are required');
   }
@@ -33,6 +33,7 @@ router.post('/ingest', asyncHandler(async (req, res) => {
     territories: Array.isArray(territories) ? territories : null,
     credit: Array.isArray(credit) ? credit : null,
     territoryTarget: territoryTarget || null,
+    tourPlan: tourPlan || null,
   });
   res.json({ ok: true, sync: syncRepo.get() });
 }));
