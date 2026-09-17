@@ -177,7 +177,16 @@ function renderUser() {
   if (!u) return;
   document.getElementById('user-name').textContent = u.name;
   document.getElementById('user-role').textContent = u.role ? u.role.name : 'No role';
-  document.getElementById('user-avatar').textContent = (u.name || '?').trim()[0].toUpperCase();
+  const avatar = document.getElementById('user-avatar');
+  if (u.photo) {
+    avatar.textContent = '';
+    avatar.style.backgroundImage = 'url(' + u.photo + ')';
+    avatar.style.backgroundSize = 'cover';
+    avatar.style.backgroundPosition = 'center';
+  } else {
+    avatar.style.backgroundImage = '';
+    avatar.textContent = (u.name || '?').trim()[0].toUpperCase();
+  }
 }
 
 function renderSync() {
@@ -317,6 +326,7 @@ function setupEvents() {
     document.getElementById('user-dropdown').classList.toggle('hidden');
   });
 
+  document.getElementById('change-photo-btn').addEventListener('click', () => openChangePhoto());
   document.getElementById('change-password-btn').addEventListener('click', () => openChangePassword());
 
   document.getElementById('nav-toggle').addEventListener('click', () => {
@@ -348,6 +358,67 @@ function syncCustom() {
   const from = document.getElementById('filter-from').value;
   const to = document.getElementById('filter-to').value;
   if (from && to) { state.custom = { from, to }; route(); }
+}
+
+function openChangePhoto() {
+  const root = document.getElementById('modal-root');
+  root.innerHTML = '';
+  let selectedPhoto = null;
+  const fileInput = ui.el('input', { type: 'file', accept: 'image/*' });
+  const preview = ui.el('img', { style: 'width:120px;height:120px;border-radius:50%;object-fit:cover;display:none;margin:0 auto;' });
+
+  fileInput.addEventListener('change', () => {
+    const file = fileInput.files[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = () => {
+      const img = new Image();
+      img.onload = () => {
+        const size = 200;
+        const canvas = document.createElement('canvas');
+        canvas.width = size; canvas.height = size;
+        const ctx = canvas.getContext('2d');
+        const min = Math.min(img.width, img.height);
+        const sx = (img.width - min) / 2, sy = (img.height - min) / 2;
+        ctx.drawImage(img, sx, sy, min, min, 0, 0, size, size);
+        selectedPhoto = canvas.toDataURL('image/jpeg', 0.85);
+        preview.src = selectedPhoto;
+        preview.style.display = 'block';
+      };
+      img.src = reader.result;
+    };
+    reader.readAsDataURL(file);
+  });
+
+  const save = async () => {
+    if (!selectedPhoto) { ui.toast('Please choose a photo', 'error'); return; }
+    try {
+      await api.post('/auth/photo', { photo: selectedPhoto });
+      ui.toast('Photo updated', 'success');
+      root.innerHTML = '';
+      boot();
+    } catch (e) { ui.toast(e.message, 'error'); }
+  };
+
+  const remove = async () => {
+    try {
+      await api.post('/auth/photo', { photo: null });
+      ui.toast('Photo removed', 'success');
+      root.innerHTML = '';
+      boot();
+    } catch (e) { ui.toast(e.message, 'error'); }
+  };
+
+  root.appendChild(ui.el('div', { class: 'modal-backdrop', onclick: () => root.innerHTML = '' }));
+  root.appendChild(ui.el('div', { class: 'modal' }, [
+    ui.el('h3', { text: 'Change profile photo' }),
+    ui.el('div', { class: 'form-row' }, [ui.el('label', { text: 'Choose a photo' }), fileInput]),
+    ui.el('div', { style: 'text-align:center;margin:12px 0;' }, [preview]),
+    ui.el('div', { class: 'modal-actions' }, [
+      ui.el('button', { class: 'btn', text: 'Remove photo', onclick: remove }),
+      ui.el('button', { class: 'btn btn-primary', text: 'Save', onclick: save }),
+    ]),
+  ]));
 }
 
 function openChangePassword() {

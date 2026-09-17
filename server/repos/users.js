@@ -16,6 +16,7 @@ function rowToUser(r) {
     status: r.status,
     title: r.title,
     plainPassword: r.plain_password,
+    photo: r.photo,
     lastLoginAt: r.last_login_at,
     createdAt: r.created_at,
     updatedAt: r.updated_at,
@@ -87,7 +88,11 @@ function setLastLogin(id, ts) {
   getDb().prepare('UPDATE users SET last_login_at = ? WHERE id = ?').run(ts || now(), id);
 }
 
+function setPhoto(id, photo) {
+  getDb().prepare('UPDATE users SET photo = ?, updated_at = ? WHERE id = ?').run(photo || null, now(), id);
+}
+
 module.exports = {
   list, create, update, findById, findByUsername, findByEmail, findByIdentifier,
-  setPasswordHash, setResetToken, setLastLogin,
+  setPasswordHash, setResetToken, setLastLogin, setPhoto,
 };

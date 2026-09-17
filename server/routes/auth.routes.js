@@ -7,6 +7,7 @@ const { authLimiter } = require('../middleware/rateLimit');
 const authService = require('../services/authService');
 const permissionService = require('../services/permissionService');
 const auditRepo = require('../repos/audit');
+const usersRepo = require('../repos/users');
 const { badRequest } = require('../lib/errors');
 
 const router = express.Router();
@@ -45,6 +46,18 @@ router.get('/me', authenticate, (req, res) => {
     },
   });
 });
+
+// Upload / remove the current user's profile photo (DP).
+router.post('/photo', authenticate, asyncHandler(async (req, res) => {
+  const { photo } = req.body || {};
+  if (photo != null && photo !== '' && !/^data:image\/(png|jpeg|jpg|webp);base64,/.test(photo)) {
+    throw badRequest('Invalid image format');
+  }
+  if (photo && photo.length > 500000) throw badRequest('Image too large (max 500KB)');
+  usersRepo.setPhoto(req.user.id, photo || null);
+  auditRepo.log({ action: 'PHOTO_UPDATED', userId: req.user.id, username: req.user.username, ip: ip(req) });
+  res.json({ ok: true, photo: photo || null });
+}));
 
 router.post('/change-password', authenticate, asyncHandler(async (req, res) => {
   const { currentPassword, newPassword } = req.body || {};

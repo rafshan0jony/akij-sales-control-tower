@@ -19,6 +19,7 @@ function userPayload(user) {
     role: role ? { id: role.id, code: role.code, name: role.name, level: role.level } : null,
     permissions: perms,
     status: user.status,
+    photo: user.photo || null,
   };
 }
 

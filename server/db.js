@@ -169,6 +169,11 @@ function migrate(db) {
   try {
     db.exec('ALTER TABLE users ADD COLUMN title TEXT');
   } catch (_) { /* column already exists */ }
+
+  // Profile photo (data URL) for the avatar.
+  try {
+    db.exec('ALTER TABLE users ADD COLUMN photo TEXT');
+  } catch (_) { /* column already exists */ }
 }
 
 const PERMISSIONS = [
