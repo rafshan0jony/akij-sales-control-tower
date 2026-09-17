@@ -173,10 +173,12 @@ router.post('/sales-report', asyncHandler(async (req, res) => {
       || (depositProjectionBdt != null && depositProjectionBdt !== '' && numOrNull(depositProjectionBdt) !== existing.depositProjectionBdt);
     if (projChanged) throw forbidden('Projection is already submitted and cannot be changed');
   }
-  // Actual lock: after actual submit, actual fields can't change.
+  // Actual lock: after actual submit, actual + TA/DA fields can't change.
   if (existing && existing.actualSubmittedAt) {
     const actualChanged = (actualSalesMt != null && actualSalesMt !== '' && numOrNull(actualSalesMt) !== existing.actualSalesMt)
-      || (actualCollectionBdt != null && actualCollectionBdt !== '' && numOrNull(actualCollectionBdt) !== existing.actualCollectionBdt);
+      || (actualCollectionBdt != null && actualCollectionBdt !== '' && numOrNull(actualCollectionBdt) !== existing.actualCollectionBdt)
+      || (taDaDetails != null && String(taDaDetails) !== (existing.taDaDetails || ''))
+      || (taDaBill != null && String(taDaBill) !== (existing.taDaBill || ''));
     if (actualChanged) throw forbidden('Actual is already submitted and cannot be changed');
   }
 
