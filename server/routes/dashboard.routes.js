@@ -164,7 +164,7 @@ router.post('/sales-report', asyncHandler(async (req, res) => {
   let visitSchedule = existing ? existing.visitSchedule : null;
   if (!existing) {
     const user = usersRepo.findById(req.user.id);
-    visitSchedule = user && user.email ? tourPlanSheetService.visitScheduleForEmail(user.email, t.d) : '';
+    visitSchedule = user ? tourPlanSheetService.visitScheduleForEmail(user.email, user.name, t.d) : '';
   }
 
   const now = new Date().toISOString();

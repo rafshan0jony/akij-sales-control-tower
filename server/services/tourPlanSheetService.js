@@ -125,12 +125,17 @@ function currentMonthKey() {
   return { key: `${y}-${String(m).padStart(2, '0')}`, name: now.toLocaleString('en-US', { month: 'long', timeZone: 'Asia/Dhaka' }) };
 }
 
-/** Visit schedule (location) for an employee's email on a day of the current month. */
-function visitScheduleForEmail(email, day) {
+/** Visit schedule (location) for an employee on a day of the current month.
+ *  Matches by email OR name (the sheet sometimes uses a different email). */
+function visitScheduleForEmail(email, name, day) {
   const { plans } = load();
   const { name: currentMonth } = currentMonthKey();
-  const emailLower = String(email || '').toLowerCase();
-  const list = plans.filter((p) => p.email === emailLower && p.month.toLowerCase() === currentMonth.toLowerCase());
+  const emailKey = String(email || '').toLowerCase();
+  const nameKey = String(name || '').toLowerCase();
+  const list = plans.filter((p) => {
+    if (p.month.toLowerCase() !== currentMonth.toLowerCase()) return false;
+    return p.email === emailKey || String(p.name).toLowerCase() === nameKey;
+  });
   if (!list.length) return '';
   const latest = list[list.length - 1];
   return (latest.days && latest.days[day - 1]) || '';
