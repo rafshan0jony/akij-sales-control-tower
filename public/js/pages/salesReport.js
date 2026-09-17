@@ -1,8 +1,8 @@
-import { api } from '../api.js';
-import { el, money, fmt, toast, emptyState } from '../ui.js';
+import { api, qs } from '../api.js';
+import { el, money, fmt, toast } from '../ui.js';
 
 export async function renderSalesReport(container, state) {
-  const data = await api.get('/dashboard/sales-report');
+  const data = await api.get('/dashboard/sales-report?' + qs(state.query()));
   const today = data.today || '';
   const canEnter = !!data.canEnter;
   const own = data.own || null;
@@ -17,19 +17,23 @@ export async function renderSalesReport(container, state) {
 
   const isManager = !canEnter;
   const columns = isManager
-    ? ['Employee', 'Territory', 'Date', 'Visit Schedule', 'Actual Visit Plan', 'Sales Projection (MT)', 'Deposit Projection (BDT)', 'Actual Sales (MT)', 'Actual Collection (BDT)', 'Projection', 'Actual']
-    : ['Date', 'Visit Schedule', 'Actual Visit Plan', 'Sales Projection (MT)', 'Deposit Projection (BDT)', 'Actual Sales (MT)', 'Actual Collection (BDT)', 'Submit Projection', 'Submit Actual'];
+    ? ['Employee', 'Territory', 'Date', 'Visit Schedule', 'Actual Visit Plan', 'Sales Proj. (MT)', 'Deposit Proj. (BDT)', 'Actual Sales (MT)', 'Actual Collect. (BDT)', 'Projection', 'Actual']
+    : ['Date', 'Visit Schedule', 'Actual Visit Plan', 'Sales Proj. (MT)', 'Deposit Proj. (BDT)', 'Actual Sales (MT)', 'Actual Collect. (BDT)', 'Submit Projection', 'Submit Actual'];
 
   const thead = el('tr', {}, columns.map((c) => el('th', { text: c })));
 
-  let tbody;
+  const rows = [];
   if (canEnter) {
-    tbody = own ? buildEditableRow(own) : el('tr', {}, [el('td', { colspan: columns.length, style: 'text-align:center;color:var(--text-muted);padding:24px;', text: 'Click + Add to create today\'s report' })]);
+    if (own) rows.push(buildEditableRow(own));
+    // past reports (read-only) for the selected month, excluding today
+    reports.filter((r) => r.date !== today).forEach((r) => rows.push(buildReadonlyRow(r)));
   } else {
-    tbody = reports.length
-      ? reports.map((r) => buildReadonlyRow(r))
-      : el('tr', {}, [el('td', { colspan: columns.length, style: 'text-align:center;color:var(--text-muted);padding:24px;', text: 'No reports yet' })]);
+    reports.forEach((r) => rows.push(buildReadonlyRow(r)));
   }
+
+  const tbody = rows.length
+    ? rows
+    : el('tr', {}, [el('td', { colspan: columns.length, style: 'text-align:center;color:var(--text-muted);padding:24px;', text: canEnter ? 'Click + Add to create today\'s report' : 'No reports yet' })]);
 
   container.appendChild(el('div', { class: 'card' }, [
     el('div', { class: 'card-head' }, [
@@ -44,20 +48,21 @@ export async function renderSalesReport(container, state) {
 }
 
 function buildEditableRow(own) {
-  const inputs = {};
-  const makeInput = (field, type, val) => {
-    const inp = el('input', { type, value: val == null ? '' : val, 'data-field': field, style: 'width:110px;padding:6px;' });
-    inputs[field] = inp;
+  const projLocked = !!own.projectionSubmittedAt;
+  const actLocked = !!own.actualSubmittedAt;
+
+  const makeInput = (field, type, val, locked) => {
+    const inp = el('input', { type, value: val == null ? '' : val, disabled: locked ? '' : null, 'data-field': field, style: 'width:105px;padding:6px;' });
     return el('td', {}, [inp]);
   };
 
   const save = async (submitProjection, submitActual) => {
     const body = {
-      actualVisitPlan: inputs.actualVisitPlan.value,
-      salesProjectionMt: inputs.salesProjectionMt.value,
-      depositProjectionBdt: inputs.depositProjectionBdt.value,
-      actualSalesMt: inputs.actualSalesMt.value,
-      actualCollectionBdt: inputs.actualCollectionBdt.value,
+      actualVisitPlan: document.querySelector('[data-field="actualVisitPlan"]')?.value ?? '',
+      salesProjectionMt: document.querySelector('[data-field="salesProjectionMt"]')?.value ?? '',
+      depositProjectionBdt: document.querySelector('[data-field="depositProjectionBdt"]')?.value ?? '',
+      actualSalesMt: document.querySelector('[data-field="actualSalesMt"]')?.value ?? '',
+      actualCollectionBdt: document.querySelector('[data-field="actualCollectionBdt"]')?.value ?? '',
       submitProjection,
       submitActual,
     };
@@ -66,24 +71,26 @@ function buildEditableRow(own) {
   };
 
   const submitProjBtn = el('button', {
-    class: 'btn btn-sm ' + (own.projectionSubmittedAt ? 'btn-ghost' : 'btn-primary'),
-    text: own.projectionSubmittedAt ? '✓ Submitted' : 'Submit',
+    class: 'btn btn-sm ' + (projLocked ? 'btn-ghost' : 'btn-primary'),
+    text: projLocked ? '✓ Submitted' : 'Submit',
+    disabled: projLocked ? '' : null,
     onclick: () => save(true, false),
   });
   const submitActBtn = el('button', {
-    class: 'btn btn-sm ' + (own.actualSubmittedAt ? 'btn-ghost' : 'btn-primary'),
-    text: own.actualSubmittedAt ? '✓ Submitted' : 'Submit',
+    class: 'btn btn-sm ' + (actLocked ? 'btn-ghost' : 'btn-primary'),
+    text: actLocked ? '✓ Submitted' : 'Submit',
+    disabled: actLocked ? '' : null,
     onclick: () => save(false, true),
   });
 
   return el('tr', {}, [
     el('td', { text: own.date }),
-    el('td', { class: 'muted', text: own.visitSchedule || '—' }),
-    makeInput('actualVisitPlan', 'text', own.actualVisitPlan),
-    makeInput('salesProjectionMt', 'number', own.salesProjectionMt),
-    makeInput('depositProjectionBdt', 'number', own.depositProjectionBdt),
-    makeInput('actualSalesMt', 'number', own.actualSalesMt),
-    makeInput('actualCollectionBdt', 'number', own.actualCollectionBdt),
+    el('td', { class: 'muted wrap-cell', text: own.visitSchedule || '—' }),
+    makeInput('actualVisitPlan', 'text', own.actualVisitPlan, projLocked),
+    makeInput('salesProjectionMt', 'number', own.salesProjectionMt, projLocked),
+    makeInput('depositProjectionBdt', 'number', own.depositProjectionBdt, projLocked),
+    makeInput('actualSalesMt', 'number', own.actualSalesMt, actLocked),
+    makeInput('actualCollectionBdt', 'number', own.actualCollectionBdt, actLocked),
     el('td', {}, [submitProjBtn]),
     el('td', {}, [submitActBtn]),
   ]);
@@ -92,10 +99,10 @@ function buildEditableRow(own) {
 function buildReadonlyRow(r) {
   return el('tr', {}, [
     el('td', { text: r.userName || '' }),
-    el('td', { class: 'muted', text: (r.territory || []).join(', ') || '—' }),
+    el('td', { class: 'muted wrap-cell', text: (r.territory || []).join(', ') || '—' }),
     el('td', { text: r.date }),
-    el('td', { class: 'muted', text: r.visitSchedule || '—' }),
-    el('td', { text: r.actualVisitPlan || '—' }),
+    el('td', { class: 'muted wrap-cell', text: r.visitSchedule || '—' }),
+    el('td', { class: 'wrap-cell', text: r.actualVisitPlan || '—' }),
     el('td', { text: r.salesProjectionMt == null ? '—' : fmt(r.salesProjectionMt, 2) }),
     el('td', { text: r.depositProjectionBdt == null ? '—' : money(r.depositProjectionBdt) }),
     el('td', { text: r.actualSalesMt == null ? '—' : fmt(r.actualSalesMt, 2) }),

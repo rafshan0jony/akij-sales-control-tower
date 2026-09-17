@@ -29,6 +29,10 @@ function listForDate(date) {
   return getDb().prepare('SELECT * FROM sales_reports WHERE date = ? ORDER BY id').all(date).map(rowToReport);
 }
 
+function listForMonth(month) {
+  return getDb().prepare("SELECT * FROM sales_reports WHERE date LIKE ? ORDER BY date, id").all(month + '%').map(rowToReport);
+}
+
 function upsert(userId, date, fields) {
   const db = getDb();
   const now = new Date().toISOString();
@@ -62,4 +66,4 @@ function upsert(userId, date, fields) {
   return get(userId, date);
 }
 
-module.exports = { get, listForDate, upsert };
+module.exports = { get, listForDate, listForMonth, upsert };

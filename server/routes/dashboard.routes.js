@@ -122,10 +122,13 @@ router.post('/tour-plan/entry', asyncHandler(async (req, res) => {
 }));
 
 // Sales report (daily projection vs actual). Territory officers enter their
-// own report for today; managers/admin view their scope's reports.
+// own report for today; managers/admin view their scope's reports for the
+// selected month + territory.
 router.get('/sales-report', asyncHandler(async (req, res) => {
+  const { range, scope } = parseRange(req);
   const t = dates.tzParts();
   const today = `${t.y}-${String(t.m).padStart(2, '0')}-${String(t.d).padStart(2, '0')}`;
+  const month = range.from ? range.from.slice(0, 7) : today.slice(0, 7);
   const isAdmin = permissionService.hasPermission(req.user, 'SYSTEM_ADMIN');
   const canEnter = req.scope.level === 4;
 
@@ -133,21 +136,16 @@ router.get('/sales-report', asyncHandler(async (req, res) => {
   const users = usersRepo.list();
   const userById = new Map(users.map((u) => [u.id, u]));
 
-  let reports = [];
-  if (canEnter) {
-    reports = own ? [{ ...own, userName: req.user.name, territory: territoryNamesForUser(req.user.id) }] : [];
-  } else {
-    const all = salesReportsRepo.listForDate(today);
-    reports = all
-      .filter((r) => {
-        if (isAdmin || req.scope.scopeAll) return true;
-        return territoryNamesForUser(r.userId).some((name) => req.scope.territoryNames.has(name));
-      })
-      .map((r) => {
-        const u = userById.get(r.userId);
-        return { ...r, userName: u ? u.name : '', territory: territoryNamesForUser(r.userId) };
-      });
-  }
+  const all = salesReportsRepo.listForMonth(month);
+  const reports = all
+    .filter((r) => {
+      if (isAdmin || scope.scopeAll) return true;
+      return territoryNamesForUser(r.userId).some((name) => scope.territoryNames.has(name));
+    })
+    .map((r) => {
+      const u = userById.get(r.userId);
+      return { ...r, userName: u ? u.name : '', territory: territoryNamesForUser(r.userId) };
+    });
 
   res.json({ today, canEnter, own, reports });
 }));
@@ -161,6 +159,21 @@ router.post('/sales-report', asyncHandler(async (req, res) => {
   const numOrNull = (v) => (v == null || v === '' ? null : Number(v));
 
   const existing = salesReportsRepo.get(req.user.id, today);
+
+  // Projection lock: after projection submit, projection fields can't change.
+  if (existing && existing.projectionSubmittedAt) {
+    const projChanged = (actualVisitPlan != null && String(actualVisitPlan) !== (existing.actualVisitPlan || ''))
+      || (salesProjectionMt != null && salesProjectionMt !== '' && numOrNull(salesProjectionMt) !== existing.salesProjectionMt)
+      || (depositProjectionBdt != null && depositProjectionBdt !== '' && numOrNull(depositProjectionBdt) !== existing.depositProjectionBdt);
+    if (projChanged) throw forbidden('Projection is already submitted and cannot be changed');
+  }
+  // Actual lock: after actual submit, actual fields can't change.
+  if (existing && existing.actualSubmittedAt) {
+    const actualChanged = (actualSalesMt != null && actualSalesMt !== '' && numOrNull(actualSalesMt) !== existing.actualSalesMt)
+      || (actualCollectionBdt != null && actualCollectionBdt !== '' && numOrNull(actualCollectionBdt) !== existing.actualCollectionBdt);
+    if (actualChanged) throw forbidden('Actual is already submitted and cannot be changed');
+  }
+
   let visitSchedule = existing ? existing.visitSchedule : null;
   if (!existing) {
     const user = usersRepo.findById(req.user.id);
