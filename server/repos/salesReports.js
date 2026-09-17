@@ -14,6 +14,8 @@ function rowToReport(r) {
     depositProjectionBdt: r.deposit_projection_bdt,
     actualSalesMt: r.actual_sales_mt,
     actualCollectionBdt: r.actual_collection_bdt,
+    taDaDetails: r.ta_da_details,
+    taDaBill: r.ta_da_bill,
     projectionSubmittedAt: r.projection_submitted_at,
     actualSubmittedAt: r.actual_submitted_at,
     createdAt: r.created_at,
@@ -38,8 +40,8 @@ function upsert(userId, date, fields) {
   const now = new Date().toISOString();
   const existing = get(userId, date);
   db.prepare(
-    `INSERT INTO sales_reports (user_id, date, visit_schedule, actual_visit_plan, sales_projection_mt, deposit_projection_bdt, actual_sales_mt, actual_collection_bdt, projection_submitted_at, actual_submitted_at, created_at, updated_at)
-     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+    `INSERT INTO sales_reports (user_id, date, visit_schedule, actual_visit_plan, sales_projection_mt, deposit_projection_bdt, actual_sales_mt, actual_collection_bdt, ta_da_details, ta_da_bill, projection_submitted_at, actual_submitted_at, created_at, updated_at)
+     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
      ON CONFLICT(user_id, date) DO UPDATE SET
        visit_schedule = excluded.visit_schedule,
        actual_visit_plan = excluded.actual_visit_plan,
@@ -47,6 +49,8 @@ function upsert(userId, date, fields) {
        deposit_projection_bdt = excluded.deposit_projection_bdt,
        actual_sales_mt = excluded.actual_sales_mt,
        actual_collection_bdt = excluded.actual_collection_bdt,
+       ta_da_details = excluded.ta_da_details,
+       ta_da_bill = excluded.ta_da_bill,
        projection_submitted_at = excluded.projection_submitted_at,
        actual_submitted_at = excluded.actual_submitted_at,
        updated_at = excluded.updated_at`
@@ -58,6 +62,8 @@ function upsert(userId, date, fields) {
     fields.depositProjectionBdt ?? (existing ? existing.depositProjectionBdt : null),
     fields.actualSalesMt ?? (existing ? existing.actualSalesMt : null),
     fields.actualCollectionBdt ?? (existing ? existing.actualCollectionBdt : null),
+    fields.taDaDetails ?? (existing ? existing.taDaDetails : null),
+    fields.taDaBill ?? (existing ? existing.taDaBill : null),
     fields.projectionSubmittedAt ?? (existing ? existing.projectionSubmittedAt : null),
     fields.actualSubmittedAt ?? (existing ? existing.actualSubmittedAt : null),
     existing ? existing.createdAt : now,

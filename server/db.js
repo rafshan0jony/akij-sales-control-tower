@@ -146,6 +146,8 @@ function migrate(db) {
       deposit_projection_bdt REAL,
       actual_sales_mt REAL,
       actual_collection_bdt REAL,
+      ta_da_details TEXT,
+      ta_da_bill TEXT,
       projection_submitted_at TEXT,
       actual_submitted_at TEXT,
       created_at TEXT NOT NULL,
@@ -153,6 +155,10 @@ function migrate(db) {
       UNIQUE (user_id, date)
     );
   `);
+
+  // Add TA/DA fields to an existing sales_reports table (older databases).
+  try { db.exec('ALTER TABLE sales_reports ADD COLUMN ta_da_details TEXT'); } catch (_) { /* exists */ }
+  try { db.exec('ALTER TABLE sales_reports ADD COLUMN ta_da_bill TEXT'); } catch (_) { /* exists */ }
 
   // Admin-visible plaintext password (for the admin user panel).
   try {

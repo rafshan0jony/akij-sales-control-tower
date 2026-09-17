@@ -73,6 +73,8 @@ function buildEditableRow(own) {
       depositProjectionBdt: document.querySelector('[data-field="depositProjectionBdt"]')?.value ?? '',
       actualSalesMt: document.querySelector('[data-field="actualSalesMt"]')?.value ?? '',
       actualCollectionBdt: document.querySelector('[data-field="actualCollectionBdt"]')?.value ?? '',
+      taDaDetails: document.querySelector('[data-field="taDaDetails"]')?.value ?? '',
+      taDaBill: document.querySelector('[data-field="taDaBill"]')?.value ?? '',
       submitProjection,
       submitActual,
     };
@@ -101,8 +103,8 @@ function buildEditableRow(own) {
     makeInput('depositProjectionBdt', 'number', own.depositProjectionBdt, projLocked),
     makeInput('actualSalesMt', 'number', own.actualSalesMt, actLocked),
     makeInput('actualCollectionBdt', 'number', own.actualCollectionBdt, actLocked),
-    el('td', { class: 'wrap-cell', text: own.taDaDetails || '—' }),
-    el('td', { text: own.taDaBill == null ? '—' : money(own.taDaBill) }),
+    makeInput('taDaDetails', 'text', own.taDaDetails, actLocked),
+    makeInput('taDaBill', 'number', own.taDaBill, actLocked),
     el('td', {}, [submitProjBtn]),
     el('td', {}, [submitActBtn]),
   ]);

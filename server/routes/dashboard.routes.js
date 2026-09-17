@@ -136,13 +136,7 @@ router.get('/sales-report', asyncHandler(async (req, res) => {
   const users = usersRepo.list();
   const userById = new Map(users.map((u) => [u.id, u]));
 
-  let own = salesReportsRepo.get(req.user.id, today);
-  if (own) {
-    const m = today.slice(0, 7);
-    const d = Number(today.slice(8, 10));
-    const entry = tourPlanEntriesRepo.get(req.user.id, m, d);
-    own = { ...own, taDaDetails: entry ? entry.taDaDetails : null, taDaBill: entry ? entry.taDaBill : null };
-  }
+  const own = salesReportsRepo.get(req.user.id, today);
 
   const all = dateParam ? salesReportsRepo.listForDate(dateParam) : salesReportsRepo.listForMonth(month);
   const reports = all
@@ -152,15 +146,10 @@ router.get('/sales-report', asyncHandler(async (req, res) => {
     })
     .map((r) => {
       const u = userById.get(r.userId);
-      const m = r.date.slice(0, 7);
-      const d = Number(r.date.slice(8, 10));
-      const entry = tourPlanEntriesRepo.get(r.userId, m, d);
       return {
         ...r,
         userName: u ? u.name : '',
         territory: territoryNamesForUser(r.userId),
-        taDaDetails: entry ? entry.taDaDetails : null,
-        taDaBill: entry ? entry.taDaBill : null,
       };
     });
 
@@ -172,7 +161,7 @@ router.post('/sales-report', asyncHandler(async (req, res) => {
   const today = `${t.y}-${String(t.m).padStart(2, '0')}-${String(t.d).padStart(2, '0')}`;
   if (req.scope.level !== 4) throw forbidden('Only territory officers can enter a sales report');
 
-  const { actualVisitPlan, salesProjectionMt, depositProjectionBdt, actualSalesMt, actualCollectionBdt, submitProjection, submitActual } = req.body || {};
+  const { actualVisitPlan, salesProjectionMt, depositProjectionBdt, actualSalesMt, actualCollectionBdt, taDaDetails, taDaBill, submitProjection, submitActual } = req.body || {};
   const numOrNull = (v) => (v == null || v === '' ? null : Number(v));
 
   const existing = salesReportsRepo.get(req.user.id, today);
@@ -205,6 +194,8 @@ router.post('/sales-report', asyncHandler(async (req, res) => {
     depositProjectionBdt: numOrNull(depositProjectionBdt),
     actualSalesMt: numOrNull(actualSalesMt),
     actualCollectionBdt: numOrNull(actualCollectionBdt),
+    taDaDetails: taDaDetails == null ? null : String(taDaDetails),
+    taDaBill: taDaBill == null ? null : String(taDaBill),
     projectionSubmittedAt: submitProjection ? now : (existing ? existing.projectionSubmittedAt : null),
     actualSubmittedAt: submitActual ? now : (existing ? existing.actualSubmittedAt : null),
   });
