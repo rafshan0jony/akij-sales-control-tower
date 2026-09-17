@@ -106,6 +106,7 @@ async function getSalesOrders(from, to, channelId = config.app.channelId) {
       CONVERT(varchar(10), h.[${H.date}], 120) AS date,
       h.[${H.orderNo}] AS orderNo,
       h.[${H.customer}] AS customer,
+      bp.strBusinessPartnerCode AS customerCode,
       t.[${TI.name}] AS territory,
       CASE WHEN h.[${H.isRejected}] = 1 THEN 'Rejected'
            WHEN h.[${H.isCompleted}] = 1 THEN 'Completed'
@@ -121,6 +122,7 @@ async function getSalesOrders(from, to, channelId = config.app.channelId) {
     FROM ${TABLES.salesOrderHeader} h
     INNER JOIN ${TABLES.salesOrderRow} r ON h.[${H.id}] = r.[${R.orderId}]
     LEFT JOIN ${TABLES.territoryInfo} t ON t.[${TI.id}] = h.[${H.territoryId}]
+    LEFT JOIN prt.tblBusinessPartnerArc bp ON bp.intBusinessPartnerId = h.intSoldToPartnerId
     LEFT JOIN (
       SELECT dr.[${DR.orderId}] AS salesOrderId, dr.[${DR.salesOrderRowId}] AS salesOrderRowId,
              SUM(dr.[${DR.quantity}]) AS challanQty
@@ -150,6 +152,7 @@ async function getDeliveries(from, to, channelId = config.app.channelId) {
     SELECT
       CONVERT(varchar(10), h.[${DH.date}], 120) AS date,
       h.[${DH.customer}] AS customer,
+      bp.strBusinessPartnerCode AS customerCode,
       t.[${TI.name}] AS territory,
       'Delivered' AS status,
       r.[${DR.orderNo}] AS orderNo,
@@ -161,6 +164,7 @@ async function getDeliveries(from, to, channelId = config.app.channelId) {
     INNER JOIN ${TABLES.deliveryRow} r ON h.[${DH.id}] = r.[${DR.deliveryId}]
     LEFT JOIN ${TABLES.salesOrderHeader} so ON so.[${H.id}] = r.[${DR.orderId}]
     LEFT JOIN ${TABLES.territoryInfo} t ON t.[${TI.id}] = so.[${H.territoryId}]
+    LEFT JOIN prt.tblBusinessPartnerArc bp ON bp.intBusinessPartnerId = h.intSoldToPartnerId
     WHERE h.[${DH.channel}] = @channel
       AND h.[${DH.date}] >= @from AND h.[${DH.date}] <= @to
       AND h.[${DH.active}] = 1

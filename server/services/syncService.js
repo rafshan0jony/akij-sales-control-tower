@@ -5,6 +5,7 @@ const syncRepo = require('../repos/sync');
 const territoriesRepo = require('../repos/territories');
 const territoryMapping = require('./territoryMappingService');
 const itemMapping = require('./itemMappingService');
+const customerTerritoryOverride = require('./customerTerritoryOverride');
 const territoryTargetService = require('./territoryTargetService');
 const tourPlanSheetService = require('./tourPlanSheetService');
 const metadataService = require('./metadataService');
@@ -33,7 +34,7 @@ function normalizeOrders(rows) {
   for (const r of rows || []) {
     const pm = itemMapping.resolveProduct(r.item);
     if (!pm) continue; // exclude by-products / unmapped items
-    const tm = territoryMapping.resolve(r.territory);
+    const tm = territoryMapping.resolve(customerTerritoryOverride.territoryFor(r.customerCode) || r.territory);
     if (!tm) continue; // exclude territories not in the mapping
     out.push({
       date: dates.toDateStr(r.date),
@@ -66,7 +67,7 @@ function normalizeDeliveries(rows) {
   for (const r of rows || []) {
     const pm = itemMapping.resolveProduct(r.item);
     if (!pm) continue;
-    const tm = territoryMapping.resolve(r.territory);
+    const tm = territoryMapping.resolve(customerTerritoryOverride.territoryFor(r.customerCode) || r.territory);
     if (!tm) continue; // exclude territories not in the mapping
     out.push({
       date: dates.toDateStr(r.date),
@@ -93,7 +94,7 @@ function normalizeCredit(rows) {
   const today = dates.todayStr();
   const out = [];
   for (const r of rows || []) {
-    const tm = territoryMapping.resolve(r.territory);
+    const tm = territoryMapping.resolve(customerTerritoryOverride.territoryFor(r.partnerCode) || r.territory);
     if (!tm) continue; // exclude territories not in the mapping
     const creditDays = num(r.creditDays);
     const lastDeliveryDate = r.lastDeliveryDate ? dates.toDateStr(r.lastDeliveryDate) : null;
