@@ -35,6 +35,10 @@ function listForMonth(month) {
   return getDb().prepare("SELECT * FROM sales_reports WHERE date LIKE ? ORDER BY date, id").all(month + '%').map(rowToReport);
 }
 
+function listAll() {
+  return getDb().prepare('SELECT * FROM sales_reports ORDER BY date, id').all().map(rowToReport);
+}
+
 function upsert(userId, date, fields) {
   const db = getDb();
   const now = new Date().toISOString();
@@ -72,4 +76,4 @@ function upsert(userId, date, fields) {
   return get(userId, date);
 }
 
-module.exports = { get, listForDate, listForMonth, upsert };
+module.exports = { get, listForDate, listForMonth, listAll, upsert };

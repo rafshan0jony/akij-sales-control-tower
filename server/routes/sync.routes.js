@@ -7,6 +7,9 @@ const { badRequest } = require('../lib/errors');
 const syncService = require('../services/syncService');
 const syncRepo = require('../repos/sync');
 const metadataService = require('../services/metadataService');
+const salesReportsRepo = require('../repos/salesReports');
+const usersRepo = require('../repos/users');
+const userTerritoriesRepo = require('../repos/userTerritories');
 
 const router = express.Router();
 
@@ -41,6 +44,23 @@ router.post('/ingest', asyncHandler(async (req, res) => {
 router.get('/status', asyncHandler(async (req, res) => {
   if (!checkSecret(req)) return res.status(401).json({ error: 'Invalid sync secret' });
   res.json({ sync: syncRepo.get() });
+}));
+
+// Export all sales reports (for the bridge to back up to Google Sheets).
+router.get('/sales-reports', asyncHandler(async (req, res) => {
+  if (!checkSecret(req)) return res.status(401).json({ error: 'Invalid sync secret' });
+  const reports = salesReportsRepo.listAll();
+  const users = usersRepo.list();
+  const userById = new Map(users.map((u) => [u.id, u]));
+  const enriched = reports.map((r) => {
+    const u = userById.get(r.userId);
+    return {
+      ...r,
+      name: u ? u.name : '',
+      territory: userTerritoriesRepo.listForUser(r.userId).map((t) => t.name).join(', '),
+    };
+  });
+  res.json({ reports: enriched });
 }));
 
 // App metadata export (users/roles/territories/targets/config) for the bridge backup.

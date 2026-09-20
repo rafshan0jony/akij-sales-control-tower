@@ -23,6 +23,7 @@ const dates = require('../server/lib/dates');
 const territoryTargetService = require('../server/services/territoryTargetService');
 const tourPlanSheetService = require('../server/services/tourPlanSheetService');
 const fs = require('node:fs');
+const os = require('node:os');
 const path = require('node:path');
 
 const TARGET_URL = (process.env.SYNC_TARGET_URL || '').replace(/\/$/, '');
@@ -35,6 +36,8 @@ const GITHUB_REPO = 'rafshan0jony/akij-sales-control-tower';
 const SNAPSHOT_BRANCH = 'snapshot';
 const SNAPSHOT_PATH = 'data/snapshot.json';
 const META_PATH = 'data/metadata-backup.json';
+const SALES_REPORT_SHEET_ID = '1z6zYTsyL6TYqpFVfRdxyx1VKoTJ1RoifACpowRyvgls';
+const SHEETS_TOKEN_PATH = path.join(os.homedir(), '.local', 'share', 'google-workspace-mcp', 'credentials', 'rafshan_at_akijresource_dot_com.json');
 
 function log(...a) {
   console.log(`[${new Date().toISOString()}] [bridge]`, ...a);
@@ -162,6 +165,50 @@ async function pushMetadataToGithub() {
 }
 
 /**
+ * Back up the app's sales reports to a Google Sheet (full overwrite each run),
+ * so the data survives a host crash / database reset.
+ */
+async function syncSalesReportsToSheet() {
+  if (!TARGET_URL) return;
+  try {
+    const res = await fetch(TARGET_URL + '/api/sync/sales-reports', { headers: { 'x-sync-secret': SECRET } });
+    if (!res.ok) return;
+    const { reports } = await res.json();
+    if (!Array.isArray(reports)) return;
+
+    const header = ['Date', 'Employee', 'Territory', 'Visit Schedule', 'Actual Visit Plan', 'Sales Projection (MT)', 'Deposit Projection (BDT)', 'Actual Sales (MT)', 'Actual Collection (BDT)', 'TA/DA Details', 'TA/DA Bill', 'Projection Submitted', 'Actual Submitted'];
+    const rows = reports.map((r) => [
+      r.date, r.name || '', r.territory || '', r.visitSchedule || '', r.actualVisitPlan || '',
+      r.salesProjectionMt == null ? '' : r.salesProjectionMt,
+      r.depositProjectionBdt == null ? '' : r.depositProjectionBdt,
+      r.actualSalesMt == null ? '' : r.actualSalesMt,
+      r.actualCollectionBdt == null ? '' : r.actualCollectionBdt,
+      r.taDaDetails || '', r.taDaBill == null ? '' : r.taDaBill,
+      r.projectionSubmittedAt || '', r.actualSubmittedAt || '',
+    ]);
+    const values = [header, ...rows];
+
+    const { OAuth2Client } = require('google-auth-library');
+    const token = JSON.parse(fs.readFileSync(SHEETS_TOKEN_PATH, 'utf8'));
+    const oauth = new OAuth2Client(token.client_id, token.client_secret);
+    oauth.setCredentials({ refresh_token: token.refresh_token });
+    const { credentials } = await oauth.refreshAccessToken();
+    const at = credentials.access_token;
+
+    const range = 'Sales Report';
+    const url = `https://sheets.googleapis.com/v4/spreadsheets/${SALES_REPORT_SHEET_ID}/values/${encodeURIComponent(range)}?valueInputOption=RAW`;
+    const wres = await fetch(url, {
+      method: 'PUT',
+      headers: { Authorization: 'Bearer ' + at, 'Content-Type': 'application/json' },
+      body: JSON.stringify({ range, values }),
+    });
+    if (!wres.ok) log('WARN: sales report sheet sync failed', wres.status, (await wres.text()).slice(0, 200));
+  } catch (err) {
+    log('WARN: sales report sheet sync failed:', err.message);
+  }
+}
+
+/**
  * Backup / restore app metadata (users/roles/territories/targets/config) so
  * created users survive the host's ephemeral-database resets.
  */
@@ -208,6 +255,7 @@ async function runOnce() {
   try { await pushSnapshotToGithub(snapshot); } catch (err) { log('WARN: snapshot backup failed:', err.message); }
   try { await backupRestoreMetadata(); } catch (err) { log('WARN: metadata backup failed:', err.message); }
   try { await pushMetadataToGithub(); } catch (err) { log('WARN: metadata GitHub backup failed:', err.message); }
+  try { await syncSalesReportsToSheet(); } catch (err) { log('WARN: sales report sheet sync failed:', err.message); }
 }
 
 async function main() {
