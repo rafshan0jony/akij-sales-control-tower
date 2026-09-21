@@ -12,6 +12,7 @@ const operationalRoutes = require('./routes/operational.routes');
 const analyticsRoutes = require('./routes/analytics.routes');
 const adminRoutes = require('./routes/admin.routes');
 const syncRoutes = require('./routes/sync.routes');
+const deliveryScheduleRoutes = require('./routes/deliverySchedule.routes');
 
 function createApp() {
   const app = express();
@@ -35,6 +36,7 @@ function createApp() {
   app.use('/api/sync', syncRoutes);
   app.use('/api/dashboard', dashboardRoutes);
   app.use('/api', operationalRoutes);
+  app.use('/api/delivery-schedules', deliveryScheduleRoutes);
   app.use('/api', analyticsRoutes);
   app.use('/api/admin', adminRoutes);
 

@@ -154,6 +154,31 @@ function migrate(db) {
       updated_at TEXT,
       UNIQUE (user_id, date)
     );
+
+    CREATE TABLE IF NOT EXISTS delivery_schedules (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      user_id INTEGER NOT NULL,
+      delivery_date TEXT NOT NULL,
+      submitted_at TEXT NOT NULL,
+      chat_message_name TEXT,
+      chat_status TEXT NOT NULL DEFAULT 'pending',
+      chat_error TEXT
+    );
+
+    CREATE TABLE IF NOT EXISTS delivery_schedule_lines (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      schedule_id INTEGER NOT NULL,
+      order_no TEXT NOT NULL,
+      customer TEXT NOT NULL,
+      territory TEXT,
+      item TEXT NOT NULL,
+      uom TEXT,
+      weight REAL,
+      order_qty_bags REAL NOT NULL,
+      pending_qty_bags REAL NOT NULL,
+      schedule_qty_bags REAL NOT NULL,
+      FOREIGN KEY (schedule_id) REFERENCES delivery_schedules(id) ON DELETE CASCADE
+    );
   `);
 
   // Add TA/DA fields to an existing sales_reports table (older databases).

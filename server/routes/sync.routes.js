@@ -10,6 +10,7 @@ const metadataService = require('../services/metadataService');
 const salesReportsRepo = require('../repos/salesReports');
 const usersRepo = require('../repos/users');
 const userTerritoriesRepo = require('../repos/userTerritories');
+const deliverySchedulesRepo = require('../repos/deliverySchedules');
 
 const router = express.Router();
 
@@ -61,6 +62,12 @@ router.get('/sales-reports', asyncHandler(async (req, res) => {
     };
   });
   res.json({ reports: enriched });
+}));
+
+// Export delivery schedules for the office bridge's Google Sheet backup.
+router.get('/delivery-schedules', asyncHandler(async (req, res) => {
+  if (!checkSecret(req)) return res.status(401).json({ error: 'Invalid sync secret' });
+  res.json({ schedules: deliverySchedulesRepo.listAll() });
 }));
 
 // Restore sales reports from the Google Sheet backup after a DB reset.

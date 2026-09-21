@@ -2,6 +2,7 @@
 
 process.env.APP_DB_PATH = ':memory:';
 process.env.SYNC_ENABLED = 'false';
+process.env.SYNC_SECRET = 'test-sync-secret';
 process.env.JWT_SECRET = 'test-secret';
 
 const test = require('node:test');
@@ -44,6 +45,9 @@ test('admin can authenticate and access admin endpoints', async () => {
   const token = r.body.token;
   const res = await fetch(base + '/api/admin/users', { headers: { Authorization: 'Bearer ' + token } });
   assert.strictEqual(res.status, 200);
+  const scheduleRes = await fetch(base + '/api/delivery-schedules/pending', { headers: { Authorization: 'Bearer ' + token } });
+  assert.strictEqual(scheduleRes.status, 200);
+  assert.ok(Array.isArray((await scheduleRes.json()).rows));
 });
 
 test('territory user is forbidden from admin endpoints', async () => {
@@ -63,4 +67,27 @@ test('territory user is forbidden from admin endpoints', async () => {
 test('unauthenticated request is rejected', async () => {
   const res = await fetch(base + '/api/dashboard/summary');
   assert.strictEqual(res.status, 401);
+});
+
+test('delivery schedule endpoints require authentication', async () => {
+  const pending = await fetch(base + '/api/delivery-schedules/pending');
+  assert.strictEqual(pending.status, 401);
+});
+
+test('delivery schedule rejects invalid submissions before Chat delivery', async () => {
+  const r = await login('admin', 'admin123');
+  const res = await fetch(base + '/api/delivery-schedules', {
+    method: 'POST',
+    headers: { Authorization: 'Bearer ' + r.body.token, 'Content-Type': 'application/json' },
+    body: JSON.stringify({ deliveryDate: 'not-a-date', lines: [] }),
+  });
+  assert.strictEqual(res.status, 400);
+});
+
+test('delivery schedules are exportable to the sync bridge', async () => {
+  const res = await fetch(base + '/api/sync/delivery-schedules', {
+    headers: { 'x-sync-secret': 'test-sync-secret' },
+  });
+  assert.strictEqual(res.status, 200);
+  assert.ok(Array.isArray((await res.json()).schedules));
 });

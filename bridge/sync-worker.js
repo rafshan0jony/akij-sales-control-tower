@@ -208,6 +208,43 @@ async function syncSalesReportsToSheet() {
   }
 }
 
+/** Back up delivery schedule lines to the Delivery Schedule tab. */
+async function syncDeliverySchedulesToSheet() {
+  if (!TARGET_URL) return;
+  try {
+    const res = await fetch(TARGET_URL + '/api/sync/delivery-schedules', { headers: { 'x-sync-secret': SECRET } });
+    if (!res.ok) return;
+    const { schedules } = await res.json();
+    if (!Array.isArray(schedules)) return;
+
+    const header = ['Submitted At', 'Delivery Date', 'Submitted By', 'Customer', 'SO No', 'Territory', 'Item', 'UOM', 'Order Qty (bags)', 'Pending Qty (bags)', 'Schedule Qty (bags)', 'Chat Status'];
+    const rows = schedules.map((r) => [
+      r.submittedAt || '', r.deliveryDate || '', r.submittedBy || '', r.customer || '',
+      r.orderNo || '', r.territory || '', r.item || '', r.uom || '',
+      r.orderQtyBags == null ? '' : r.orderQtyBags,
+      r.pendingQtyBags == null ? '' : r.pendingQtyBags,
+      r.scheduleQtyBags == null ? '' : r.scheduleQtyBags,
+      r.chatStatus || '',
+    ]);
+    const values = [header, ...rows];
+    const range = 'Delivery Schedule';
+    const { OAuth2Client } = require('google-auth-library');
+    const token = JSON.parse(fs.readFileSync(SHEETS_TOKEN_PATH, 'utf8'));
+    const oauth = new OAuth2Client(token.client_id, token.client_secret);
+    oauth.setCredentials({ refresh_token: token.refresh_token });
+    const { credentials } = await oauth.refreshAccessToken();
+    const url = `https://sheets.googleapis.com/v4/spreadsheets/${SALES_REPORT_SHEET_ID}/values/${encodeURIComponent(range)}?valueInputOption=RAW`;
+    const wres = await fetch(url, {
+      method: 'PUT',
+      headers: { Authorization: 'Bearer ' + credentials.access_token, 'Content-Type': 'application/json' },
+      body: JSON.stringify({ range, values }),
+    });
+    if (!wres.ok) log('WARN: delivery schedule sheet sync failed', wres.status, (await wres.text()).slice(0, 200));
+  } catch (err) {
+    log('WARN: delivery schedule sheet sync failed:', err.message);
+  }
+}
+
 // Recover reports from the Sheet backup when the deployed app database is empty.
 async function restoreSalesReportsFromSheet() {
   if (!TARGET_URL) return;
@@ -298,6 +335,7 @@ async function runOnce() {
   try { await backupRestoreMetadata(); } catch (err) { log('WARN: metadata backup failed:', err.message); }
   try { await pushMetadataToGithub(); } catch (err) { log('WARN: metadata GitHub backup failed:', err.message); }
   try { await syncSalesReportsToSheet(); } catch (err) { log('WARN: sales report sheet sync failed:', err.message); }
+  try { await syncDeliverySchedulesToSheet(); } catch (err) { log('WARN: delivery schedule sheet sync failed:', err.message); }
 }
 
 async function main() {

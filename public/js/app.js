@@ -7,6 +7,7 @@ import { renderSalesReport } from './pages/salesReport.js';
 import { renderSales } from './pages/sales.js';
 import { renderDelivery } from './pages/delivery.js';
 import { renderPending } from './pages/pending.js';
+import { renderDeliverySchedule } from './pages/deliverySchedule.js';
 import { renderTarget } from './pages/target.js';
 import { renderPerformance } from './pages/performance.js';
 import { renderAnalytics } from './pages/analytics.js';
@@ -45,6 +46,7 @@ const NAV = [
   { label: 'Sales Order', hash: '#/sales', ico: '🧾', perm: 'VIEW_SALES_ORDER' },
   { label: 'Delivery', hash: '#/delivery', ico: '🚚', perm: 'VIEW_DELIVERY' },
   { label: 'Pending', hash: '#/pending', ico: '⏳', perm: 'VIEW_PENDING' },
+  { label: 'Delivery Schedule', hash: '#/delivery-schedule', ico: '📅', perm: 'VIEW_PENDING' },
   { label: 'Credit Status', hash: '#/credit-status', ico: '💳' },
   { section: 'Performance' },
   { label: 'Target vs Achievement', hash: '#/target', ico: '🎯', perm: 'VIEW_TARGET' },
@@ -216,6 +218,7 @@ const ROUTES = [
   ['#/sales', 'Sales Order', renderSales],
   ['#/delivery', 'Delivery', renderDelivery],
   ['#/pending', 'Pending', renderPending],
+  ['#/delivery-schedule', 'Delivery Schedule', renderDeliverySchedule],
   ['#/credit-status', 'Credit Status', renderCreditStatus],
   ['#/target', 'Target vs Achievement', renderTarget],
   ['#/region', 'Region Performance', (c) => renderPerformance(c, state, 'region')],
