@@ -121,27 +121,29 @@ router.post('/tour-plan/entry', asyncHandler(async (req, res) => {
   res.json({ entry });
 }));
 
-// Sales report (daily projection vs actual). Territory officers enter their
-// own report for today; managers/admin view their scope's reports for the
-// selected month + territory.
+// Sales report (daily projection vs actual). Any field employee (national/
+// region/area/territory) enters their own report for today; managers/admin
+// also view their scope's reports for the selected month + date.
 router.get('/sales-report', asyncHandler(async (req, res) => {
   const { range, scope } = parseRange(req);
   const t = dates.tzParts();
   const today = `${t.y}-${String(t.m).padStart(2, '0')}-${String(t.d).padStart(2, '0')}`;
   const month = range.from ? range.from.slice(0, 7) : today.slice(0, 7);
   const dateParam = req.query.date || '';
-  const isAdmin = permissionService.hasPermission(req.user, 'SYSTEM_ADMIN');
-  const canEnter = req.scope.level === 4;
+  const canEnter = req.scope.level >= 0;
 
   const users = usersRepo.list();
   const userById = new Map(users.map((u) => [u.id, u]));
 
-  const own = salesReportsRepo.get(req.user.id, today);
+  let own = salesReportsRepo.get(req.user.id, today);
+  if (own) {
+    own = { ...own, userName: req.user.name, territory: territoryNamesForUser(req.user.id) };
+  }
 
   const all = dateParam ? salesReportsRepo.listForDate(dateParam) : salesReportsRepo.listForMonth(month);
   const reports = all
     .filter((r) => {
-      if (isAdmin || scope.scopeAll) return true;
+      if (scope.scopeAll) return true;
       return territoryNamesForUser(r.userId).some((name) => scope.territoryNames.has(name));
     })
     .map((r) => {
@@ -159,7 +161,7 @@ router.get('/sales-report', asyncHandler(async (req, res) => {
 router.post('/sales-report', asyncHandler(async (req, res) => {
   const t = dates.tzParts();
   const today = `${t.y}-${String(t.m).padStart(2, '0')}-${String(t.d).padStart(2, '0')}`;
-  if (req.scope.level !== 4) throw forbidden('Only territory officers can enter a sales report');
+  if (req.scope.level < 0) throw forbidden('Only field employees can enter a sales report');
 
   const { actualVisitPlan, salesProjectionMt, depositProjectionBdt, actualSalesMt, actualCollectionBdt, taDaDetails, taDaBill, submitProjection, submitActual } = req.body || {};
   const numOrNull = (v) => (v == null || v === '' ? null : Number(v));

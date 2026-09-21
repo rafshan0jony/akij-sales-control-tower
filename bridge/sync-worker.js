@@ -208,6 +208,45 @@ async function syncSalesReportsToSheet() {
   }
 }
 
+// Recover reports from the Sheet backup when the deployed app database is empty.
+async function restoreSalesReportsFromSheet() {
+  if (!TARGET_URL) return;
+  try {
+    const current = await fetch(TARGET_URL + '/api/sync/sales-reports', { headers: { 'x-sync-secret': SECRET } });
+    if (!current.ok) return;
+    const currentBody = await current.json();
+    if (Array.isArray(currentBody.reports) && currentBody.reports.length) return;
+
+    const token = JSON.parse(fs.readFileSync(SHEETS_TOKEN_PATH, 'utf8'));
+    const { OAuth2Client } = require('google-auth-library');
+    const oauth = new OAuth2Client(token.client_id, token.client_secret);
+    oauth.setCredentials({ refresh_token: token.refresh_token });
+    const { credentials } = await oauth.refreshAccessToken();
+    const url = `https://sheets.googleapis.com/v4/spreadsheets/${SALES_REPORT_SHEET_ID}/values/${encodeURIComponent('Sales Report!A:M')}`;
+    const sres = await fetch(url, { headers: { Authorization: 'Bearer ' + credentials.access_token } });
+    if (!sres.ok) return;
+    const values = (await sres.json()).values || [];
+    if (values.length < 2) return;
+
+    const reports = values.slice(1).map((r) => ({
+      date: r[0], name: r[1], visitSchedule: r[3], actualVisitPlan: r[4],
+      salesProjectionMt: r[5], depositProjectionBdt: r[6], actualSalesMt: r[7],
+      actualCollectionBdt: r[8], taDaDetails: r[9], taDaBill: r[10],
+      projectionSubmittedAt: r[11], actualSubmittedAt: r[12],
+    })).filter((r) => r.date && r.name);
+    if (!reports.length) return;
+
+    const ires = await fetch(TARGET_URL + '/api/sync/sales-reports/import', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'x-sync-secret': SECRET },
+      body: JSON.stringify({ reports }),
+    });
+    if (ires.ok) log('restored sales reports from Google Sheet:', await ires.json());
+  } catch (err) {
+    log('WARN: sales report restore failed:', err.message);
+  }
+}
+
 /**
  * Backup / restore app metadata (users/roles/territories/targets/config) so
  * created users survive the host's ephemeral-database resets.
@@ -255,6 +294,7 @@ async function runOnce() {
   try { await pushSnapshotToGithub(snapshot); } catch (err) { log('WARN: snapshot backup failed:', err.message); }
   try { await backupRestoreMetadata(); } catch (err) { log('WARN: metadata backup failed:', err.message); }
   try { await pushMetadataToGithub(); } catch (err) { log('WARN: metadata GitHub backup failed:', err.message); }
+  try { await restoreSalesReportsFromSheet(); } catch (err) { log('WARN: sales report restore failed:', err.message); }
   try { await syncSalesReportsToSheet(); } catch (err) { log('WARN: sales report sheet sync failed:', err.message); }
 }
 
