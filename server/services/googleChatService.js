@@ -9,10 +9,20 @@ const credentialsPath = process.env.GOOGLE_CHAT_CREDENTIALS || path.join(project
 const tokenPath = process.env.GOOGLE_CHAT_TOKEN || path.join(projectDir, '..', 'token.json');
 const space = process.env.DELIVERY_CHAT_SPACE || 'spaces/AAAAnG4FiIs';
 
+function readJsonSecret(envName, filePath) {
+  const value = process.env[envName];
+  if (value) return JSON.parse(value);
+  return JSON.parse(fs.readFileSync(filePath, 'utf8'));
+}
+
 async function authToken() {
-  const creds = JSON.parse(fs.readFileSync(credentialsPath, 'utf8'));
+  const creds = process.env.GOOGLE_CHAT_CLIENT_ID
+    ? { installed: { client_id: process.env.GOOGLE_CHAT_CLIENT_ID, client_secret: process.env.GOOGLE_CHAT_CLIENT_SECRET } }
+    : readJsonSecret('GOOGLE_CHAT_CREDENTIALS_JSON', credentialsPath);
   const client = creds.installed || creds.web;
-  const token = JSON.parse(fs.readFileSync(tokenPath, 'utf8'));
+  const token = process.env.GOOGLE_CHAT_REFRESH_TOKEN
+    ? { refresh_token: process.env.GOOGLE_CHAT_REFRESH_TOKEN }
+    : readJsonSecret('GOOGLE_CHAT_TOKEN_JSON', tokenPath);
   const oauth = new OAuth2Client(client.client_id, client.client_secret);
   oauth.setCredentials({ refresh_token: token.refresh_token });
   const result = await oauth.refreshAccessToken();
