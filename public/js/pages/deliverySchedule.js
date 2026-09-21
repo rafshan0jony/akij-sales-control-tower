@@ -11,16 +11,14 @@ export async function renderDeliverySchedule(container) {
     ...customers.map((customer) => el('option', { value: customer, text: customer })),
   ]);
   const orderSelect = el('select', { class: 'form-control' }, [el('option', { value: '', text: 'Select sales order' })]);
-  const itemSelect = el('select', { class: 'form-control' }, [el('option', { value: '', text: 'Select item' })]);
-  const qty = el('input', { class: 'form-control', type: 'number', min: '0.01', step: '0.01', placeholder: 'Bags' });
   const date = el('input', { class: 'form-control', type: 'date' });
   const today = new Date();
   const iso = (value) => value.toISOString().slice(0, 10);
   date.min = iso(today);
   today.setDate(today.getDate() + 1);
   date.value = iso(today);
-  const tableBody = el('tbody');
-  const selected = [];
+  const lineBox = el('div', { class: 'schedule-lines-empty', text: 'Select a customer and sales order to view pending line items.' });
+  const inputs = new Map();
 
   function refreshOrders() {
     orderSelect.innerHTML = '';
@@ -28,54 +26,61 @@ export async function renderDeliverySchedule(container) {
     [...new Set(rows.filter((r) => r.customer === customerSelect.value).map((r) => r.orderNo))].forEach((order) => {
       orderSelect.appendChild(el('option', { value: order, text: order }));
     });
-    refreshItems();
+    renderLines();
   }
-  function refreshItems() {
-    itemSelect.innerHTML = '';
-    itemSelect.appendChild(el('option', { value: '', text: 'Select item' }));
-    rows.filter((r) => r.customer === customerSelect.value && r.orderNo === orderSelect.value)
-      .forEach((r) => itemSelect.appendChild(el('option', { value: r.key, text: `${r.item} (${r.availableQtyBags} bags available)` })));
-  }
-  function addLine() {
-    const row = rows.find((r) => r.key === itemSelect.value);
-    const value = Number(qty.value);
-    if (!row || !Number.isFinite(value) || value <= 0 || value > row.availableQtyBags) return;
-    if (selected.some((x) => x.key === row.key)) return;
-    selected.push({ ...row, scheduleQtyBags: value });
-    tableBody.appendChild(el('tr', {}, [
-      el('td', { text: row.customer }), el('td', { text: row.orderNo }), el('td', { text: row.item }),
-      el('td', { text: `${value} / ${row.availableQtyBags}` }),
-      el('td', {}, [el('button', { class: 'btn btn-sm', text: 'Remove', onclick: (event) => {
-        event.target.closest('tr').remove(); selected.splice(selected.indexOf(row), 1);
-      } })]),
+
+  function renderLines() {
+    inputs.clear();
+    const orderRows = rows.filter((r) => r.customer === customerSelect.value && r.orderNo === orderSelect.value);
+    if (!orderRows.length) {
+      lineBox.className = 'schedule-lines-empty';
+      lineBox.textContent = 'Select a customer and sales order to view pending line items.';
+      return;
+    }
+    lineBox.className = 'schedule-lines';
+    lineBox.innerHTML = '';
+    const body = el('tbody');
+    for (const row of orderRows) {
+      const input = el('input', { class: 'form-control schedule-qty', type: 'number', min: '0', max: row.availableQtyBags, step: '0.01', placeholder: 'Enter bags' });
+      inputs.set(row.key, input);
+      body.appendChild(el('tr', {}, [
+        el('td', { text: row.item }),
+        el('td', { text: row.uom || 'Bag' }),
+        el('td', { text: String(row.orderQtyBags) }),
+        el('td', { text: String(row.pendingQtyBags) }),
+        el('td', { text: String(row.availableQtyBags) }),
+        el('td', {}, [input]),
+      ]));
+    }
+    lineBox.appendChild(el('table', { class: 'data-table' }, [
+      el('thead', {}, [el('tr', {}, ['Item', 'UOM', 'Order Qty (bags)', 'Pending Qty (bags)', 'Available (bags)', 'Schedule Qty (bags)'])]),
+      body,
     ]));
-    qty.value = '';
   }
 
   customerSelect.addEventListener('change', refreshOrders);
-  orderSelect.addEventListener('change', refreshItems);
-  const add = el('button', { class: 'btn btn-primary', text: 'Add item', onclick: addLine });
+  orderSelect.addEventListener('change', renderLines);
   const submit = el('button', { class: 'btn btn-success', text: 'Submit schedule' });
   const message = el('div', { class: 'form-help' });
   submit.onclick = async () => {
-    if (!date.value || !selected.length) { message.textContent = 'Choose a delivery date and add at least one item.'; return; }
+    const orderRows = rows.filter((r) => r.customer === customerSelect.value && r.orderNo === orderSelect.value);
+    const selected = orderRows.map((row) => ({ ...row, scheduleQtyBags: Number(inputs.get(row.key)?.value || 0) })).filter((row) => row.scheduleQtyBags > 0);
+    if (!date.value || !selected.length) { message.textContent = 'Choose a delivery date and enter schedule quantity for at least one item.'; return; }
     submit.disabled = true;
     try {
       const result = await api.post('/delivery-schedules', { deliveryDate: date.value, lines: selected });
       message.textContent = result.chatStatus === 'sent' ? 'Schedule submitted and posted to Google Chat.' : `Schedule submitted. Chat warning: ${result.warning}`;
-      selected.length = 0;
-      tableBody.innerHTML = '';
+      renderLines();
     } catch (error) { message.textContent = error.message; }
     submit.disabled = false;
   };
 
   const form = el('div', { class: 'form-grid' }, [
     el('label', {}, ['Customer', customerSelect]), el('label', {}, ['Sales Order', orderSelect]),
-    el('label', {}, ['Item', itemSelect]), el('label', {}, ['Schedule Quantity (bags)', qty]),
-    el('label', {}, ['Recommended Delivery Date', date]), add,
+    el('label', {}, ['Recommended Delivery Date', date]),
   ]);
-  const table = el('table', { class: 'data-table' }, [el('thead', {}, [el('tr', {}, ['Customer', 'SO No', 'Item', 'Schedule / Available', ''])]), tableBody]);
   container.appendChild(card('Create Delivery Schedule', form));
-  container.appendChild(card('Selected Items', table));
+  container.appendChild(card('Pending Line Items', lineBox));
+  container.appendChild(submit);
   container.appendChild(message);
 }
