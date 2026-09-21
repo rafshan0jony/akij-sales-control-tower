@@ -25,7 +25,11 @@ router.post('/', asyncHandler(async (req, res) => {
   }
 
   try {
-    const message = await googleChat.sendDeliverySchedule({ deliveryDate, lines: schedule.lines });
+    const message = await googleChat.sendDeliverySchedule({
+      deliveryDate,
+      submittedBy: req.user.name,
+      lines: schedule.lines,
+    });
     deliverySchedulesRepo.updateChat(schedule.id, 'sent', message.name);
     res.status(201).json({ id: schedule.id, chatStatus: 'sent' });
   } catch (error) {
