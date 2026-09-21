@@ -286,6 +286,9 @@ async function backupRestoreMetadata() {
 
 async function runOnce() {
   const started = Date.now();
+  // Restore app-only reports before the DWH push so a temporary DWH outage
+  // cannot prevent recovery from the Google Sheet backup.
+  try { await restoreSalesReportsFromSheet(); } catch (err) { log('WARN: sales report restore failed:', err.message); }
   log('collecting from DWH...');
   const snapshot = await collectSnapshot();
   log(`collected ${snapshot.orders.length} orders, ${snapshot.deliveries.length} deliveries in ${Date.now() - started}ms`);
@@ -294,7 +297,6 @@ async function runOnce() {
   try { await pushSnapshotToGithub(snapshot); } catch (err) { log('WARN: snapshot backup failed:', err.message); }
   try { await backupRestoreMetadata(); } catch (err) { log('WARN: metadata backup failed:', err.message); }
   try { await pushMetadataToGithub(); } catch (err) { log('WARN: metadata GitHub backup failed:', err.message); }
-  try { await restoreSalesReportsFromSheet(); } catch (err) { log('WARN: sales report restore failed:', err.message); }
   try { await syncSalesReportsToSheet(); } catch (err) { log('WARN: sales report sheet sync failed:', err.message); }
 }
 
