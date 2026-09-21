@@ -53,7 +53,9 @@ export async function renderDeliverySchedule(container) {
       ]));
     }
     lineBox.appendChild(el('table', { class: 'data-table' }, [
-      el('thead', {}, [el('tr', {}, ['Item', 'UOM', 'Order Qty (bags)', 'Pending Qty (bags)', 'Available (bags)', 'Schedule Qty (bags)'])]),
+      el('thead', {}, [el('tr', {}, [
+        'Item', 'UOM', 'Order Qty (bags)', 'Pending Qty (bags)', 'Available (bags)', 'Schedule Qty (bags)',
+      ].map((label) => el('th', { text: label })))]),
       body,
     ]));
   }
