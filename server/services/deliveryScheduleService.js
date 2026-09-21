@@ -17,6 +17,14 @@ function bags(qty, uom, weight) {
   return num(qty);
 }
 
+function lineKey(orderNo, item, uom) {
+  return [orderNo, item, uom || ''].map((value) => String(value == null ? '' : value).trim().toLowerCase()).join('\u0001');
+}
+
+function orderItemKey(orderNo, item) {
+  return lineKey(orderNo, item, '');
+}
+
 function pendingRows(scope) {
   const data = syncService.getData();
   const from = dates.monthsAgoStart(4);
@@ -24,7 +32,8 @@ function pendingRows(scope) {
   const scoped = analytics.scopedFacts(data, scope, from, to);
   const pending = analytics.computePending(scoped.orders, scoped.deliveries, to);
   return pending.rows.filter((r) => r.orderNo != null).map((r) => ({
-    key: [r.orderNo, r.item, r.uom || ''].join('\u0001'),
+    key: lineKey(r.orderNo, r.item, r.uom),
+    orderItemKey: orderItemKey(r.orderNo, r.item),
     orderNo: String(r.orderNo),
     customer: r.customer || 'Unknown',
     territory: r.territory || 'Unassigned',
@@ -46,7 +55,7 @@ function scheduledByKey(scope) {
      GROUP BY l.order_no, l.item, l.uom, l.territory`
   ).all();
   return rows.filter((r) => !names || names.has(String(r.territory || '').toLowerCase()))
-    .reduce((m, r) => m.set([r.orderNo, r.item, r.uom || ''].join('\u0001'), num(r.qty)), new Map());
+    .reduce((m, r) => m.set(lineKey(r.orderNo, r.item, r.uom), num(r.qty)), new Map());
 }
 
 function options(scope) {
@@ -63,18 +72,25 @@ function submit(userId, scope, deliveryDate, inputLines) {
     throw new Error('A valid current or future delivery date is required');
   }
   const allowed = new Map(options(scope).map((r) => [r.key, r]));
+  const allowedByOrderItem = new Map();
+  for (const row of allowed.values()) {
+    const key = row.orderItemKey;
+    if (!allowedByOrderItem.has(key)) allowedByOrderItem.set(key, row);
+    else allowedByOrderItem.set(key, null);
+  }
   if (!Array.isArray(inputLines)) throw new Error('Schedule lines are required');
   const requested = new Map();
   for (const input of inputLines) {
     if (!input || typeof input !== 'object') throw new Error('Invalid schedule line');
-    const key = [input.orderNo, input.item, input.uom || ''].join('\u0001');
+    const key = lineKey(input.orderNo, input.item, input.uom);
     requested.set(key, num(requested.get(key)) + num(input.scheduleQtyBags));
   }
   const lines = [];
   for (const [key, qty] of requested) {
-    const row = allowed.get(key);
+    const [orderNo, item, uom] = key.split('\u0001');
+    const row = allowed.get(key) || allowedByOrderItem.get(orderItemKey(orderNo, item));
     if (!row || qty <= 0 || qty > row.availableQtyBags + 0.0001) {
-      throw new Error(`Invalid schedule quantity for ${row?.orderNo || 'unknown order'} / ${row?.item || 'unknown item'}`);
+      throw new Error(`Invalid schedule quantity for ${row?.orderNo || orderNo || 'unknown order'} / ${row?.item || item || 'unknown item'}`);
     }
     lines.push({ ...row, scheduleQtyBags: qty });
   }
