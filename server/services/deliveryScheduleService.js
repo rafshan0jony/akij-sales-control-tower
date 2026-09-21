@@ -51,7 +51,7 @@ function scheduledByKey(scope) {
     `SELECT l.order_no AS orderNo, l.item, l.uom, l.territory, SUM(l.schedule_qty_bags) AS qty
      FROM delivery_schedule_lines l
      INNER JOIN delivery_schedules s ON s.id = l.schedule_id
-     WHERE s.delivery_date >= date('now')
+     WHERE s.delivery_date >= date('now') AND s.chat_status != 'failed'
      GROUP BY l.order_no, l.item, l.uom, l.territory`
   ).all();
   return rows.filter((r) => !names || names.has(String(r.territory || '').toLowerCase()))
