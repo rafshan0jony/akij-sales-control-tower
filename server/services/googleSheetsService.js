@@ -7,7 +7,6 @@ const { OAuth2Client } = require('google-auth-library');
 
 const credentialsPath = process.env.GOOGLE_SHEETS_CREDENTIALS || path.join(os.homedir(), '.local', 'share', 'google-workspace-mcp', 'credentials', 'rafshan_at_akijresource_dot_com.json');
 const spreadsheetId = process.env.SALES_REPORT_SHEET_ID || '1z6zYTsyL6TYqpFVfRdxyx1VKoTJ1RoifACpowRyvgls';
-const range = 'Delivery Schedule';
 
 function clientCreds() {
   if (process.env.GOOGLE_SHEETS_CLIENT_ID) {
@@ -47,7 +46,7 @@ async function appendSchedule({ submittedAt, deliveryDate, submittedBy, lines, c
     line.scheduleQtyBags == null ? '' : line.scheduleQtyBags,
     chatStatus || '',
   ]);
-  const url = `https://sheets.googleapis.com/v4/spreadsheets/${spreadsheetId}/values/${encodeURIComponent(range)}:append?valueInputOption=RAW&insertDataOption=INSERT_ROWS`;
+  const url = `https://sheets.googleapis.com/v4/spreadsheets/${spreadsheetId}/values/${encodeURIComponent('Delivery Schedule')}:append?valueInputOption=RAW&insertDataOption=INSERT_ROWS`;
   const res = await fetch(url, {
     method: 'POST',
     headers: { Authorization: 'Bearer ' + at, 'Content-Type': 'application/json' },
@@ -58,4 +57,27 @@ async function appendSchedule({ submittedAt, deliveryDate, submittedBy, lines, c
   return JSON.parse(body);
 }
 
-module.exports = { appendSchedule };
+async function overwriteSalesReports(header, rows) {
+  const at = await authToken();
+  const values = [header, ...rows];
+  const range = 'Sales Report';
+
+  // Clear the whole tab first so stale rows (deleted users/older days) never linger.
+  const clearRes = await fetch(
+    `https://sheets.googleapis.com/v4/spreadsheets/${spreadsheetId}/values/${encodeURIComponent(range)}:clear`,
+    { method: 'POST', headers: { Authorization: 'Bearer ' + at } }
+  );
+  if (!clearRes.ok) throw new Error(`Sheets clear ${clearRes.status}: ${(await clearRes.text()).slice(0, 250)}`);
+
+  const url = `https://sheets.googleapis.com/v4/spreadsheets/${spreadsheetId}/values/${encodeURIComponent(range)}?valueInputOption=RAW`;
+  const res = await fetch(url, {
+    method: 'PUT',
+    headers: { Authorization: 'Bearer ' + at, 'Content-Type': 'application/json' },
+    body: JSON.stringify({ range, values }),
+  });
+  const body = await res.text();
+  if (!res.ok) throw new Error(`Sheets ${res.status}: ${body.slice(0, 250)}`);
+  return JSON.parse(body);
+}
+
+module.exports = { appendSchedule, overwriteSalesReports, authToken };
