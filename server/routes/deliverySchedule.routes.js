@@ -7,6 +7,7 @@ const { badRequest } = require('../lib/errors');
 const deliveryScheduleService = require('../services/deliveryScheduleService');
 const deliverySchedulesRepo = require('../repos/deliverySchedules');
 const googleChat = require('../services/googleChatService');
+const googleSheets = require('../services/googleSheetsService');
 
 const router = express.Router();
 router.use(authenticate);
@@ -24,6 +25,10 @@ router.post('/', asyncHandler(async (req, res) => {
     throw badRequest(error.message);
   }
 
+  const submittedAt = new Date().toISOString();
+  let chatStatus = 'pending';
+  let warning = null;
+
   try {
     const message = await googleChat.sendDeliverySchedule({
       deliveryDate,
@@ -31,11 +36,26 @@ router.post('/', asyncHandler(async (req, res) => {
       lines: schedule.lines,
     });
     deliverySchedulesRepo.updateChat(schedule.id, 'sent', message.name);
-    res.status(201).json({ id: schedule.id, chatStatus: 'sent' });
+    chatStatus = 'sent';
   } catch (error) {
     deliverySchedulesRepo.updateChat(schedule.id, 'failed', null, error.message);
-    res.status(201).json({ id: schedule.id, chatStatus: 'failed', warning: error.message });
+    chatStatus = 'failed';
+    warning = error.message;
   }
+
+  try {
+    await googleSheets.appendSchedule({
+      submittedAt,
+      deliveryDate,
+      submittedBy: req.user.name,
+      lines: schedule.lines,
+      chatStatus,
+    });
+  } catch (error) {
+    warning = warning ? `${warning} | Sheets: ${error.message}` : error.message;
+  }
+
+  res.status(201).json({ id: schedule.id, chatStatus, warning });
 }));
 
 module.exports = router;
