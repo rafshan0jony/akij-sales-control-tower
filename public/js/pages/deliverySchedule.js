@@ -3,12 +3,20 @@ import { el } from '../ui.js';
 import { card } from './common.js';
 
 export async function renderDeliverySchedule(container) {
-  const data = await api.get('/delivery-schedules/pending');
-  const rows = data.rows || [];
-  const customers = [...new Set(rows.map((r) => r.customer))].sort();
+  let rows = [];
+  try {
+    const data = await api.get('/delivery-schedules/pending');
+    rows = data.rows || [];
+  } catch (_) {
+    rows = [];
+  }
+
   const customerSelect = el('select', { class: 'form-control' }, [
     el('option', { value: '', text: 'Select customer' }),
-    ...customers.map((customer) => el('option', { value: customer, text: customer })),
+    ...(() => {
+      const customers = [...new Set(rows.map((r) => r.customer))].sort();
+      return customers.map((customer) => el('option', { value: customer, text: customer }));
+    })(),
   ]);
   const orderSelect = el('select', { class: 'form-control' }, [el('option', { value: '', text: 'Select sales order' })]);
   const date = el('input', { class: 'form-control', type: 'date' });
@@ -17,8 +25,13 @@ export async function renderDeliverySchedule(container) {
   date.min = iso(today);
   today.setDate(today.getDate() + 1);
   date.value = iso(today);
+
   const lineBox = el('div', { class: 'schedule-lines-empty', text: 'Select a customer and sales order to view pending line items.' });
+  const cartBox = el('div', { class: 'schedule-lines-empty', text: 'No items added yet.' });
+  const message = el('div', { class: 'form-help' });
   const inputs = new Map();
+  const selected = [];
+  const selectedKeys = new Set();
 
   function refreshOrders() {
     orderSelect.innerHTML = '';
@@ -41,8 +54,9 @@ export async function renderDeliverySchedule(container) {
     lineBox.innerHTML = '';
     const body = el('tbody');
     for (const row of orderRows) {
-      const input = el('input', { class: 'form-control schedule-qty', type: 'number', min: '0', max: row.availableQtyBags, step: '0.01', placeholder: 'Enter bags' });
+      const input = el('input', { class: 'form-control schedule-qty', type: 'number', min: '0', max: row.availableQtyBags, step: '0.01', placeholder: 'Bags' });
       inputs.set(row.key, input);
+      const addBtn = el('button', { class: 'btn btn-primary btn-sm', text: 'Add', onclick: () => addLine(row) });
       body.appendChild(el('tr', {}, [
         el('td', { text: row.item }),
         el('td', { text: row.uom || 'Bag' }),
@@ -50,11 +64,60 @@ export async function renderDeliverySchedule(container) {
         el('td', { text: String(row.pendingQtyBags) }),
         el('td', { text: String(row.availableQtyBags) }),
         el('td', {}, [input]),
+        el('td', {}, [addBtn]),
       ]));
     }
     lineBox.appendChild(el('table', { class: 'data-table' }, [
       el('thead', {}, [el('tr', {}, [
-        'Item', 'UOM', 'Order Qty (bags)', 'Pending Qty (bags)', 'Available (bags)', 'Schedule Qty (bags)',
+        'Item', 'UOM', 'Order Qty (bags)', 'Pending Qty (bags)', 'Available (bags)', 'Schedule Qty (bags)', '',
+      ].map((label) => el('th', { text: label })))]),
+      body,
+    ]));
+  }
+
+  function addLine(row) {
+    const input = inputs.get(row.key);
+    const qty = Number(input?.value || 0);
+    if (qty <= 0) { message.textContent = 'Enter schedule quantity first.'; return; }
+    if (qty > row.availableQtyBags + 0.0001) { message.textContent = `Quantity exceeds available (${row.availableQtyBags} bags).`; return; }
+    if (selectedKeys.has(row.key)) { message.textContent = 'This line is already added. Remove it first to change the quantity.'; return; }
+    selected.push({ ...row, scheduleQtyBags: qty });
+    selectedKeys.add(row.key);
+    input.value = '';
+    message.textContent = '';
+    renderCart();
+  }
+
+  function removeLine(key) {
+    const idx = selected.findIndex((line) => line.key === key);
+    if (idx >= 0) {
+      selected.splice(idx, 1);
+      selectedKeys.delete(key);
+    }
+    renderCart();
+  }
+
+  function renderCart() {
+    if (!selected.length) {
+      cartBox.className = 'schedule-lines-empty';
+      cartBox.textContent = 'No items added yet.';
+      return;
+    }
+    cartBox.className = 'schedule-lines';
+    cartBox.innerHTML = '';
+    const body = el('tbody');
+    for (const line of selected) {
+      body.appendChild(el('tr', {}, [
+        el('td', { text: line.customer }),
+        el('td', { text: line.orderNo }),
+        el('td', { text: line.item }),
+        el('td', { text: String(line.scheduleQtyBags) }),
+        el('td', {}, [el('button', { class: 'btn btn-danger btn-sm', text: 'Remove', onclick: () => removeLine(line.key) })]),
+      ]));
+    }
+    cartBox.appendChild(el('table', { class: 'data-table' }, [
+      el('thead', {}, [el('tr', {}, [
+        'Customer', 'SO No', 'Item', 'Qty (bags)', '',
       ].map((label) => el('th', { text: label })))]),
       body,
     ]));
@@ -62,17 +125,21 @@ export async function renderDeliverySchedule(container) {
 
   customerSelect.addEventListener('change', refreshOrders);
   orderSelect.addEventListener('change', renderLines);
+
   const submit = el('button', { class: 'btn btn-success', text: 'Submit schedule' });
-  const message = el('div', { class: 'form-help' });
   submit.onclick = async () => {
-    const orderRows = rows.filter((r) => r.customer === customerSelect.value && r.orderNo === orderSelect.value);
-    const selected = orderRows.map((row) => ({ ...row, scheduleQtyBags: Number(inputs.get(row.key)?.value || 0) })).filter((row) => row.scheduleQtyBags > 0);
-    if (!date.value || !selected.length) { message.textContent = 'Choose a delivery date and enter schedule quantity for at least one item.'; return; }
+    if (!date.value) { message.textContent = 'Choose a delivery date.'; return; }
+    if (!selected.length) { message.textContent = 'Add at least one item before submitting.'; return; }
     submit.disabled = true;
     try {
       const result = await api.post('/delivery-schedules', { deliveryDate: date.value, lines: selected });
       message.textContent = result.chatStatus === 'sent' ? 'Schedule submitted and posted to Google Chat.' : `Schedule submitted. Chat warning: ${result.warning}`;
-      renderLines();
+      selected.length = 0;
+      selectedKeys.clear();
+      renderCart();
+      const refreshed = await api.get('/delivery-schedules/pending');
+      rows = refreshed.rows || [];
+      refreshOrders();
     } catch (error) { message.textContent = error.message; }
     submit.disabled = false;
   };
@@ -83,6 +150,7 @@ export async function renderDeliverySchedule(container) {
   ]);
   container.appendChild(card('Create Delivery Schedule', form));
   container.appendChild(card('Pending Line Items', lineBox));
+  container.appendChild(card('Selected Items', cartBox));
   container.appendChild(submit);
   container.appendChild(message);
 }
