@@ -56,7 +56,6 @@ export async function renderDeliverySchedule(container) {
     for (const row of orderRows) {
       const input = el('input', { class: 'form-control schedule-qty', type: 'number', min: '0', max: row.availableQtyBags, step: '0.01', placeholder: 'Bags' });
       inputs.set(row.key, input);
-      const addBtn = el('button', { class: 'btn btn-primary btn-sm', text: 'Add', onclick: () => addLine(row) });
       body.appendChild(el('tr', {}, [
         el('td', { text: row.item }),
         el('td', { text: row.uom || 'Bag' }),
@@ -64,28 +63,39 @@ export async function renderDeliverySchedule(container) {
         el('td', { text: String(row.pendingQtyBags) }),
         el('td', { text: String(row.availableQtyBags) }),
         el('td', {}, [input]),
-        el('td', {}, [addBtn]),
       ]));
     }
+    const addAllBtn = el('button', { class: 'btn btn-primary', text: 'Add', onclick: addAllLines });
     lineBox.appendChild(el('table', { class: 'data-table' }, [
       el('thead', {}, [el('tr', {}, [
-        'Item', 'UOM', 'Order Qty (bags)', 'Pending Qty (bags)', 'Available (bags)', 'Schedule Qty (bags)', '',
+        'Item', 'UOM', 'Order Qty (bags)', 'Pending Qty (bags)', 'Available (bags)', 'Schedule Qty (bags)',
       ].map((label) => el('th', { text: label })))]),
       body,
     ]));
+    lineBox.appendChild(el('div', { class: 'schedule-add-row' }, [addAllBtn]));
   }
 
-  function addLine(row) {
-    const input = inputs.get(row.key);
-    const qty = Number(input?.value || 0);
-    if (qty <= 0) { message.textContent = 'Enter schedule quantity first.'; return; }
-    if (qty > row.availableQtyBags + 0.0001) { message.textContent = `Quantity exceeds available (${row.availableQtyBags} bags).`; return; }
-    if (selectedKeys.has(row.key)) { message.textContent = 'This line is already added. Remove it first to change the quantity.'; return; }
-    selected.push({ ...row, scheduleQtyBags: qty });
-    selectedKeys.add(row.key);
-    input.value = '';
-    message.textContent = '';
-    renderCart();
+  function addAllLines() {
+    const orderRows = rows.filter((r) => r.customer === customerSelect.value && r.orderNo === orderSelect.value);
+    const errors = [];
+    let hasQty = false;
+    let added = 0;
+    for (const row of orderRows) {
+      const input = inputs.get(row.key);
+      const qty = Number(input?.value || 0);
+      if (qty <= 0) continue;
+      hasQty = true;
+      if (qty > row.availableQtyBags + 0.0001) { errors.push(`${row.item}: exceeds available (${row.availableQtyBags})`); continue; }
+      if (selectedKeys.has(row.key)) { errors.push(`${row.item}: already added`); continue; }
+      selected.push({ ...row, scheduleQtyBags: qty });
+      selectedKeys.add(row.key);
+      input.value = '';
+      added++;
+    }
+    if (errors.length) message.textContent = errors.join('; ');
+    else if (!hasQty) message.textContent = 'Enter schedule quantity for at least one item.';
+    else message.textContent = '';
+    if (added) renderCart();
   }
 
   function removeLine(key) {
