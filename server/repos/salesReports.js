@@ -39,6 +39,10 @@ function listAll() {
   return getDb().prepare('SELECT * FROM sales_reports ORDER BY date, id').all().map(rowToReport);
 }
 
+function clearAll() {
+  getDb().prepare('DELETE FROM sales_reports').run();
+}
+
 function upsert(userId, date, fields) {
   const db = getDb();
   const now = new Date().toISOString();
@@ -76,4 +80,4 @@ function upsert(userId, date, fields) {
   return get(userId, date);
 }
 
-module.exports = { get, listForDate, listForMonth, listAll, upsert };
+module.exports = { get, listForDate, listForMonth, listAll, clearAll, upsert };

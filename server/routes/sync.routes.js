@@ -102,6 +102,39 @@ router.post('/sales-reports/import', asyncHandler(async (req, res) => {
   res.json({ imported, skipped });
 }));
 
+// Replace all sales reports (clear + import by name). Recovery tool.
+router.post('/sales-reports/replace', asyncHandler(async (req, res) => {
+  if (!checkSecret(req)) return res.status(401).json({ error: 'Invalid sync secret' });
+  const rows = Array.isArray(req.body && req.body.reports) ? req.body.reports : [];
+  salesReportsRepo.clearAll();
+  const users = usersRepo.list();
+  const byName = new Map(users.map((u) => [String(u.name).trim().toLowerCase(), u]));
+  let imported = 0;
+  let skipped = 0;
+  for (const r of rows) {
+    const user = byName.get(String(r.name || r.employee || '').trim().toLowerCase());
+    if (!user || !/^\d{4}-\d{2}-\d{2}$/.test(String(r.date || ''))) {
+      skipped++;
+      continue;
+    }
+    const num = (v) => (v == null || v === '' ? null : Number(v));
+    salesReportsRepo.upsert(user.id, r.date, {
+      visitSchedule: r.visitSchedule == null ? null : String(r.visitSchedule),
+      actualVisitPlan: r.actualVisitPlan == null ? null : String(r.actualVisitPlan),
+      salesProjectionMt: num(r.salesProjectionMt),
+      depositProjectionBdt: num(r.depositProjectionBdt),
+      actualSalesMt: num(r.actualSalesMt),
+      actualCollectionBdt: num(r.actualCollectionBdt),
+      taDaDetails: r.taDaDetails == null ? null : String(r.taDaDetails),
+      taDaBill: num(r.taDaBill),
+      projectionSubmittedAt: r.projectionSubmittedAt || null,
+      actualSubmittedAt: r.actualSubmittedAt || null,
+    });
+    imported++;
+  }
+  res.json({ imported, skipped });
+}));
+
 // App metadata export (users/roles/territories/targets/config) for the bridge backup.
 router.get('/metadata', asyncHandler(async (req, res) => {
   if (!checkSecret(req)) return res.status(401).json({ error: 'Invalid sync secret' });
