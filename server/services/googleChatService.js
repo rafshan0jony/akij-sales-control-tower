@@ -34,14 +34,17 @@ async function sendDeliverySchedule({ deliveryDate, submittedBy, lines, remarks 
   const accessToken = await authToken();
   const text = [
     'Delivery Schedule Submitted',
+    '',
     `Customer: ${lines[0]?.customer || ''}`,
     `Sales Order: ${[...new Set(lines.map((line) => line.orderNo))].join(', ')}`,
     `Delivery Date: ${deliveryDate}`,
+    '',
     'Items:',
     ...lines.map((line) => `- ${line.item} - ${line.scheduleQtyBags} bag(s)`),
+    '',
     `Submitted by: ${submittedBy || ''}`,
     `Territory: ${territories}`,
-    ...(remarks ? [`Remarks: ${remarks}`] : []),
+    ...(remarks ? ['', `Remarks: ${remarks}`] : []),
   ].join('\n');
   const response = await fetch(`https://chat.googleapis.com/v1/${space}/messages`, {
     method: 'POST',
