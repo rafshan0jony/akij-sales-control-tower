@@ -136,17 +136,20 @@ export async function renderDeliverySchedule(container) {
   customerSelect.addEventListener('change', refreshOrders);
   orderSelect.addEventListener('change', renderLines);
 
+  const remarks = el('textarea', { class: 'form-control', rows: '3', placeholder: 'Remarks (optional note)' });
+
   const submit = el('button', { class: 'btn btn-success', text: 'Submit schedule' });
   submit.onclick = async () => {
     if (!date.value) { message.textContent = 'Choose a delivery date.'; return; }
     if (!selected.length) { message.textContent = 'Add at least one item before submitting.'; return; }
     submit.disabled = true;
     try {
-      const result = await api.post('/delivery-schedules', { deliveryDate: date.value, lines: selected });
+      const result = await api.post('/delivery-schedules', { deliveryDate: date.value, lines: selected, remarks: remarks.value });
       message.textContent = result.chatStatus === 'sent' ? 'Schedule submitted and posted to Google Chat.' : `Schedule submitted. Chat warning: ${result.warning}`;
       selected.length = 0;
       selectedKeys.clear();
       renderCart();
+      remarks.value = '';
       const refreshed = await api.get('/delivery-schedules/pending');
       rows = refreshed.rows || [];
       refreshOrders();
@@ -161,6 +164,7 @@ export async function renderDeliverySchedule(container) {
   container.appendChild(card('Create Delivery Schedule', form));
   container.appendChild(card('Pending Line Items', lineBox));
   container.appendChild(card('Selected Items', cartBox));
+  container.appendChild(card('Remarks', el('div', {}, [remarks])));
   container.appendChild(submit);
   container.appendChild(message);
 }

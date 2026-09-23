@@ -17,10 +17,10 @@ router.get('/pending', asyncHandler(async (req, res) => {
 }));
 
 router.post('/', asyncHandler(async (req, res) => {
-  const { deliveryDate, lines } = req.body || {};
+  const { deliveryDate, lines, remarks } = req.body || {};
   let schedule;
   try {
-    schedule = deliveryScheduleService.submit(req.user.id, req.scope, deliveryDate, lines);
+    schedule = deliveryScheduleService.submit(req.user.id, req.scope, deliveryDate, lines, remarks);
   } catch (error) {
     throw badRequest(error.message);
   }
@@ -34,6 +34,7 @@ router.post('/', asyncHandler(async (req, res) => {
       deliveryDate,
       submittedBy: req.user.name,
       lines: schedule.lines,
+      remarks,
     });
     deliverySchedulesRepo.updateChat(schedule.id, 'sent', message.name);
     chatStatus = 'sent';
@@ -50,6 +51,7 @@ router.post('/', asyncHandler(async (req, res) => {
       submittedBy: req.user.name,
       lines: schedule.lines,
       chatStatus,
+      remarks,
     });
   } catch (error) {
     warning = warning ? `${warning} | Sheets: ${error.message}` : error.message;

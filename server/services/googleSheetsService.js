@@ -30,7 +30,7 @@ async function authToken() {
   return credentials.access_token;
 }
 
-async function appendSchedule({ submittedAt, deliveryDate, submittedBy, lines, chatStatus }) {
+async function appendSchedule({ submittedAt, deliveryDate, submittedBy, lines, chatStatus, remarks }) {
   const at = await authToken();
   const rows = lines.map((line) => [
     submittedAt || '',
@@ -45,6 +45,7 @@ async function appendSchedule({ submittedAt, deliveryDate, submittedBy, lines, c
     line.pendingQtyBags == null ? '' : line.pendingQtyBags,
     line.scheduleQtyBags == null ? '' : line.scheduleQtyBags,
     chatStatus || '',
+    remarks || '',
   ]);
   const url = `https://sheets.googleapis.com/v4/spreadsheets/${spreadsheetId}/values/${encodeURIComponent('Delivery Schedule')}:append?valueInputOption=RAW&insertDataOption=INSERT_ROWS`;
   const res = await fetch(url, {

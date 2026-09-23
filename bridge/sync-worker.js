@@ -217,7 +217,7 @@ async function syncDeliverySchedulesToSheet() {
     const { schedules } = await res.json();
     if (!Array.isArray(schedules)) return;
 
-    const header = ['Submitted At', 'Delivery Date', 'Submitted By', 'Customer', 'SO No', 'Territory', 'Item', 'UOM', 'Order Qty (bags)', 'Pending Qty (bags)', 'Schedule Qty (bags)', 'Chat Status'];
+    const header = ['Submitted At', 'Delivery Date', 'Submitted By', 'Customer', 'SO No', 'Territory', 'Item', 'UOM', 'Order Qty (bags)', 'Pending Qty (bags)', 'Schedule Qty (bags)', 'Chat Status', 'Remarks'];
     const rows = schedules.map((r) => [
       r.submittedAt || '', r.deliveryDate || '', r.submittedBy || '', r.customer || '',
       r.orderNo || '', r.territory || '', r.item || '', r.uom || '',
@@ -225,6 +225,7 @@ async function syncDeliverySchedulesToSheet() {
       r.pendingQtyBags == null ? '' : r.pendingQtyBags,
       r.scheduleQtyBags == null ? '' : r.scheduleQtyBags,
       r.chatStatus || '',
+      r.remarks || '',
     ]);
     const values = [header, ...rows];
     const range = 'Delivery Schedule';
@@ -284,6 +285,68 @@ async function restoreSalesReportsFromSheet() {
   }
 }
 
+// Recover delivery schedules from the Sheet backup when the app DB is empty.
+async function restoreDeliverySchedulesFromSheet() {
+  if (!TARGET_URL) return;
+  try {
+    const current = await fetch(TARGET_URL + '/api/sync/delivery-schedules', { headers: { 'x-sync-secret': SECRET } });
+    if (!current.ok) return;
+    const currentBody = await current.json();
+    if (Array.isArray(currentBody.schedules) && currentBody.schedules.length) return;
+
+    const token = JSON.parse(fs.readFileSync(SHEETS_TOKEN_PATH, 'utf8'));
+    const { OAuth2Client } = require('google-auth-library');
+    const oauth = new OAuth2Client(token.client_id, token.client_secret);
+    oauth.setCredentials({ refresh_token: token.refresh_token });
+    const { credentials } = await oauth.refreshAccessToken();
+    const url = `https://sheets.googleapis.com/v4/spreadsheets/${SALES_REPORT_SHEET_ID}/values/${encodeURIComponent('Delivery Schedule')}`;
+    const sres = await fetch(url, { headers: { Authorization: 'Bearer ' + credentials.access_token } });
+    if (!sres.ok) return;
+    const values = (await sres.json()).values || [];
+    if (values.length < 2) return;
+
+    // Columns: 0 SubmittedAt, 1 DeliveryDate, 2 SubmittedBy, 3 Customer, 4 SO No,
+    // 5 Territory, 6 Item, 7 UOM, 8 OrderQty, 9 PendingQty, 10 ScheduleQty,
+    // 11 ChatStatus, 12 Remarks.
+    const groups = new Map();
+    for (let i = 1; i < values.length; i++) {
+      const row = values[i] || [];
+      const submittedAt = String(row[0] || '').trim();
+      const deliveryDate = String(row[1] || '').trim();
+      const submittedBy = String(row[2] || '').trim();
+      if (!submittedBy || !deliveryDate) continue;
+      const key = `${submittedAt}\u0001${deliveryDate}\u0001${submittedBy}`;
+      if (!groups.has(key)) {
+        groups.set(key, { submittedAt, deliveryDate, submittedBy, chatStatus: String(row[11] || '').trim(), remarks: String(row[12] || '').trim(), lines: [] });
+      }
+      groups.get(key).lines.push({
+        customer: String(row[3] || '').trim(),
+        orderNo: String(row[4] || '').trim(),
+        territory: String(row[5] || '').trim(),
+        item: String(row[6] || '').trim(),
+        uom: String(row[7] || '').trim(),
+        orderQtyBags: row[8] == null || row[8] === '' ? null : Number(row[8]),
+        pendingQtyBags: row[9] == null || row[9] === '' ? null : Number(row[9]),
+        scheduleQtyBags: row[10] == null || row[10] === '' ? null : Number(row[10]),
+      });
+    }
+
+    const schedules = [...groups.values()]
+      .map((g) => ({ ...g, lines: g.lines.filter((l) => l.orderNo && l.item) }))
+      .filter((g) => g.lines.length);
+    if (!schedules.length) return;
+
+    const ires = await fetch(TARGET_URL + '/api/sync/delivery-schedules/import', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'x-sync-secret': SECRET },
+      body: JSON.stringify({ schedules }),
+    });
+    if (ires.ok) log('restored delivery schedules from Google Sheet:', await ires.json());
+  } catch (err) {
+    log('WARN: delivery schedule restore failed:', err.message);
+  }
+}
+
 /**
  * Backup / restore app metadata (users/roles/territories/targets/config) so
  * created users survive the host's ephemeral-database resets.
@@ -326,6 +389,7 @@ async function runOnce() {
   // Restore app-only reports before the DWH push so a temporary DWH outage
   // cannot prevent recovery from the Google Sheet backup.
   try { await restoreSalesReportsFromSheet(); } catch (err) { log('WARN: sales report restore failed:', err.message); }
+  try { await restoreDeliverySchedulesFromSheet(); } catch (err) { log('WARN: delivery schedule restore failed:', err.message); }
   log('collecting from DWH...');
   const snapshot = await collectSnapshot();
   log(`collected ${snapshot.orders.length} orders, ${snapshot.deliveries.length} deliveries in ${Date.now() - started}ms`);

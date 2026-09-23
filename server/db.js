@@ -162,7 +162,8 @@ function migrate(db) {
       submitted_at TEXT NOT NULL,
       chat_message_name TEXT,
       chat_status TEXT NOT NULL DEFAULT 'pending',
-      chat_error TEXT
+      chat_error TEXT,
+      remarks TEXT
     );
 
     CREATE TABLE IF NOT EXISTS delivery_schedule_lines (
@@ -184,6 +185,9 @@ function migrate(db) {
   // Add TA/DA fields to an existing sales_reports table (older databases).
   try { db.exec('ALTER TABLE sales_reports ADD COLUMN ta_da_details TEXT'); } catch (_) { /* exists */ }
   try { db.exec('ALTER TABLE sales_reports ADD COLUMN ta_da_bill TEXT'); } catch (_) { /* exists */ }
+
+  // Delivery schedule remarks (employee note).
+  try { db.exec('ALTER TABLE delivery_schedules ADD COLUMN remarks TEXT'); } catch (_) { /* exists */ }
 
   // Admin-visible plaintext password (for the admin user panel).
   try {

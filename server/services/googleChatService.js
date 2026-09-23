@@ -29,7 +29,7 @@ async function authToken() {
   return result.credentials.access_token;
 }
 
-async function sendDeliverySchedule({ deliveryDate, submittedBy, lines }) {
+async function sendDeliverySchedule({ deliveryDate, submittedBy, lines, remarks }) {
   const territories = [...new Set(lines.map((line) => line.territory).filter(Boolean))].join(', ');
   const accessToken = await authToken();
   const text = [
@@ -41,6 +41,7 @@ async function sendDeliverySchedule({ deliveryDate, submittedBy, lines }) {
     ...lines.map((line) => `- ${line.item} - ${line.scheduleQtyBags} bag(s)`),
     `Submitted by: ${submittedBy || ''}`,
     `Territory: ${territories}`,
+    ...(remarks ? [`Remarks: ${remarks}`] : []),
   ].join('\n');
   const response = await fetch(`https://chat.googleapis.com/v1/${space}/messages`, {
     method: 'POST',

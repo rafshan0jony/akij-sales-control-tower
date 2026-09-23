@@ -70,6 +70,42 @@ router.get('/delivery-schedules', asyncHandler(async (req, res) => {
   res.json({ schedules: deliverySchedulesRepo.listAll() });
 }));
 
+// Restore delivery schedules from the Google Sheet backup after a DB reset.
+router.post('/delivery-schedules/import', asyncHandler(async (req, res) => {
+  if (!checkSecret(req)) return res.status(401).json({ error: 'Invalid sync secret' });
+  const schedules = Array.isArray(req.body && req.body.schedules) ? req.body.schedules : [];
+  const users = usersRepo.list();
+  const byName = new Map(users.map((u) => [String(u.name).trim().toLowerCase(), u]));
+  const num = (v) => (v == null || v === '' ? null : Number(v));
+  let imported = 0;
+  let skipped = 0;
+  for (const s of schedules) {
+    const user = byName.get(String(s.submittedBy || '').trim().toLowerCase());
+    if (!user || !/^\d{4}-\d{2}-\d{2}$/.test(String(s.deliveryDate || ''))) {
+      skipped++;
+      continue;
+    }
+    const lines = (Array.isArray(s.lines) ? s.lines : []).map((l) => ({
+      orderNo: l.orderNo == null ? null : String(l.orderNo),
+      customer: l.customer == null ? null : String(l.customer),
+      territory: l.territory == null ? null : String(l.territory),
+      item: l.item == null ? null : String(l.item),
+      uom: l.uom == null ? null : String(l.uom),
+      weight: num(l.weight),
+      orderQtyBags: num(l.orderQtyBags),
+      pendingQtyBags: num(l.pendingQtyBags),
+      scheduleQtyBags: num(l.scheduleQtyBags),
+    })).filter((l) => l.orderNo && l.item);
+    if (!lines.length) {
+      skipped++;
+      continue;
+    }
+    deliverySchedulesRepo.restoreSchedule(user.id, s.deliveryDate, s.submittedAt || null, s.chatStatus || 'pending', lines, s.remarks || null);
+    imported++;
+  }
+  res.json({ imported, skipped });
+}));
+
 // Restore sales reports from the Google Sheet backup after a DB reset.
 router.post('/sales-reports/import', asyncHandler(async (req, res) => {
   if (!checkSecret(req)) return res.status(401).json({ error: 'Invalid sync secret' });

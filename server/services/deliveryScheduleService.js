@@ -67,7 +67,7 @@ function options(scope) {
   })).filter((r) => r.availableQtyBags > 0.0001);
 }
 
-function submit(userId, scope, deliveryDate, inputLines) {
+function submit(userId, scope, deliveryDate, inputLines, remarks) {
   if (!/^\d{4}-\d{2}-\d{2}$/.test(String(deliveryDate || '')) || deliveryDate < dates.todayStr()) {
     throw new Error('A valid current or future delivery date is required');
   }
@@ -95,7 +95,7 @@ function submit(userId, scope, deliveryDate, inputLines) {
     lines.push({ ...row, scheduleQtyBags: qty });
   }
   if (!lines.length) throw new Error('At least one schedule line is required');
-  return { id: deliverySchedulesRepo.create(userId, deliveryDate, lines), lines };
+  return { id: deliverySchedulesRepo.create(userId, deliveryDate, lines, remarks), lines };
 }
 
 module.exports = { options, submit, pendingRows };
