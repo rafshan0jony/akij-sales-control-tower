@@ -6,7 +6,6 @@ const { asyncHandler } = require('../middleware/errorHandler');
 const { parseRange, freshness } = require('./helpers');
 const { forbidden, badRequest } = require('../lib/errors');
 const dates = require('../lib/dates');
-const logger = require('../logger');
 const syncService = require('../services/syncService');
 const analytics = require('../services/analyticsService');
 const insightService = require('../services/insightService');
@@ -15,7 +14,6 @@ const tourPlanService = require('../services/tourPlanService');
 const tourPlanSheetService = require('../services/tourPlanSheetService');
 const tourPlanEntriesRepo = require('../repos/tourPlanEntries');
 const salesReportsRepo = require('../repos/salesReports');
-const salesReportSheetService = require('../services/salesReportSheetService');
 const usersRepo = require('../repos/users');
 const userTerritoriesRepo = require('../repos/userTerritories');
 const syncRepo = require('../repos/sync');
@@ -205,16 +203,6 @@ router.post('/sales-report', asyncHandler(async (req, res) => {
     projectionSubmittedAt: submitProjection ? now : (existing ? existing.projectionSubmittedAt : null),
     actualSubmittedAt: submitActual ? now : (existing ? existing.actualSubmittedAt : null),
   });
-
-  // Push the full sales-report table to the Google Sheet immediately so the
-  // backup is always current (no dependence on the office bridge's 5-min sync).
-  if (process.env.SALES_REPORT_SHEET_SYNC !== 'false') {
-    try {
-      await salesReportSheetService.syncToSheet();
-    } catch (e) {
-      logger.warn('[sales-report] sheet sync failed:', e.message);
-    }
-  }
 
   res.json({ report });
 }));
