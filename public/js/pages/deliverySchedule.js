@@ -20,11 +20,10 @@ export async function renderDeliverySchedule(container) {
   ]);
   const orderSelect = el('select', { class: 'form-control' }, [el('option', { value: '', text: 'Select sales order' })]);
   const date = el('input', { class: 'form-control', type: 'date' });
-  const today = new Date();
-  const iso = (value) => value.toISOString().slice(0, 10);
-  date.min = iso(today);
-  today.setDate(today.getDate() + 1);
-  date.value = iso(today);
+  const now = new Date();
+  const todayStr = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`;
+  date.min = todayStr;
+  date.value = todayStr;
 
   const lineBox = el('div', { class: 'schedule-lines-empty', text: 'Select a customer and sales order to view pending line items.' });
   const cartBox = el('div', { class: 'schedule-lines-empty', text: 'No items added yet.' });
