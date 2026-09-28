@@ -8,6 +8,7 @@
  */
 const OVERRIDES = {
   '222133300': 'Narsingdi',
+  '8398998': 'Keraniganj',
 };
 
 function territoryFor(customerCode) {
