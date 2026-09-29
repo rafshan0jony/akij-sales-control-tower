@@ -228,7 +228,7 @@ async function getCreditStatus(channelId = config.app.channelId) {
     FROM prt.tblBusinessPartnerSalesArc s
     INNER JOIN prt.tblBusinessPartnerArc p ON p.intBusinessPartnerId = s.intBusinessPartnerId
     LEFT JOIN (
-      SELECT strSubGlCode, SUM(numAmount) AS ledgerBalance
+      SELECT intSubGLId, SUM(numAmount) AS ledgerBalance
       FROM fin.tblAccountingJournalArc
       WHERE intGeneralLedgerId = (
         SELECT TOP 1 intGeneralLedgerId
@@ -239,12 +239,12 @@ async function getCreditStatus(channelId = config.app.channelId) {
         ORDER BY intGeneralLedgerId
       )
         AND isActive = 1
-      GROUP BY strSubGlCode
-    ) gl ON gl.strSubGlCode = p.strBusinessPartnerCode
+      GROUP BY intSubGLId
+    ) gl ON gl.intSubGLId = p.intBusinessPartnerId
     LEFT JOIN (
-      SELECT aj.strSubGlCode, SUM(aj.numAmount) AS recentDebits
+      SELECT aj.intSubGLId, SUM(aj.numAmount) AS recentDebits
       FROM fin.tblAccountingJournalArc aj
-      INNER JOIN prt.tblBusinessPartnerArc bp ON bp.strBusinessPartnerCode = aj.strSubGlCode
+      INNER JOIN prt.tblBusinessPartnerArc bp ON bp.intBusinessPartnerId = aj.intSubGLId
       INNER JOIN prt.tblBusinessPartnerSalesArc sc ON sc.intBusinessPartnerId = bp.intBusinessPartnerId
       WHERE aj.isActive = 1
         AND aj.intGeneralLedgerId = (
@@ -257,8 +257,8 @@ async function getCreditStatus(channelId = config.app.channelId) {
         )
         AND aj.numAmount > 0
         AND aj.dteTransactionDate > DATEADD(day, -ISNULL(sc.numRunningDayLimit, 0), CAST(GETDATE() AS date))
-      GROUP BY aj.strSubGlCode
-    ) rd ON rd.strSubGlCode = p.strBusinessPartnerCode
+      GROUP BY aj.intSubGLId
+    ) rd ON rd.intSubGLId = p.intBusinessPartnerId
     LEFT JOIN (
       SELECT intSoldToPartnerId, MAX(dteLastActionDateTime) AS lastDeliveryDate
       FROM sms.tblDeliveryHeaderArc
