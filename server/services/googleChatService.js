@@ -32,15 +32,34 @@ async function authToken() {
 async function sendDeliverySchedule({ deliveryDate, submittedBy, lines, remarks }) {
   const territories = [...new Set(lines.map((line) => line.territory).filter(Boolean))].join(', ');
   const accessToken = await authToken();
+
+  // Group lines by customer so multiple customers appear as separate parts.
+  const byCustomer = new Map();
+  for (const line of lines) {
+    const key = line.customer || 'Unknown';
+    if (!byCustomer.has(key)) byCustomer.set(key, []);
+    byCustomer.get(key).push(line);
+  }
+
+  const customerSections = [];
+  let idx = 1;
+  for (const [customer, customerLines] of byCustomer) {
+    const soNumbers = [...new Set(customerLines.map((l) => l.orderNo))].join(', ');
+    customerSections.push([
+      `Customer ${idx}: ${customer}`,
+      `Sales Order: ${soNumbers}`,
+      'Items:',
+      ...customerLines.map((l) => `- ${l.item} - ${l.scheduleQtyBags} bag(s)`),
+    ].join('\n'));
+    idx++;
+  }
+
   const text = [
     'Delivery Schedule Submitted',
     '',
-    `Customer: ${lines[0]?.customer || ''}`,
-    `Sales Order: ${[...new Set(lines.map((line) => line.orderNo))].join(', ')}`,
     `Delivery Date: ${deliveryDate}`,
     '',
-    'Items:',
-    ...lines.map((line) => `- ${line.item} - ${line.scheduleQtyBags} bag(s)`),
+    customerSections.join('\n\n'),
     '',
     `Submitted by: ${submittedBy || ''}`,
     `Territory: ${territories}`,
