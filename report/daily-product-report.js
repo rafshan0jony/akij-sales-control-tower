@@ -245,11 +245,14 @@ async function main() {
   const announce = args.includes('--announce');
   const userArg = args.find((a) => a.startsWith('--user='));
   const onlyEmail = userArg ? userArg.split('=')[1].toLowerCase() : null;
+  const monthArg = args.find((a) => a.startsWith('--month='));
+  const selMonth = monthArg ? monthArg.split('=')[1] : null;
+  const markerKey = selMonth || dates.todayStr();
 
   if (!force && !dryRun && !onlyEmail) {
     try {
-      if (fs.readFileSync(MARKER, 'utf8').trim() === dates.todayStr()) {
-        log('already sent today, skipping (use --force to override)');
+      if (fs.readFileSync(MARKER, 'utf8').trim() === markerKey) {
+        log('already sent for ' + markerKey + ', skipping (use --force to override)');
         return;
       }
     } catch (_) { /* no marker yet */ }
@@ -273,13 +276,16 @@ async function main() {
   catch (e) { log('WARN territory target fetch failed:', e.message); }
 
   const today = dates.todayStr();
-  const monthFrom = today.slice(0, 7) + '-01';
-  const dataFrom = dates.monthsAgoStart(4, today); // orders cover 4 months so "Pending" matches the app
-  log('fetching DWH data for', dataFrom, '..', today);
+  const reportTo = selMonth
+    ? dates.addDays(selMonth + '-01', dates.daysInMonth(Number(selMonth.slice(0, 4)), Number(selMonth.slice(5, 7))))
+    : today;
+  const monthFrom = (selMonth || today.slice(0, 7)) + '-01';
+  const dataFrom = dates.monthsAgoStart(4, reportTo); // orders cover 4 months so "Pending" matches the app
+  log('fetching DWH data for', dataFrom, '..', reportTo);
 
   const [rawOrders, rawDeliveries] = await Promise.all([
-    mcp.getSalesOrders(dataFrom, today),
-    mcp.getDeliveries(monthFrom, today),
+    mcp.getSalesOrders(dataFrom, reportTo),
+    mcp.getDeliveries(monthFrom, reportTo),
   ]);
   const data = {
     orders: normalizeOrders(rawOrders),
@@ -287,14 +293,14 @@ async function main() {
   };
   log('normalized:', data.orders.length, 'orders,', data.deliveries.length, 'deliveries');
 
-  const monthLabel = new Date(today + 'T00:00:00Z').toLocaleString('en-US', { month: 'long', year: 'numeric', timeZone: 'UTC' });
+  const monthLabel = new Date((selMonth || today.slice(0, 7)) + '-01T00:00:00Z').toLocaleString('en-US', { month: 'long', year: 'numeric', timeZone: 'UTC' });
   const at = dryRun ? null : await chatAuth();
 
   let sent = 0, failed = 0;
   for (const s of scopes) {
     try {
       const scope = { scopeAll: s.scopeAll, territoryNames: s.territoryNames };
-      const range = { from: monthFrom, to: today };
+      const range = { from: monthFrom, to: reportTo };
       const result = analytics.targetAchievement(data, scope, range, {});
       const rows = formatRows(result.byProduct || []);
 
@@ -324,7 +330,7 @@ async function main() {
   }
 
   log('DONE sent=' + sent + ' failed=' + failed);
-  if (!dryRun && sent > 0) fs.writeFileSync(MARKER, dates.todayStr());
+  if (!dryRun && sent > 0) fs.writeFileSync(MARKER, markerKey);
 }
 
 main().then(() => process.exit(0)).catch((e) => { console.error(e.stack || e); process.exit(1); });
