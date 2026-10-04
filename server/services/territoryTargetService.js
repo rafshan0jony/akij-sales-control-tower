@@ -19,12 +19,47 @@ const TOKEN_PATH = path.join(os.homedir(), '.local', 'share', 'google-workspace-
 const BYPRODUCT = 'By-Product';
 const MONTHS = { jan: 1, january: 1, feb: 2, february: 2, mar: 3, march: 3, apr: 4, april: 4, may: 5, jun: 6, june: 6, jul: 7, july: 7, aug: 8, august: 8, sep: 9, september: 9, oct: 10, october: 10, nov: 11, november: 11, dec: 12, december: 12 };
 
+// Old territory names (used by earlier target rows) -> new territory names.
+const TERRITORY_RENAME = {
+  'badda & jatrabari': 'Badda',
+  'savar & manikganj': 'Savar',
+  'mohammadpur & kawranbazar': 'Mohammadpur',
+  'munshiganj & araihazar': 'Munshiganj',
+  'laxmipur & feni': 'Laxmipur',
+  'cumilla metro & chandpur': 'Cumilla Metro',
+  'sylhet metro & sunamganj': 'Sylhet Metro',
+  'hobiganj & moulvibazar': 'Moulvibazar',
+  'narsingdi & brahmanbaria': 'Narsingdi',
+  'gazipur & tongi': 'Gazipur',
+  'tongi': 'Gazipur',
+  'jashore metro': 'Khulna Metro',
+  'rangpur metro': 'Madaripur',
+};
+
 let data = null;
 
 function num(v) {
   if (typeof v === 'number') return v;
   const n = parseFloat(String(v == null ? '' : v).replace(/,/g, '').trim());
   return Number.isFinite(n) ? n : 0;
+}
+
+/** Map old territory names -> new names and merge duplicate rows (sum targets). */
+function normalizeRows(rows) {
+  const seen = new Map();
+  for (const r of rows) {
+    const name = TERRITORY_RENAME[String(r.territory).toLowerCase()] || r.territory;
+    const key = r.month + '\u0001' + name.toLowerCase();
+    if (!seen.has(key)) {
+      seen.set(key, { month: r.month, territory: name, targets: { ...r.targets } });
+    } else {
+      const e = seen.get(key);
+      for (const [p, v] of Object.entries(r.targets || {})) {
+        e.targets[p] = (e.targets[p] || 0) + (v || 0);
+      }
+    }
+  }
+  return [...seen.values()];
 }
 
 function normalizeMonth(s) {
@@ -43,7 +78,8 @@ function parse(vals) {
   const products = [];
   for (let i = 2; i < header.length; i++) {
     const p = String(header[i] || '').trim();
-    if (p && p.toLowerCase() !== 'by-product') products.push(p);
+    const pl = p.toLowerCase();
+    if (p && pl !== 'by-product' && pl !== 'total target') products.push(p);
   }
   const rows = [];
   for (let i = 1; i < vals.length; i++) {
@@ -56,13 +92,14 @@ function parse(vals) {
     rows.push({ month, territory, targets });
   }
   const months = [...new Set(rows.map((r) => r.month))].sort();
-  return { updatedAt: new Date().toISOString(), months, products, rows };
+  return { updatedAt: new Date().toISOString(), months, products, rows: normalizeRows(rows) };
 }
 
 function load() {
   if (data) return data;
   try {
-    data = require('../data/territoryTarget.json');
+    const raw = require('../data/territoryTarget.json');
+    data = { ...raw, rows: normalizeRows(raw.rows || []) };
   } catch (_) {
     data = { updatedAt: '', months: [], products: [], rows: [] };
   }
@@ -100,7 +137,10 @@ function nationalRow(month) {
 }
 
 function productsList() {
-  return load().products || [];
+  return (load().products || []).filter((p) => {
+    const pl = String(p).toLowerCase();
+    return pl !== 'by-product' && pl !== 'total target';
+  });
 }
 
 /** Sorted month list (YYYY-MM). */

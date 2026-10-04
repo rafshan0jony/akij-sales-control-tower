@@ -270,9 +270,6 @@ function dashboardSummary(data, scope, range, opts = {}) {
 
   const now = dates.todayStr();
   const { year, month } = dates.currentMonth(now);
-  const mtdFrom = `${year}-${dates.pad(month)}-01`;
-  const mtd = scopedFacts(data, scope, mtdFrom, now);
-  const mtdTotals = totals(mtd.orders, mtd.deliveries);
 
   const prog = monthProgress.computeMonthProgress(year, month, now);
   const selMonth = range.from ? range.from.slice(0, 7) : `${year}-${dates.pad(month)}`;
@@ -280,8 +277,8 @@ function dashboardSummary(data, scope, range, opts = {}) {
   const target = scopeTargetValue(scope, selMonth);
 
   const basis = (configRepo.get('targetBasis') || 'delivery').toLowerCase();
-  const achievement = basis === 'sales' ? mtdTotals.salesValue : mtdTotals.deliveryValue;
-  const achievementMt = basis === 'sales' ? mtdTotals.salesMt : mtdTotals.deliveryMt;
+  const achievement = basis === 'sales' ? t.salesValue : t.deliveryValue;
+  const achievementMt = basis === 'sales' ? t.salesMt : t.deliveryMt;
   const achievementPct = target > 0 ? (achievement / target) * 100 : 0;
   const achievementMtPct = targetMt > 0 ? (achievementMt / targetMt) * 100 : 0;
   const pendingScope = scopedFacts(data, scope, dates.monthsAgoStart(4, now), now);
@@ -296,8 +293,8 @@ function dashboardSummary(data, scope, range, opts = {}) {
       month: `${year}-${dates.pad(month)}`,
       salesValue: t.salesValue,
       salesQty: t.salesQty,
-      mtdSalesValue: mtdTotals.salesValue,
-      mtdSalesMt: round1(mtdTotals.salesMt),
+      mtdSalesValue: t.salesValue,
+      mtdSalesMt: round1(t.salesMt),
       mtdTarget: target,
       mtdTargetMt: targetMt,
       achievement,
@@ -306,9 +303,9 @@ function dashboardSummary(data, scope, range, opts = {}) {
       achievementMtPct: round1(achievementMtPct),
       pendingTarget: Math.max(target - achievement, 0),
       pendingTargetMt: round1(Math.max(targetMt - achievementMt, 0)),
-      deliveryValue: mtdTotals.deliveryValue,
-      deliveryQty: mtdTotals.deliveryQty,
-      deliveryMt: round1(mtdTotals.deliveryMt),
+      deliveryValue: t.deliveryValue,
+      deliveryQty: t.deliveryQty,
+      deliveryMt: round1(t.deliveryMt),
       pendingOrderValue: pending.totalValue,
       pendingOrderQty: pending.totalQty,
       pendingOrderMt: round1(pending.totalMt),
