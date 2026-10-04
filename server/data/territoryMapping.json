@@ -1,9 +1,9 @@
 {
-  "updatedAt": "2026-09-13T14:23:06.708Z",
+  "updatedAt": "2026-10-04T11:51:32.585Z",
   "rows": [
     {
       "system": "Mohammadpur",
-      "territory": "Mohammadpur & Kawranbazar",
+      "territory": "Mohammadpur",
       "area": "Dhaka South Area",
       "region": "Dhaka West & North Region"
     },
@@ -14,14 +14,8 @@
       "region": "Dhaka West & North Region"
     },
     {
-      "system": "Manikganj",
-      "territory": "Savar & Manikganj",
-      "area": "Dhaka South Area",
-      "region": "Dhaka West & North Region"
-    },
-    {
       "system": "Savar",
-      "territory": "Savar & Manikganj",
+      "territory": "Savar",
       "area": "Dhaka South Area",
       "region": "Dhaka West & North Region"
     },
@@ -33,7 +27,7 @@
     },
     {
       "system": "Tongi",
-      "territory": "Tongi",
+      "territory": "Gazipur",
       "area": "Dhaka North & Narayanganj Area",
       "region": "Dhaka East & North East Region"
     },
@@ -63,25 +57,25 @@
     },
     {
       "system": "Badda",
-      "territory": "Badda & Jatrabari",
+      "territory": "Badda",
       "area": "Dhaka North & Narayanganj Area",
       "region": "Dhaka East & North East Region"
     },
     {
       "system": "Jatrabari",
-      "territory": "Badda & Jatrabari",
+      "territory": "Badda",
       "area": "Dhaka North & Narayanganj Area",
       "region": "Dhaka East & North East Region"
     },
     {
       "system": "Araihazar",
-      "territory": "Munshiganj & Araihazar",
+      "territory": "Munshiganj",
       "area": "Dhaka North & Narayanganj Area",
       "region": "Dhaka East & North East Region"
     },
     {
       "system": "Munshiganj",
-      "territory": "Munshiganj & Araihazar",
+      "territory": "Munshiganj",
       "area": "Dhaka North & Narayanganj Area",
       "region": "Dhaka East & North East Region"
     },
@@ -93,31 +87,31 @@
     },
     {
       "system": "Narsingdi",
-      "territory": "Narsingdi & Brahmanbaria",
+      "territory": "Narsingdi",
       "area": "Sylhet Area",
       "region": "Dhaka East & North East Region"
     },
     {
       "system": "Brahmanbaria",
-      "territory": "Narsingdi & Brahmanbaria",
+      "territory": "Narsingdi",
       "area": "Sylhet Area",
       "region": "Dhaka East & North East Region"
     },
     {
       "system": "Moulvibazar",
-      "territory": "Hobiganj & Moulvibazar",
+      "territory": "Moulvibazar",
       "area": "Sylhet Area",
       "region": "Dhaka East & North East Region"
     },
     {
       "system": "Sunamganj",
-      "territory": "Sylhet Metro & Sunamganj",
+      "territory": "Sylhet Metro",
       "area": "Sylhet Area",
       "region": "Dhaka East & North East Region"
     },
     {
       "system": "Sylhet Metro",
-      "territory": "Sylhet Metro & Sunamganj",
+      "territory": "Sylhet Metro",
       "area": "Sylhet Area",
       "region": "Dhaka East & North East Region"
     },
@@ -129,61 +123,61 @@
     },
     {
       "system": "Feni",
-      "territory": "Laxmipur & Feni",
+      "territory": "Laxmipur",
       "area": "Cumilla Area",
       "region": "East Region"
     },
     {
       "system": "Laxmipur",
-      "territory": "Laxmipur & Feni",
+      "territory": "Laxmipur",
       "area": "Cumilla Area",
       "region": "East Region"
     },
     {
       "system": "Chaktai",
-      "territory": "Cumilla Metro & Chandpur",
-      "area": "Cumilla Area",
+      "territory": "Hathazari",
+      "area": "Chattogram Area",
       "region": "East Region"
     },
     {
       "system": "Cox Bazar",
-      "territory": "Cumilla Metro & Chandpur",
-      "area": "Cumilla Area",
+      "territory": "Hathazari",
+      "area": "Chattogram Area",
       "region": "East Region"
     },
     {
       "system": "Hathazari",
-      "territory": "Cumilla Metro & Chandpur",
-      "area": "Cumilla Area",
+      "territory": "Hathazari",
+      "area": "Chattogram Area",
       "region": "East Region"
     },
     {
       "system": "Pahartali",
-      "territory": "Cumilla Metro & Chandpur",
-      "area": "Cumilla Area",
+      "territory": "Hathazari",
+      "area": "Chattogram Area",
       "region": "East Region"
     },
     {
       "system": "Patiya",
-      "territory": "Cumilla Metro & Chandpur",
-      "area": "Cumilla Area",
+      "territory": "Hathazari",
+      "area": "Chattogram Area",
       "region": "East Region"
     },
     {
       "system": "Rangamati",
-      "territory": "Cumilla Metro & Chandpur",
-      "area": "Cumilla Area",
+      "territory": "Hathazari",
+      "area": "Chattogram Area",
       "region": "East Region"
     },
     {
       "system": "Chandpur",
-      "territory": "Cumilla Metro & Chandpur",
+      "territory": "Cumilla Metro",
       "area": "Cumilla Area",
       "region": "East Region"
     },
     {
       "system": "Cumilla Metro",
-      "territory": "Cumilla Metro & Chandpur",
+      "territory": "Cumilla Metro",
       "area": "Cumilla Area",
       "region": "East Region"
     },
@@ -195,13 +189,13 @@
     },
     {
       "system": "Magura",
-      "territory": "Jashore Metro",
+      "territory": "Khulna Metro",
       "area": "Khulna Area",
       "region": "South Region"
     },
     {
       "system": "Jashore Metro",
-      "territory": "Jashore Metro",
+      "territory": "Khulna Metro",
       "area": "Khulna Area",
       "region": "South Region"
     },
