@@ -28,7 +28,7 @@ const path = require('node:path');
 
 const TARGET_URL = (process.env.SYNC_TARGET_URL || '').replace(/\/$/, '');
 const SECRET = config.sync.secret;
-const LOOKBACK_DAYS = parseInt(process.env.SYNC_LOOKBACK_DAYS || '730', 10);
+const LOOKBACK_DAYS = parseInt(process.env.SYNC_LOOKBACK_DAYS || '150', 10);
 const INTERVAL_MS = config.sync.intervalMs;
 const BACKUP_FILE = path.join(__dirname, '..', 'data', 'metadata-backup.json');
 const GITHUB_TOKEN_FILE = path.join(__dirname, '..', 'data', '.github_token');

@@ -50,7 +50,7 @@ async function query(text, inputs = []) {
   }
   const result = await mcpCall('tools/call', {
     name: 'execute_readonly_query',
-    arguments: { sql: sqlText },
+    arguments: { sql: sqlText, limit: 500 },
   });
   const textPart = (result.content || []).find((c) => c.type === 'text');
   if (!textPart) return [];
@@ -59,6 +59,20 @@ async function query(text, inputs = []) {
   } catch (_) {
     return [];
   }
+}
+
+/** Run a query with OFFSET/FETCH pagination to fetch all rows (beyond the 500 cap). */
+async function queryAll(text, inputs = []) {
+  const all = [];
+  const batch = 500;
+  let offset = 0;
+  for (;;) {
+    const rows = await query(`${text} OFFSET ${offset} ROWS FETCH NEXT ${batch} ROWS ONLY`, inputs);
+    all.push(...rows);
+    if (rows.length < batch) break;
+    offset += batch;
+  }
+  return all;
 }
 
 async function queryOne(text, inputs = []) {
@@ -121,6 +135,7 @@ async function getSalesOrders(from, to, channelId = config.app.channelId) {
       FROM ${TABLES.deliveryHeader} dh
       INNER JOIN ${TABLES.deliveryRow} dr ON dh.[${DH.id}] = dr.[${DR.deliveryId}]
       WHERE dh.[${DH.channel}] = @channel AND dh.[${DH.active}] = 1 AND dh.[${DH.shipmentPosted}] = 1
+        AND dh.[${DH.date}] >= @from
       GROUP BY dr.[${DR.orderId}], dr.[${DR.salesOrderRowId}]
     ) d ON d.salesOrderId = h.[${H.id}] AND d.salesOrderRowId = r.[${R.rowId}]
     WHERE h.[${H.channel}] = @channel
@@ -128,7 +143,7 @@ async function getSalesOrders(from, to, channelId = config.app.channelId) {
       AND h.[${H.active}] = 1
     ORDER BY h.[${H.date}], h.[${H.orderNo}]
   `;
-  return query(q, [
+  return queryAll(q, [
     { name: 'channel', type: sql.BigInt, value: channelId },
     { name: 'from', type: sql.NVarChar, value: from },
     { name: 'to', type: sql.NVarChar, value: to },
@@ -158,8 +173,9 @@ async function getDeliveries(from, to, channelId = config.app.channelId) {
       AND h.[${DH.date}] >= @from AND h.[${DH.date}] <= @to
       AND h.[${DH.active}] = 1
       AND h.[${DH.shipmentPosted}] = 1
+    ORDER BY h.[${DH.date}]
   `;
-  const rows = await query(q, [
+  const rows = await queryAll(q, [
     { name: 'channel', type: sql.BigInt, value: channelId },
     { name: 'from', type: sql.NVarChar, value: from },
     { name: 'to', type: sql.NVarChar, value: to },
