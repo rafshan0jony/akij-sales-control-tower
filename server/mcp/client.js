@@ -80,6 +80,18 @@ async function queryOne(text, inputs = []) {
   return rows && rows.length ? rows[0] : null;
 }
 
+/** Run a `WHERE col IN (...)` lookup across many ids, chunked to stay under the 500-row cap. */
+async function queryChunkedIn(sqlPrefix, idList, sqlSuffix = '') {
+  const unique = [...new Set(idList.filter((x) => x != null && x !== ''))];
+  const all = [];
+  for (let i = 0; i < unique.length; i += 450) {
+    const chunk = unique.slice(i, i + 450).map(Number).join(',');
+    const rows = await query(`${sqlPrefix} IN (${chunk})${sqlSuffix}`, []);
+    all.push(...rows);
+  }
+  return all;
+}
+
 async function health() {
   try {
     await queryOne('SELECT 1 AS ok');
@@ -188,18 +200,18 @@ async function getDeliveries(from, to, channelId = config.app.channelId) {
   // Territory: sales order -> territory id -> territory name (single-table queries).
   const terrIdBySo = new Map();
   if (soIds.length) {
-    const soRows = await query(
-      `SELECT intSalesOrderId, intTerritoryId FROM ${TABLES.salesOrderHeader} WHERE intSalesOrderId IN (${soIds.map(Number).join(',')})`,
-      []
+    const soRows = await queryChunkedIn(
+      `SELECT intSalesOrderId, intTerritoryId FROM ${TABLES.salesOrderHeader} WHERE intSalesOrderId`,
+      soIds
     );
     for (const s of soRows) terrIdBySo.set(s.intSalesOrderId, s.intTerritoryId);
   }
   const terrNameById = new Map();
   const terrIds = [...new Set([...terrIdBySo.values()].filter((x) => x != null && x !== ''))];
   if (terrIds.length) {
-    const terrRows = await query(
-      `SELECT intTerritoryId, strTerritoryName FROM ${TABLES.territoryInfo} WHERE intTerritoryId IN (${terrIds.map(Number).join(',')})`,
-      []
+    const terrRows = await queryChunkedIn(
+      `SELECT intTerritoryId, strTerritoryName FROM ${TABLES.territoryInfo} WHERE intTerritoryId`,
+      terrIds
     );
     for (const t of terrRows) terrNameById.set(t.intTerritoryId, t.strTerritoryName);
   }
@@ -207,9 +219,9 @@ async function getDeliveries(from, to, channelId = config.app.channelId) {
   // Customer code (single-table business partner lookup).
   const codeByPartner = new Map();
   if (partnerIds.length) {
-    const bpRows = await query(
-      `SELECT intBusinessPartnerId, strBusinessPartnerCode FROM prt.tblBusinessPartner WHERE intBusinessPartnerId IN (${partnerIds.map(Number).join(',')})`,
-      []
+    const bpRows = await queryChunkedIn(
+      `SELECT intBusinessPartnerId, strBusinessPartnerCode FROM prt.tblBusinessPartner WHERE intBusinessPartnerId`,
+      partnerIds
     );
     for (const b of bpRows) codeByPartner.set(b.intBusinessPartnerId, b.strBusinessPartnerCode);
   }
