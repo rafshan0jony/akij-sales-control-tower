@@ -319,12 +319,20 @@ async function getCreditStatus(channelId = config.app.channelId) {
       GROUP BY intSoldToPartnerId
     ) d ON d.intSoldToPartnerId = p.intBusinessPartnerId
     LEFT JOIN (
-      SELECT intSoldToPartnerId, MAX(dteCollectionDate) AS lastPaymentDate
-      FROM sms.tblDeliveryHeaderArc
-      WHERE intDistributionChannelId = @channel AND isActive = 1
-        AND dteCollectionDate IS NOT NULL AND dteCollectionDate <= CAST(GETDATE() AS date)
-      GROUP BY intSoldToPartnerId
-    ) pc ON pc.intSoldToPartnerId = p.intBusinessPartnerId
+      SELECT aj.intSubGLId, MAX(aj.dteTransactionDate) AS lastPaymentDate
+      FROM fin.tblAccountingJournalArc aj
+      WHERE aj.intGeneralLedgerId = (
+        SELECT TOP 1 intGeneralLedgerId
+        FROM fin.tblGeneralLedgerArc
+        WHERE strGeneralLedgerCode = '1120001'
+          AND strGeneralLedgerName = 'Trade Receivable (Local)'
+          AND isActive = 1
+        ORDER BY intGeneralLedgerId
+      )
+        AND aj.isActive = 1
+        AND aj.numAmount < 0
+      GROUP BY aj.intSubGLId
+    ) pc ON pc.intSubGLId = p.intBusinessPartnerId
     LEFT JOIN (
       SELECT h.intSoldToPartnerId,
              SUM(h.numTotalNetValue) AS deliveryWithinCreditDays
