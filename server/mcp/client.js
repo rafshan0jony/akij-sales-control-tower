@@ -11,62 +11,54 @@ const DH = COLUMNS.deliveryHeader;
 const DR = COLUMNS.deliveryRow;
 const TI = COLUMNS.territoryInfo;
 
-let pool = null;
-let connecting = null;
 let lastError = null;
 
-function poolConfig() {
-  return {
-    server: config.mssql.server,
-    port: config.mssql.port,
-    user: config.mssql.user,
-    password: config.mssql.password,
-    database: config.mssql.database,
-    options: {
-      encrypt: config.mssql.encrypt,
-      trustServerCertificate: config.mssql.trustServerCertificate,
-      enableArithAbort: true,
-    },
-    connectionTimeout: config.mssql.connectionTimeout,
-    requestTimeout: config.mssql.requestTimeout,
-    pool: { max: 10, min: 0, idleTimeoutMillis: 60000 },
-  };
-}
+const API_URL = process.env.ENTERPRISE_API_URL || 'https://enterprise-api-gateway.ibos.agency/mcp';
+const API_KEY = process.env.ENTERPRISE_API_KEY || 'ak_live_agJ16x8qFRq0OIGFMbIC8ipv_OcYTGMZYehTPp1VZlU';
+const DEVICE_ID = process.env.ENTERPRISE_DEVICE_ID || '948716142c1d4cdd8bb947b13179161f';
+let _reqId = 0;
 
-async function getPool() {
-  if (pool) return pool;
-  if (!connecting) {
-    connecting = (async () => {
-      const p = new sql.ConnectionPool(poolConfig());
-      p.on('error', (err) => {
-        logger.error('[mcp] pool error', err.message);
-        pool = null;
-      });
-      try {
-        await p.connect();
-        pool = p;
-        return p;
-      } catch (err) {
-        try { await p.close(); } catch (_) { /* ignore */ }
-        throw err;
-      } finally {
-        connecting = null;
-      }
-    })();
-  }
-  return connecting;
+async function mcpCall(method, params) {
+  const res = await fetch(API_URL, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      Accept: 'application/json, text/event-stream',
+      Authorization: 'Bearer ' + API_KEY,
+      'X-Device-Id': DEVICE_ID,
+    },
+    body: JSON.stringify({ jsonrpc: '2.0', id: ++_reqId, method, params }),
+  });
+  if (!res.ok) throw new Error('MCP HTTP ' + res.status);
+  const json = await res.json();
+  if (json.error) throw new Error(json.error.message || 'MCP error');
+  return json.result;
 }
 
 function close() {
-  if (pool) { pool.close().catch(() => {}); pool = null; }
+  // HTTP-based client has no persistent connection to close.
 }
 
 async function query(text, inputs = []) {
-  const p = await getPool();
-  const req = p.request();
-  for (const { name, type, value } of inputs) req.input(name, type, value);
-  const result = await req.query(text);
-  return result.recordset;
+  // Strip the DWH "Arc" table suffix so the same queries run against live iBOS.
+  let sqlText = text.replace(/Arc\b/g, '');
+  for (const { name, value } of inputs) {
+    const literal = (typeof value === 'number')
+      ? String(value)
+      : "'" + String(value).replace(/'/g, "''") + "'";
+    sqlText = sqlText.replace(new RegExp('@' + name + '\\b', 'g'), literal);
+  }
+  const result = await mcpCall('tools/call', {
+    name: 'execute_readonly_query',
+    arguments: { sql: sqlText },
+  });
+  const textPart = (result.content || []).find((c) => c.type === 'text');
+  if (!textPart) return [];
+  try {
+    return JSON.parse(textPart.text).rows || [];
+  } catch (_) {
+    return [];
+  }
 }
 
 async function queryOne(text, inputs = []) {
@@ -148,13 +140,13 @@ async function getSalesOrders(from, to, channelId = config.app.channelId) {
  * Territory resolved via the delivery row -> sales order -> territory join.
  */
 async function getDeliveries(from, to, channelId = config.app.channelId) {
+  // Delivery header + row only (unambiguous: delivery row has no intBusinessUnitId).
   const q = `
     SELECT
       CONVERT(varchar(10), h.[${DH.date}], 120) AS date,
       h.[${DH.customer}] AS customer,
-      bp.strBusinessPartnerCode AS customerCode,
-      t.[${TI.name}] AS territory,
-      'Delivered' AS status,
+      h.intSoldToPartnerId AS soldToPartnerId,
+      r.intSalesOrderId AS salesOrderId,
       r.[${DR.orderNo}] AS orderNo,
       r.[${DR.item}] AS item,
       r.[${DR.uom}] AS uom,
@@ -162,20 +154,62 @@ async function getDeliveries(from, to, channelId = config.app.channelId) {
       r.[${DR.value}] AS value
     FROM ${TABLES.deliveryHeader} h
     INNER JOIN ${TABLES.deliveryRow} r ON h.[${DH.id}] = r.[${DR.deliveryId}]
-    LEFT JOIN ${TABLES.salesOrderHeader} so ON so.[${H.id}] = r.[${DR.orderId}]
-    LEFT JOIN ${TABLES.territoryInfo} t ON t.[${TI.id}] = so.[${H.territoryId}]
-    LEFT JOIN prt.tblBusinessPartnerArc bp ON bp.intBusinessPartnerId = h.intSoldToPartnerId
     WHERE h.[${DH.channel}] = @channel
       AND h.[${DH.date}] >= @from AND h.[${DH.date}] <= @to
       AND h.[${DH.active}] = 1
       AND h.[${DH.shipmentPosted}] = 1
-    ORDER BY h.[${DH.date}]
   `;
-  return query(q, [
+  const rows = await query(q, [
     { name: 'channel', type: sql.BigInt, value: channelId },
     { name: 'from', type: sql.NVarChar, value: from },
     { name: 'to', type: sql.NVarChar, value: to },
   ]);
+  if (!rows.length) return [];
+
+  const soIds = [...new Set(rows.map((r) => r.salesOrderId).filter((x) => x != null && x !== ''))];
+  const partnerIds = [...new Set(rows.map((r) => r.soldToPartnerId).filter((x) => x != null && x !== ''))];
+
+  // Territory: sales order -> territory id -> territory name (single-table queries).
+  const terrIdBySo = new Map();
+  if (soIds.length) {
+    const soRows = await query(
+      `SELECT intSalesOrderId, intTerritoryId FROM ${TABLES.salesOrderHeader} WHERE intSalesOrderId IN (${soIds.map(Number).join(',')})`,
+      []
+    );
+    for (const s of soRows) terrIdBySo.set(s.intSalesOrderId, s.intTerritoryId);
+  }
+  const terrNameById = new Map();
+  const terrIds = [...new Set([...terrIdBySo.values()].filter((x) => x != null && x !== ''))];
+  if (terrIds.length) {
+    const terrRows = await query(
+      `SELECT intTerritoryId, strTerritoryName FROM ${TABLES.territoryInfo} WHERE intTerritoryId IN (${terrIds.map(Number).join(',')})`,
+      []
+    );
+    for (const t of terrRows) terrNameById.set(t.intTerritoryId, t.strTerritoryName);
+  }
+
+  // Customer code (single-table business partner lookup).
+  const codeByPartner = new Map();
+  if (partnerIds.length) {
+    const bpRows = await query(
+      `SELECT intBusinessPartnerId, strBusinessPartnerCode FROM prt.tblBusinessPartner WHERE intBusinessPartnerId IN (${partnerIds.map(Number).join(',')})`,
+      []
+    );
+    for (const b of bpRows) codeByPartner.set(b.intBusinessPartnerId, b.strBusinessPartnerCode);
+  }
+
+  return rows.map((r) => ({
+    date: r.date,
+    customer: r.customer,
+    customerCode: codeByPartner.get(r.soldToPartnerId) || null,
+    territory: terrNameById.get(terrIdBySo.get(r.salesOrderId)) || null,
+    status: 'Delivered',
+    orderNo: r.orderNo,
+    item: r.item,
+    uom: r.uom,
+    quantity: r.quantity,
+    value: r.value,
+  }));
 }
 
 /**
@@ -183,19 +217,10 @@ async function getDeliveries(from, to, channelId = config.app.channelId) {
  * Returns rows: { national, regionId, region, zoneId, zone, territoryId, territory }.
  * Levels: L1 national, L5 region, L6 zone, L7 territory.
  */
-async function getTerritoryHierarchy(channelId = config.app.channelId) {
-  const q = `
-    SELECT DISTINCT
-      NL1 AS nationalName,
-      L5 AS regionId, NL5 AS region,
-      L6 AS zoneId, NL6 AS zone,
-      L7 AS territoryId, NL7 AS territory
-    FROM ${TABLES.territorySetup}
-    WHERE intChannelId = @channel AND intLevelId = 7 AND isActive = 1
-      AND NL7 IS NOT NULL
-    ORDER BY region, zone, territory
-  `;
-  return query(q, [{ name: 'channel', type: sql.BigInt, value: channelId }]);
+async function getTerritoryHierarchy() {
+  // Territory hierarchy is derived from the static mapping (territoryMapping.json),
+  // so this DWH query is no longer needed. Return empty.
+  return [];
 }
 
 /**
@@ -301,7 +326,6 @@ async function getCreditStatus(channelId = config.app.channelId) {
 }
 
 module.exports = {
-  getPool,
   close,
   query,
   queryOne,
