@@ -4,6 +4,8 @@ const sql = require('mssql');
 const config = require('../config');
 const logger = require('../logger');
 const { TABLES, COLUMNS } = require('./schema');
+const territoryMapping = require('../services/territoryMappingService');
+const customerTerritoryOverride = require('../services/customerTerritoryOverride');
 
 const H = COLUMNS.salesOrderHeader;
 const R = COLUMNS.salesOrderRow;
@@ -12,6 +14,12 @@ const DR = COLUMNS.deliveryRow;
 const TI = COLUMNS.territoryInfo;
 
 let lastError = null;
+
+/** Resolve a raw ERP territory name (after customer-code override) to its final reporting territory. */
+function resolveTerritoryName(rawTerritory, customerCode) {
+  const tm = territoryMapping.resolve(customerTerritoryOverride.territoryFor(customerCode) || rawTerritory);
+  return tm ? tm.territory : (rawTerritory == null ? null : rawTerritory);
+}
 
 const API_URL = process.env.ENTERPRISE_API_URL || 'https://enterprise-api-gateway.ibos.agency/mcp';
 const API_KEY = process.env.ENTERPRISE_API_KEY || 'ak_live_agJ16x8qFRq0OIGFMbIC8ipv_OcYTGMZYehTPp1VZlU';
@@ -155,11 +163,12 @@ async function getSalesOrders(from, to, channelId = config.app.channelId) {
       AND h.[${H.active}] = 1
     ORDER BY h.[${H.date}], h.[${H.orderNo}]
   `;
-  return queryAll(q, [
+  const rows = await queryAll(q, [
     { name: 'channel', type: sql.BigInt, value: channelId },
     { name: 'from', type: sql.NVarChar, value: from },
     { name: 'to', type: sql.NVarChar, value: to },
   ]);
+  return rows.map((r) => ({ ...r, territory: resolveTerritoryName(r.territory, r.customerCode) }));
 }
 
 /**
@@ -230,7 +239,7 @@ async function getDeliveries(from, to, channelId = config.app.channelId) {
     date: r.date,
     customer: r.customer,
     customerCode: codeByPartner.get(r.soldToPartnerId) || null,
-    territory: terrNameById.get(terrIdBySo.get(r.salesOrderId)) || null,
+    territory: resolveTerritoryName(terrNameById.get(terrIdBySo.get(r.salesOrderId)) || null, codeByPartner.get(r.soldToPartnerId) || null),
     status: 'Delivered',
     orderNo: r.orderNo,
     item: r.item,
@@ -358,7 +367,8 @@ async function getCreditStatus(channelId = config.app.channelId) {
       AND (s.strCreditFacilityType IS NULL OR s.strCreditFacilityType = 'Credit')
     ORDER BY gl.ledgerBalance DESC
   `;
-  return query(q, [{ name: 'channel', type: sql.BigInt, value: channelId }]);
+  const rows = await query(q, [{ name: 'channel', type: sql.BigInt, value: channelId }]);
+  return rows.map((r) => ({ ...r, territory: resolveTerritoryName(r.territory, r.partnerCode) }));
 }
 
 module.exports = {
