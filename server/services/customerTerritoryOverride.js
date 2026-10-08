@@ -9,6 +9,7 @@
 const OVERRIDES = {
   '222133300': 'Narsingdi',
   '8398998': 'Keraniganj',
+  '8396188': 'Narayanganj Metro',
 };
 
 function territoryFor(customerCode) {
