@@ -1,5 +1,5 @@
 {
-  "updatedAt": "2026-10-04T11:51:32.585Z",
+  "updatedAt": "2026-10-08T11:40:35.038Z",
   "rows": [
     {
       "system": "Mohammadpur",
@@ -275,6 +275,12 @@
       "system": "Rajshahi Metro",
       "territory": "Rajshahi Metro",
       "area": "Rajshahi Area",
+      "region": "Dhaka West & North Region"
+    },
+    {
+      "system": "Manikganj",
+      "territory": "Savar",
+      "area": "Dhaka South Area",
       "region": "Dhaka West & North Region"
     }
   ]
