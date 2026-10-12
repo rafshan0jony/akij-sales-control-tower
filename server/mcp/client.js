@@ -58,7 +58,7 @@ async function query(text, inputs = []) {
   }
   const result = await mcpCall('tools/call', {
     name: 'execute_readonly_query',
-    arguments: { sql: sqlText, limit: 500 },
+    arguments: { sql: sqlText, limit: 500, max_bytes: 4194304 },
   });
   const textPart = (result.content || []).find((c) => c.type === 'text');
   if (!textPart) return [];
