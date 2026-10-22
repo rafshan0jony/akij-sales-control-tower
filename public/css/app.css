@@ -55,6 +55,7 @@ a { color: var(--primary); text-decoration: none; }
 .login-card input { width: 100%; }
 .login-error { background: var(--danger-soft); color: var(--danger); padding: 8px 12px; border-radius: var(--radius-sm); margin: 12px 0; font-size: 13px; }
 .login-foot { margin-top: 20px; font-size: 12px; text-align: center; }
+.login-credit { margin-top: 6px; font-size: 12px; text-align: center; color: var(--text-muted); font-weight: 500; }
 
 /* ---------- Shell layout ---------- */
 .shell { display: flex; min-height: 100vh; }
