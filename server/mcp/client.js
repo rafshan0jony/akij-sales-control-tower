@@ -278,7 +278,7 @@ async function getCreditStatus(channelId = config.app.channelId) {
     SELECT
       p.strBusinessPartnerCode AS partnerCode,
       p.strBusinessPartnerName AS partnerName,
-      s.numRunningDayLimit AS creditDays,
+      s.intCollectionDays AS creditDays,
       gl.ledgerBalance AS ledgerBalance,
       CASE WHEN gl.ledgerBalance > ISNULL(rd.recentDebits, 0)
            THEN gl.ledgerBalance - ISNULL(rd.recentDebits, 0)
@@ -318,7 +318,7 @@ async function getCreditStatus(channelId = config.app.channelId) {
           ORDER BY intGeneralLedgerId
         )
         AND aj.numAmount > 0
-        AND aj.dteTransactionDate > DATEADD(day, -ISNULL(sc.numRunningDayLimit, 0), CAST(GETDATE() AS date))
+        AND aj.dteTransactionDate > DATEADD(day, -ISNULL(sc.intCollectionDays, 0), CAST(GETDATE() AS date))
       GROUP BY aj.intSubGLId
     ) rd ON rd.intSubGLId = p.intBusinessPartnerId
     LEFT JOIN (
@@ -348,7 +348,7 @@ async function getCreditStatus(channelId = config.app.channelId) {
       FROM sms.tblDeliveryHeaderArc h
       INNER JOIN prt.tblBusinessPartnerSalesArc sc ON sc.intBusinessPartnerId = h.intSoldToPartnerId
       WHERE h.intDistributionChannelId = @channel AND h.isActive = 1 AND h.isShipmentPosted = 1
-        AND h.dteLastActionDateTime >= DATEADD(day, -ISNULL(sc.numRunningDayLimit, 0), CAST(GETDATE() AS date))
+        AND h.dteLastActionDateTime >= DATEADD(day, -ISNULL(sc.intCollectionDays, 0), CAST(GETDATE() AS date))
       GROUP BY h.intSoldToPartnerId
     ) dd ON dd.intSoldToPartnerId = p.intBusinessPartnerId
     LEFT JOIN (
