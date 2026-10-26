@@ -7,6 +7,7 @@
  */
 const OVERRIDES = {
   '22216504': 30, // M/S Nur-A-Nobobi Trading: ERP numRunningDayLimit=7, should be 30
+  '222125277': 30, // Nokul Trader's: ERP numRunningDayLimit=7, should be 30
 };
 
 function creditDaysFor(customerCode) {
