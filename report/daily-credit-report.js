@@ -18,6 +18,7 @@ const mcp = require('../server/mcp/client');
 const dates = require('../server/lib/dates');
 const territoryMapping = require('../server/services/territoryMappingService');
 const customerTerritoryOverride = require('../server/services/customerTerritoryOverride');
+const customerCreditDaysOverride = require('../server/services/customerCreditDaysOverride');
 const analytics = require('../server/services/analyticsService');
 const { renderProductTable } = require('./render-product-table');
 
@@ -43,7 +44,7 @@ function normalizeCredit(rows) {
   for (const r of rows || []) {
     const tm = territoryMapping.resolve(customerTerritoryOverride.territoryFor(r.partnerCode) || r.territory);
     if (!tm) continue;
-    const creditDays = num(r.creditDays);
+    const creditDays = num(customerCreditDaysOverride.creditDaysFor(r.partnerCode) || r.creditDays);
     const lastDeliveryDate = r.lastDeliveryDate ? dates.toDateStr(r.lastDeliveryDate) : null;
     const lastPaymentDate = r.lastPaymentDate ? dates.toDateStr(r.lastPaymentDate) : null;
     const deliveryGap = lastDeliveryDate ? Math.max(0, dates.diffDays(lastDeliveryDate, today)) : null;

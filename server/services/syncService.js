@@ -6,6 +6,7 @@ const territoriesRepo = require('../repos/territories');
 const territoryMapping = require('./territoryMappingService');
 const itemMapping = require('./itemMappingService');
 const customerTerritoryOverride = require('./customerTerritoryOverride');
+const customerCreditDaysOverride = require('./customerCreditDaysOverride');
 const territoryTargetService = require('./territoryTargetService');
 const tourPlanSheetService = require('./tourPlanSheetService');
 const metadataService = require('./metadataService');
@@ -96,7 +97,7 @@ function normalizeCredit(rows) {
   for (const r of rows || []) {
     const tm = territoryMapping.resolve(customerTerritoryOverride.territoryFor(r.partnerCode) || r.territory);
     if (!tm) continue; // exclude territories not in the mapping
-    const creditDays = num(r.creditDays);
+    const creditDays = num(customerCreditDaysOverride.creditDaysFor(r.partnerCode) || r.creditDays);
     const lastDeliveryDate = r.lastDeliveryDate ? dates.toDateStr(r.lastDeliveryDate) : null;
     const lastPaymentDate = r.lastPaymentDate ? dates.toDateStr(r.lastPaymentDate) : null;
     const deliveryGap = lastDeliveryDate ? Math.max(0, dates.diffDays(lastDeliveryDate, today)) : null;
