@@ -220,6 +220,7 @@ table.sales-report-table thead th { background: #eef3f7; }
 .matrix-table td:first-child, .matrix-table td:nth-child(2), .matrix-table td:nth-child(3) { text-align: left; }
 .matrix-table tr.matrix-region td { background: #e8eefb; font-weight: 700; }
 .matrix-table tr.matrix-area td { background: #f3f7fd; font-weight: 600; }
+.matrix-table tr.matrix-national td { background: #d4e0f7; font-weight: 800; }
 .matrix-table .area-indent { padding-left: 22px !important; }
 .matrix-table .terr-indent { padding-left: 40px !important; }
 .schedule-lines-empty { padding: 16px; color: var(--text-muted); background: var(--surface-2); border-radius: 8px; }

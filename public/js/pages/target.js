@@ -205,7 +205,7 @@ function sumVals(vals, products) {
   return out;
 }
 
-/** Flatten to display rows: region subtotal -> area subtotal -> territory. */
+/** Flatten to display rows: territory details first, then area/region subtotals below. */
 function buildMatrixRows(matrix) {
   const products = matrix.products;
   const regions = new Map();
@@ -218,12 +218,13 @@ function buildMatrixRows(matrix) {
   }
   const out = [];
   for (const reg of regions.values()) {
-    out.push({ kind: 'region', name: reg.name, values: sumVals(reg.rows, products) });
     for (const area of reg.areas.values()) {
-      out.push({ kind: 'area', name: area.name, values: sumVals(area.rows, products) });
-      for (const t of area.rows) out.push({ kind: 'territory', name: t.territory, values: t.values });
+      for (const t of area.rows) out.push({ kind: 'territory', region: reg.name, area: area.name, name: t.territory, values: t.values });
+      out.push({ kind: 'area', region: reg.name, name: area.name, values: sumVals(area.rows, products) });
     }
+    out.push({ kind: 'region', name: reg.name, values: sumVals(reg.rows, products) });
   }
+  out.push({ kind: 'national', name: 'National', values: sumVals(matrix.rows, products) });
   return out;
 }
 
@@ -238,20 +239,21 @@ function matrixCard(matrix) {
   for (const p of products) html += '<th>Target</th><th>Delivery</th><th>Achv.%</th>';
   html += '</tr></thead><tbody>';
   for (const r of rows) {
-    const cls = r.kind === 'region' ? 'matrix-region' : (r.kind === 'area' ? 'matrix-area' : 'matrix-territory');
+    const cls = r.kind === 'national' ? 'matrix-national' : (r.kind === 'region' ? 'matrix-region' : (r.kind === 'area' ? 'matrix-area' : 'matrix-territory'));
     const bold = r.kind !== 'territory';
-    const indent = r.kind === 'region' ? '' : (r.kind === 'area' ? 'area-indent' : 'terr-indent');
-    const regionCell = r.kind === 'region' ? r.name : '';
-    const areaCell = r.kind === 'area' ? r.name : '';
-    const terrCell = r.kind === 'territory' ? r.name : '';
+    let regionCell, areaCell, terrCell;
+    if (r.kind === 'territory') { regionCell = r.region || ''; areaCell = r.area || ''; terrCell = r.name; }
+    else if (r.kind === 'area') { regionCell = r.region || ''; areaCell = r.name; terrCell = 'TOTAL'; }
+    else if (r.kind === 'region') { regionCell = r.name; areaCell = 'TOTAL'; terrCell = ''; }
+    else { regionCell = r.name; areaCell = ''; terrCell = ''; }
     html += '<tr class="' + cls + '">';
-    html += '<td class="' + indent + '"><strong>' + regionCell + '</strong></td>';
-    html += '<td class="' + indent + '">' + areaCell + '</td>';
-    html += '<td class="' + indent + '">' + terrCell + '</td>';
+    html += '<td>' + (bold ? '<strong>' : '') + regionCell + (bold ? '</strong>' : '') + '</td>';
+    html += '<td>' + (bold ? '<strong>' : '') + areaCell + (bold ? '</strong>' : '') + '</td>';
+    html += '<td>' + terrCell + '</td>';
     for (const p of products) {
       const v = r.values[p] || { targetMt: 0, deliveryMt: 0, achvPct: 0 };
-      html += '<td>' + fmt(v.targetMt, 1) + '</td>';
-      html += '<td>' + fmt(v.deliveryMt, 1) + '</td>';
+      html += '<td>' + (bold ? '<strong>' : '') + fmt(v.targetMt, 1) + (bold ? '</strong>' : '') + '</td>';
+      html += '<td>' + (bold ? '<strong>' : '') + fmt(v.deliveryMt, 1) + (bold ? '</strong>' : '') + '</td>';
       html += '<td>' + (bold ? '<strong>' : '') + v.achvPct + '%' + (bold ? '</strong>' : '') + '</td>';
     }
     html += '</tr>';
@@ -264,35 +266,49 @@ function matrixCard(matrix) {
   return el('div', { class: 'card', id: 'matrix-report' }, [
     el('div', { class: 'card-head' }, [
       el('div', { class: 'card-title', text: 'Target vs Achievement Matrix (Region → Area → Territory × Product)' }),
-      el('div', {}, [el('button', { class: 'btn btn-sm', text: '⬇ Download CSV', onclick: () => downloadMatrixCsv(matrix) })]),
+      el('div', {}, [el('button', { class: 'btn btn-sm', text: '⬇ Download Excel', onclick: () => downloadMatrixExcel(matrix) })]),
     ]),
     el('div', { class: 'card-body' }, [wrap]),
   ]);
 }
 
-function downloadMatrixCsv(matrix) {
+function downloadMatrixExcel(matrix) {
   const products = matrix.products;
   const rows = buildMatrixRows(matrix);
-  const esc = (s) => '"' + String(s == null ? '' : s).replace(/"/g, '""') + '"';
-  const lines = [];
-  // header row 1: product names (spanned)
-  lines.push(['', '', ''].concat(products.flatMap((p) => [p, '', ''])).join(','));
-  // header row 2: Target / Delivery / Achv.%
-  lines.push(['Region', 'Area', 'Territory'].concat(products.flatMap(() => ['Target', 'Delivery', 'Achv.%'])).join(','));
+
+  // Build an HTML table (Excel opens HTML tables as a real .xls with grouped headers).
+  let html = '<table border="1"><thead>';
+  html += '<tr><th rowspan="2">Region</th><th rowspan="2">Area</th><th rowspan="2">Territory</th>';
+  for (const p of products) html += '<th colspan="3">' + p + '</th>';
+  html += '</tr><tr>';
+  for (const p of products) html += '<th>Target</th><th>Delivery</th><th>Achv.%</th>';
+  html += '</tr></thead><tbody>';
   for (const r of rows) {
-    const region = r.kind === 'region' ? r.name : '';
-    const area = r.kind === 'area' ? r.name : '';
-    const terr = r.kind === 'territory' ? r.name : '';
-    const cells = [region, area, terr];
+    let regionCell, areaCell, terrCell;
+    if (r.kind === 'territory') { regionCell = r.region || ''; areaCell = r.area || ''; terrCell = r.name; }
+    else if (r.kind === 'area') { regionCell = r.region || ''; areaCell = r.name; terrCell = 'TOTAL'; }
+    else if (r.kind === 'region') { regionCell = r.name; areaCell = 'TOTAL'; terrCell = ''; }
+    else { regionCell = r.name; areaCell = ''; terrCell = ''; }
+    const bold = r.kind !== 'territory';
+    html += '<tr>';
+    html += '<td>' + (bold ? '<b>' : '') + regionCell + (bold ? '</b>' : '') + '</td>';
+    html += '<td>' + (bold ? '<b>' : '') + areaCell + (bold ? '</b>' : '') + '</td>';
+    html += '<td>' + (bold ? '<b>' : '') + terrCell + (bold ? '</b>' : '') + '</td>';
     for (const p of products) {
       const v = r.values[p] || { targetMt: 0, deliveryMt: 0, achvPct: 0 };
-      cells.push(v.targetMt, v.deliveryMt, v.achvPct);
+      const b = bold ? '<b>' : '', be = bold ? '</b>' : '';
+      html += '<td>' + b + v.targetMt + be + '</td>';
+      html += '<td>' + b + v.deliveryMt + be + '</td>';
+      html += '<td>' + b + v.achvPct + be + '</td>';
     }
-    lines.push(cells.join(','));
+    html += '</tr>';
   }
-  const blob = new Blob(['\uFEFF' + lines.join('\r\n')], { type: 'text/csv;charset=utf-8;' });
+  html += '</tbody></table>';
+
+  const full = '<html xmlns:o="urn:schemas-microsoft-com:office:office" xmlns:x="urn:schemas-microsoft-com:office:excel" xmlns="http://www.w3.org/TR/REC-html40"><head><meta charset="utf-8"></head><body>' + html + '</body></html>';
+  const blob = new Blob(['\uFEFF' + full], { type: 'application/vnd.ms-excel' });
   const link = document.createElement('a');
-  link.download = 'target-vs-achievement-matrix-' + new Date().toISOString().slice(0, 10) + '.csv';
+  link.download = 'target-vs-achievement-matrix-' + new Date().toISOString().slice(0, 10) + '.xls';
   link.href = URL.createObjectURL(blob);
   link.click();
   URL.revokeObjectURL(link.href);
