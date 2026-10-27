@@ -40,11 +40,6 @@ export async function renderTarget(container, state) {
     card('Target vs Achievement (MT)', el('div', { class: 'chart-box', style: 'height:140px;' }, [el('canvas', { id: 'ta-bar' })])),
   ]));
 
-  const cumulative = data.cumulative || [];
-  container.appendChild(chartCard('Daily Cumulative Achievement', 'ta-cum'));
-  lineChart('ta-cum', cumulative.map((c) => c.date.slice(5)), [
-    { label: 'Cumulative Achievement', data: cumulative.map((c) => c.achievement), color: '#0f766e' },
-  ]);
   barChart('ta-bar', ['Target (MT)', 'Achievement (MT)'], [{ label: 'MT', data: [m.targetMt, m.achievementMt], color: '#2563eb' }], { stacked: false });
 
   // Product-wise target vs achievement (delivery MT)
