@@ -67,6 +67,12 @@ export async function renderTarget(container, state) {
     rows: products.concat(productTotal),
   })));
 
+  // Region-wise target vs achievement (delivery MT)
+  container.appendChild(levelTable('Region Target vs Achievement', data.byRegion || [], 'region', 'Region'));
+
+  // Area-wise target vs achievement (delivery MT)
+  container.appendChild(levelTable('Area Target vs Achievement', data.byArea || [], 'area', 'Area'));
+
   // Territory-wise target vs achievement (delivery MT)
   const territories = data.byTerritory || [];
   const mpct = m.monthProgressPct || 0;
@@ -111,6 +117,39 @@ export async function renderTarget(container, state) {
     })]),
   ]);
   container.appendChild(terrCard);
+}
+
+/** Render a Region/Area/Territory rollup target-vs-achievement table. */
+function levelTable(title, rows, key, label) {
+  const sum = (arr, k) => arr.reduce((s, r) => s + (Number(r[k]) || 0), 0);
+  const tTgt = sum(rows, 'targetMt');
+  const tDel = sum(rows, 'deliveryMt');
+  const tSales = sum(rows, 'salesMt');
+  const tPend = sum(rows, 'pendingMt');
+  const total = {
+    __total: true,
+    [label]: 'Total',
+    targetMt: Math.round(tTgt * 10) / 10,
+    deliveryMt: Math.round(tDel * 10) / 10,
+    achievementPct: tTgt > 0 ? Math.round((tDel / tTgt) * 1000) / 10 : 0,
+    remainingMt: Math.round(Math.max(0, tTgt - tDel) * 10) / 10,
+    salesMt: Math.round(tSales * 10) / 10,
+    orderAchievementPct: tTgt > 0 ? Math.round((tSales / tTgt) * 1000) / 10 : 0,
+    pendingMt: Math.round(tPend * 10) / 10,
+  };
+  return card(title, dataTable({
+    columns: [
+      { label, key: label },
+      { label: 'Target (MT)', key: 'targetMt' },
+      { label: 'Delivery (MT)', key: 'deliveryMt' },
+      { label: 'Achievement %', key: 'achievementPct', pct: true },
+      { label: 'Remaining (MT)', key: 'remainingMt' },
+      { label: 'Sales Order (MT)', key: 'salesMt' },
+      { label: 'Achievement from Order', key: 'orderAchievementPct', pct: true },
+      { label: 'Pending (MT)', key: 'pendingMt' },
+    ],
+    rows: rows.concat(total),
+  }));
 }
 
 async function downloadTerritoryReport(m) {

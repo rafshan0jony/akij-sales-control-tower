@@ -8,6 +8,7 @@ const permissionService = require('./permissionService');
 const monthProgress = require('./monthProgressService');
 const rateService = require('./rateService');
 const territoryTargetService = require('./territoryTargetService');
+const territoryMapping = require('./territoryMappingService');
 
 const num = (v) => {
   const n = Number(v);
@@ -533,6 +534,8 @@ function targetAchievement(data, scope, range, opts = {}) {
     monthlyTrend: [],
     byProduct: productTargetAchievement(data, scope, range, selMonth),
     byTerritory: territoryTargetAchievement(data, scope, range, selMonth),
+    byRegion: regionTargetAchievement(data, scope, range, selMonth),
+    byArea: areaTargetAchievement(data, scope, range, selMonth),
   };
 }
 
@@ -653,6 +656,52 @@ function territoryTargetAchievement(data, scope, range, selMonth) {
       pendingMt: round1(pendingMtByTerr.get(tt.territory) || 0),
     };
   });
+}
+
+/**
+ * Roll territory-level target vs achievement up to a higher level
+ * ('region' or 'area'), aggregating target/delivery/sales/pending MT.
+ */
+function rollupTargetAchievement(byTerritory, level) {
+  const meta = new Map();
+  for (const r of territoryMapping.territoriesDetailed()) {
+    meta.set(String(r.territory).toLowerCase(), r);
+  }
+  const agg = new Map();
+  for (const t of byTerritory || []) {
+    const m = meta.get(String(t.territory).toLowerCase());
+    const name = (m && m[level]) ? String(m[level]) : 'Unassigned';
+    const e = agg.get(name) || { targetMt: 0, deliveryMt: 0, salesMt: 0, pendingMt: 0, deliveryValue: 0, territories: new Set() };
+    e.targetMt += num(t.targetMt);
+    e.deliveryMt += num(t.deliveryMt);
+    e.salesMt += num(t.salesMt);
+    e.pendingMt += num(t.pendingMt);
+    e.deliveryValue += num(t.deliveryValue);
+    e.territories.add(String(t.territory));
+    agg.set(name, e);
+  }
+  return [...agg.entries()].map(([name, e]) => ({
+    [level]: name,
+    targetMt: round1(e.targetMt),
+    deliveryMt: round1(e.deliveryMt),
+    achievementPct: e.targetMt > 0 ? round1((e.deliveryMt / e.targetMt) * 100) : 0,
+    remainingMt: round1(Math.max(0, e.targetMt - e.deliveryMt)),
+    deliveryValue: e.deliveryValue,
+    salesMt: round1(e.salesMt),
+    orderAchievementPct: e.targetMt > 0 ? round1((e.salesMt / e.targetMt) * 100) : 0,
+    pendingMt: round1(e.pendingMt),
+    territoryCount: e.territories.size,
+  })).sort((a, b) => b.targetMt - a.targetMt);
+}
+
+/** Region-wise target vs achievement (delivery MT) for a month. */
+function regionTargetAchievement(data, scope, range, selMonth) {
+  return rollupTargetAchievement(territoryTargetAchievement(data, scope, range, selMonth), 'region');
+}
+
+/** Area-wise target vs achievement (delivery MT) for a month. */
+function areaTargetAchievement(data, scope, range, selMonth) {
+  return rollupTargetAchievement(territoryTargetAchievement(data, scope, range, selMonth), 'area');
 }
 
 function territoryPerformance(data, scope, range) {
