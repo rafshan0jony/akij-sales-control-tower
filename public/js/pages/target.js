@@ -4,6 +4,11 @@ import { kpiGrid, card, chartCard } from './common.js';
 import { lineChart, barChart } from '../charts.js';
 import { dataTable } from '../ui.js';
 
+const fmtMt = (v) => {
+  const n = Number(v) || 0;
+  return Number.isInteger(n) ? n.toLocaleString('en-US') : n.toLocaleString('en-US', { minimumFractionDigits: 1, maximumFractionDigits: 1 });
+};
+
 export async function renderTarget(container, state) {
   const data = await api.get('/target-achievement?' + qs(state.query()));
   const m = data.metrics || {};
@@ -62,11 +67,11 @@ export async function renderTarget(container, state) {
   container.appendChild(card('Product-wise Target vs Achievement (Delivery MT)', dataTable({
     columns: [
       { label: 'Product', key: 'product' },
-      { label: 'Target (MT)', key: 'targetMt' },
-      { label: 'Delivery (MT)', key: 'deliveryMt' },
-      { label: 'Achievement %', key: 'achievementPct', pct: true },
-      { label: 'Remaining (MT)', key: 'remainingMt' },
-      { label: 'Pending (MT)', key: 'pendingMt' },
+      { label: 'Target (MT)', key: 'targetMt', align: 'right', format: fmtMt },
+      { label: 'Delivery (MT)', key: 'deliveryMt', align: 'right', format: fmtMt },
+      { label: 'Achievement %', key: 'achievementPct', pct: true, align: 'right' },
+      { label: 'Remaining (MT)', key: 'remainingMt', align: 'right', format: fmtMt },
+      { label: 'Pending (MT)', key: 'pendingMt', align: 'right', format: fmtMt },
     ],
     rows: products.concat(productTotal),
   })));
@@ -109,11 +114,11 @@ export async function renderTarget(container, state) {
     el('div', { class: 'card-body' }, [dataTable({
       columns: [
         { label: 'Territory', key: 'territory' },
-        { label: 'Target (MT)', key: 'targetMt' },
-        { label: 'Delivery (MT)', key: 'deliveryMt' },
-        { label: 'Achievement %', key: 'achievementPct', pct: true },
-        { label: 'Remaining (MT)', key: 'remainingMt' },
-        { label: 'Pending (MT)', key: 'pendingMt' },
+        { label: 'Target (MT)', key: 'targetMt', align: 'right', format: fmtMt },
+        { label: 'Delivery (MT)', key: 'deliveryMt', align: 'right', format: fmtMt },
+        { label: 'Achievement %', key: 'achievementPct', pct: true, align: 'right' },
+        { label: 'Remaining (MT)', key: 'remainingMt', align: 'right', format: fmtMt },
+        { label: 'Pending (MT)', key: 'pendingMt', align: 'right', format: fmtMt },
       ],
       rows: terrRows.concat(territoryTotal),
     })]),
@@ -142,11 +147,11 @@ function levelTable(title, rows, key, label) {
   return card(title, dataTable({
     columns: [
       { label, key },
-      { label: 'Target (MT)', key: 'targetMt' },
-      { label: 'Delivery (MT)', key: 'deliveryMt' },
-      { label: 'Achievement %', key: 'achievementPct', pct: true },
-      { label: 'Remaining (MT)', key: 'remainingMt' },
-      { label: 'Pending (MT)', key: 'pendingMt' },
+      { label: 'Target (MT)', key: 'targetMt', align: 'right', format: fmtMt },
+      { label: 'Delivery (MT)', key: 'deliveryMt', align: 'right', format: fmtMt },
+      { label: 'Achievement %', key: 'achievementPct', pct: true, align: 'right' },
+      { label: 'Remaining (MT)', key: 'remainingMt', align: 'right', format: fmtMt },
+      { label: 'Pending (MT)', key: 'pendingMt', align: 'right', format: fmtMt },
     ],
     rows: rows.concat(total),
   }));

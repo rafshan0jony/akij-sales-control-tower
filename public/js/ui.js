@@ -109,7 +109,7 @@ export function dataTable({ columns, rows, onSort, sort, order, onPage, page, to
   for (const c of columns) {
     const key = c.key || c.label.toLowerCase();
     const arrow = sort === key ? (order === 'asc' ? ' ▲' : ' ▼') : '';
-    tr.appendChild(el('th', { text: c.label + arrow, onclick: onSort ? () => onSort(key) : undefined }));
+    tr.appendChild(el('th', { text: c.label + arrow, style: c.align ? 'text-align:' + c.align + ';' : undefined, onclick: onSort ? () => onSort(key) : undefined }));
   }
   thead.appendChild(tr);
   const tbody = el('tbody');
@@ -126,7 +126,7 @@ export function dataTable({ columns, rows, onSort, sort, order, onPage, page, to
         else if (c.pct) v = pct(v);
         else if (c.badge) v = statusBadge(v);
         else if (v == null) v = '—';
-        r.appendChild(el('td', {}, [v]));
+        r.appendChild(el('td', { style: c.align ? 'text-align:' + c.align + ';' : undefined }, [v]));
       }
       tbody.appendChild(r);
     }
