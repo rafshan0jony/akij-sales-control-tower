@@ -477,7 +477,8 @@ function scopeTargetMt(scope, month) {
   if (scope && !scope.scopeAll) {
     return territoryTargetService.scopeTotalMt(month, scope.territoryNames);
   }
-  return territoryTargetService.nationalTotalMt(month);
+  // National target = sum of per-territory targets (keeps Product/Region/Area/Territory consistent).
+  return territoryTargetService.territoryTargets(month).reduce((s, t) => s + num(t.targetMt), 0);
 }
 
 /** Total target VALUE (৳) for a scope in a month = target MT × 20 × announced 50kg price. */
@@ -578,7 +579,7 @@ function productTargetAchievement(data, scope, range, selMonth) {
     const k = p.toLowerCase();
     seen.delete(k);
     const targetMt = scope.scopeAll
-      ? territoryTargetService.nationalProductMt(selMonth, p)
+      ? territoryTargetService.rowsForMonth(selMonth).reduce((s, r) => s + num(r.targets[p]), 0)
       : territoryTargetService.scopeProductMt(selMonth, p, scope.territoryNames);
     const delMt = mtByProduct.get(k) || 0;
     const salesMt = salesMtByProduct.get(k) || 0;
@@ -645,6 +646,7 @@ function territoryTargetAchievement(data, scope, range, selMonth) {
   return territoryTargetService.territoryTargetsForScope(selMonth, scope).map((tt) => {
     const delMt = delMtByTerr.get(tt.territory) || 0;
     const salesMt = salesMtByTerr.get(tt.territory) || 0;
+    const pendingMt = pendingMtByTerr.get(tt.territory) || 0;
     return {
       territory: tt.territory,
       targetMt: round1(tt.targetMt),
@@ -654,9 +656,9 @@ function territoryTargetAchievement(data, scope, range, selMonth) {
       deliveryValue: delValByTerr.get(tt.territory) || 0,
       salesMt: round1(salesMt),
       orderAchievementPct: tt.targetMt > 0 ? round1((salesMt / tt.targetMt) * 100) : 0,
-      pendingMt: round1(pendingMtByTerr.get(tt.territory) || 0),
+      pendingMt: round1(pendingMt),
     };
-  });
+  }).filter((r) => r.targetMt > 0 || r.deliveryMt > 0 || r.salesMt > 0 || r.pendingMt > 0);
 }
 
 /**
@@ -732,7 +734,29 @@ function targetAchievementMatrix(data, scope, range, selMonth) {
   const meta = new Map();
   for (const r of territoryMapping.territoriesDetailed()) meta.set(String(r.territory).toLowerCase(), r);
 
-  const terrList = territoryTargetService.territoryTargetsForScope(selMonth, scope).map((t) => t.territory);
+  const terrList = territoryTargetService.territoryTargetsForScope(selMonth, scope).map((t) => t.territory)
+    .filter((t) => {
+      const key = String(t).toLowerCase();
+      const targets = targetByTerr.get(key) || {};
+      const hasTarget = Object.values(targets).some((v) => num(v) > 0);
+      const del = delByTerr.get(key) || new Map();
+      const hasDel = [...del.values()].some((v) => v > 0);
+      return hasTarget || hasDel;
+    });
+
+  // Keep only products that have some target or delivery in scope (hide all-zero columns).
+  const activeProducts = products.filter((p) => {
+    const pl = p.toLowerCase();
+    for (const t of terrList) {
+      const key = String(t).toLowerCase();
+      const targets = targetByTerr.get(key) || {};
+      if (num(targets[p]) > 0) return true;
+      const del = delByTerr.get(key) || new Map();
+      if ((del.get(pl) || 0) > 0) return true;
+    }
+    return false;
+  });
+
   const rows = [];
   for (const t of terrList) {
     const key = String(t).toLowerCase();
@@ -740,17 +764,17 @@ function targetAchievementMatrix(data, scope, range, selMonth) {
     const targets = targetByTerr.get(key) || {};
     const del = delByTerr.get(key) || new Map();
     const values = {};
-    for (const p of products) {
+    for (const p of activeProducts) {
       const tgt = num(targets[p]);
       const dm = del.get(p.toLowerCase()) || 0;
       values[p] = { targetMt: round1(tgt), deliveryMt: round1(dm), achvPct: tgt > 0 ? round1((dm / tgt) * 100) : 0 };
     }
-    const totalTgt = products.reduce((s, p) => s + num(targets[p]), 0);
-    const totalDel = products.reduce((s, p) => s + (del.get(p.toLowerCase()) || 0), 0);
+    const totalTgt = activeProducts.reduce((s, p) => s + num(targets[p]), 0);
+    const totalDel = activeProducts.reduce((s, p) => s + (del.get(p.toLowerCase()) || 0), 0);
     values['Total'] = { targetMt: round1(totalTgt), deliveryMt: round1(totalDel), achvPct: totalTgt > 0 ? round1((totalDel / totalTgt) * 100) : 0 };
     rows.push({ region: (m && m.region) || 'Unassigned', area: (m && m.area) || 'Unassigned', territory: t, values });
   }
-  return { products: [...products, 'Total'], rows };
+  return { products: [...activeProducts, 'Total'], rows };
 }
 
 function territoryPerformance(data, scope, range) {

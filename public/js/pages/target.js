@@ -133,7 +133,7 @@ function levelTable(title, rows, key, label) {
   const tPend = sum(rows, 'pendingMt');
   const total = {
     __total: true,
-    [label]: 'Total',
+    [key]: 'Total',
     targetMt: Math.round(tTgt * 10) / 10,
     deliveryMt: Math.round(tDel * 10) / 10,
     achievementPct: tTgt > 0 ? Math.round((tDel / tTgt) * 1000) / 10 : 0,
@@ -144,7 +144,7 @@ function levelTable(title, rows, key, label) {
   };
   return card(title, dataTable({
     columns: [
-      { label, key: label },
+      { label, key },
       { label: 'Target (MT)', key: 'targetMt' },
       { label: 'Delivery (MT)', key: 'deliveryMt' },
       { label: 'Achievement %', key: 'achievementPct', pct: true },
@@ -252,9 +252,9 @@ function matrixCard(matrix) {
     html += '<td>' + terrCell + '</td>';
     for (const p of products) {
       const v = r.values[p] || { targetMt: 0, deliveryMt: 0, achvPct: 0 };
-      html += '<td>' + (bold ? '<strong>' : '') + fmt(v.targetMt, 1) + (bold ? '</strong>' : '') + '</td>';
-      html += '<td>' + (bold ? '<strong>' : '') + fmt(v.deliveryMt, 1) + (bold ? '</strong>' : '') + '</td>';
-      html += '<td>' + (bold ? '<strong>' : '') + v.achvPct + '%' + (bold ? '</strong>' : '') + '</td>';
+      html += '<td>' + (bold ? '<strong>' : '') + (v.targetMt > 0 ? fmt(v.targetMt, 1) : '') + (bold ? '</strong>' : '') + '</td>';
+      html += '<td>' + (bold ? '<strong>' : '') + (v.deliveryMt > 0 ? fmt(v.deliveryMt, 1) : '') + (bold ? '</strong>' : '') + '</td>';
+      html += '<td>' + (bold ? '<strong>' : '') + (v.achvPct > 0 ? v.achvPct + '%' : '') + (bold ? '</strong>' : '') + '</td>';
     }
     html += '</tr>';
   }
@@ -297,9 +297,9 @@ function downloadMatrixExcel(matrix) {
     for (const p of products) {
       const v = r.values[p] || { targetMt: 0, deliveryMt: 0, achvPct: 0 };
       const b = bold ? '<b>' : '', be = bold ? '</b>' : '';
-      html += '<td>' + b + v.targetMt + be + '</td>';
-      html += '<td>' + b + v.deliveryMt + be + '</td>';
-      html += '<td>' + b + v.achvPct + be + '</td>';
+      html += '<td>' + b + (v.targetMt > 0 ? v.targetMt : '') + be + '</td>';
+      html += '<td>' + b + (v.deliveryMt > 0 ? v.deliveryMt : '') + be + '</td>';
+      html += '<td>' + b + (v.achvPct > 0 ? v.achvPct : '') + be + '</td>';
     }
     html += '</tr>';
   }
