@@ -102,8 +102,8 @@ export function errorState(message = 'Failed to load data') {
 }
 
 /** Build a reusable data table with search/sort/pagination hooks. */
-export function dataTable({ columns, rows, onSort, sort, order, onPage, page, totalPages, total, search, onSearch }) {
-  const table = el('table', { class: 'data' });
+export function dataTable({ columns, rows, onSort, sort, order, onPage, page, totalPages, total, search, onSearch, compact }) {
+  const table = el('table', { class: compact ? 'data compact' : 'data' });
   const thead = el('thead');
   const tr = el('tr');
   for (const c of columns) {

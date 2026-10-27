@@ -74,6 +74,7 @@ export async function renderTarget(container, state) {
       { label: 'Pending (MT)', key: 'pendingMt', align: 'right', format: fmtMt },
     ],
     rows: products.concat(productTotal),
+    compact: true,
   })));
 
   // Region-wise target vs achievement (delivery MT)
@@ -121,6 +122,7 @@ export async function renderTarget(container, state) {
         { label: 'Pending (MT)', key: 'pendingMt', align: 'right', format: fmtMt },
       ],
       rows: terrRows.concat(territoryTotal),
+      compact: true,
     })]),
   ]);
   container.appendChild(terrCard);
@@ -154,6 +156,7 @@ function levelTable(title, rows, key, label) {
       { label: 'Pending (MT)', key: 'pendingMt', align: 'right', format: fmtMt },
     ],
     rows: rows.concat(total),
+    compact: true,
   }));
 }
 
