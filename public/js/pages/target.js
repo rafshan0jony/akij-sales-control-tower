@@ -22,6 +22,11 @@ export async function renderTarget(container, state) {
     { label: 'Month Progress', value: pct(m.monthProgressPct) },
   ]));
 
+  // Matrix report: Region -> Area -> Territory x Product (Target/Delivery/Achv.%)
+  if (data.matrix && data.matrix.rows && data.matrix.rows.length) {
+    container.appendChild(matrixCard(data.matrix));
+  }
+
   container.appendChild(el('div', { class: 'grid-2', style: 'margin-top:18px;' }, [
     card('Performance Status', el('div', { style: 'display:flex;gap:10px;align-items:center;' }, [
       statusBadge(m.status || 'Behind'),
@@ -175,4 +180,120 @@ function achColor(p) {
   if (p >= 100) return 'var(--success)';
   if (p >= 90) return 'var(--warning)';
   return 'var(--danger)';
+}
+
+// ---------------------------------------------------------------------------
+// Matrix report (Region -> Area -> Territory rows x Product columns)
+// ---------------------------------------------------------------------------
+function zeroVals(products) {
+  const o = {};
+  for (const p of products) o[p] = { targetMt: 0, deliveryMt: 0 };
+  return o;
+}
+
+function sumVals(vals, products) {
+  const acc = zeroVals(products);
+  for (const v of vals) for (const p of products) {
+    acc[p].targetMt += Number(v.values[p].targetMt) || 0;
+    acc[p].deliveryMt += Number(v.values[p].deliveryMt) || 0;
+  }
+  const out = {};
+  for (const p of products) {
+    const t = acc[p].targetMt, d = acc[p].deliveryMt;
+    out[p] = { targetMt: Math.round(t * 10) / 10, deliveryMt: Math.round(d * 10) / 10, achvPct: t > 0 ? Math.round((d / t) * 1000) / 10 : 0 };
+  }
+  return out;
+}
+
+/** Flatten to display rows: region subtotal -> area subtotal -> territory. */
+function buildMatrixRows(matrix) {
+  const products = matrix.products;
+  const regions = new Map();
+  for (const r of matrix.rows) {
+    if (!regions.has(r.region)) regions.set(r.region, { name: r.region, areas: new Map(), rows: [] });
+    const reg = regions.get(r.region);
+    if (!reg.areas.has(r.area)) reg.areas.set(r.area, { name: r.area, rows: [] });
+    reg.areas.get(r.area).rows.push(r);
+    reg.rows.push(r);
+  }
+  const out = [];
+  for (const reg of regions.values()) {
+    out.push({ kind: 'region', name: reg.name, values: sumVals(reg.rows, products) });
+    for (const area of reg.areas.values()) {
+      out.push({ kind: 'area', name: area.name, values: sumVals(area.rows, products) });
+      for (const t of area.rows) out.push({ kind: 'territory', name: t.territory, values: t.values });
+    }
+  }
+  return out;
+}
+
+function matrixCard(matrix) {
+  const products = matrix.products;
+  const rows = buildMatrixRows(matrix);
+
+  let html = '<table class="data-table matrix-table"><thead>';
+  html += '<tr><th class="sticky" rowspan="2">Region</th><th rowspan="2">Area</th><th rowspan="2">Territory</th>';
+  for (const p of products) html += '<th colspan="3">' + p + '</th>';
+  html += '</tr><tr>';
+  for (const p of products) html += '<th>Target</th><th>Delivery</th><th>Achv.%</th>';
+  html += '</tr></thead><tbody>';
+  for (const r of rows) {
+    const cls = r.kind === 'region' ? 'matrix-region' : (r.kind === 'area' ? 'matrix-area' : 'matrix-territory');
+    const bold = r.kind !== 'territory';
+    const indent = r.kind === 'region' ? '' : (r.kind === 'area' ? 'area-indent' : 'terr-indent');
+    const regionCell = r.kind === 'region' ? r.name : '';
+    const areaCell = r.kind === 'area' ? r.name : '';
+    const terrCell = r.kind === 'territory' ? r.name : '';
+    html += '<tr class="' + cls + '">';
+    html += '<td class="' + indent + '"><strong>' + regionCell + '</strong></td>';
+    html += '<td class="' + indent + '">' + areaCell + '</td>';
+    html += '<td class="' + indent + '">' + terrCell + '</td>';
+    for (const p of products) {
+      const v = r.values[p] || { targetMt: 0, deliveryMt: 0, achvPct: 0 };
+      html += '<td>' + fmt(v.targetMt, 1) + '</td>';
+      html += '<td>' + fmt(v.deliveryMt, 1) + '</td>';
+      html += '<td>' + (bold ? '<strong>' : '') + v.achvPct + '%' + (bold ? '</strong>' : '') + '</td>';
+    }
+    html += '</tr>';
+  }
+  html += '</tbody></table>';
+
+  const wrap = el('div', { class: 'matrix-scroll' });
+  wrap.innerHTML = html;
+
+  return el('div', { class: 'card', id: 'matrix-report' }, [
+    el('div', { class: 'card-head' }, [
+      el('div', { class: 'card-title', text: 'Target vs Achievement Matrix (Region → Area → Territory × Product)' }),
+      el('div', {}, [el('button', { class: 'btn btn-sm', text: '⬇ Download CSV', onclick: () => downloadMatrixCsv(matrix) })]),
+    ]),
+    el('div', { class: 'card-body' }, [wrap]),
+  ]);
+}
+
+function downloadMatrixCsv(matrix) {
+  const products = matrix.products;
+  const rows = buildMatrixRows(matrix);
+  const esc = (s) => '"' + String(s == null ? '' : s).replace(/"/g, '""') + '"';
+  const lines = [];
+  // header row 1: product names (spanned)
+  lines.push(['', '', ''].concat(products.flatMap((p) => [p, '', ''])).join(','));
+  // header row 2: Target / Delivery / Achv.%
+  lines.push(['Region', 'Area', 'Territory'].concat(products.flatMap(() => ['Target', 'Delivery', 'Achv.%'])).join(','));
+  for (const r of rows) {
+    const region = r.kind === 'region' ? r.name : '';
+    const area = r.kind === 'area' ? r.name : '';
+    const terr = r.kind === 'territory' ? r.name : '';
+    const cells = [region, area, terr];
+    for (const p of products) {
+      const v = r.values[p] || { targetMt: 0, deliveryMt: 0, achvPct: 0 };
+      cells.push(v.targetMt, v.deliveryMt, v.achvPct);
+    }
+    lines.push(cells.join(','));
+  }
+  const blob = new Blob(['\uFEFF' + lines.join('\r\n')], { type: 'text/csv;charset=utf-8;' });
+  const link = document.createElement('a');
+  link.download = 'target-vs-achievement-matrix-' + new Date().toISOString().slice(0, 10) + '.csv';
+  link.href = URL.createObjectURL(blob);
+  link.click();
+  URL.revokeObjectURL(link.href);
 }

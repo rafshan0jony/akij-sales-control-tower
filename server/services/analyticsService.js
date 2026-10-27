@@ -536,6 +536,7 @@ function targetAchievement(data, scope, range, opts = {}) {
     byTerritory: territoryTargetAchievement(data, scope, range, selMonth),
     byRegion: regionTargetAchievement(data, scope, range, selMonth),
     byArea: areaTargetAchievement(data, scope, range, selMonth),
+    matrix: targetAchievementMatrix(data, scope, range, selMonth),
   };
 }
 
@@ -702,6 +703,54 @@ function regionTargetAchievement(data, scope, range, selMonth) {
 /** Area-wise target vs achievement (delivery MT) for a month. */
 function areaTargetAchievement(data, scope, range, selMonth) {
   return rollupTargetAchievement(territoryTargetAchievement(data, scope, range, selMonth), 'area');
+}
+
+/**
+ * Pivot matrix: Region -> Area -> Territory rows, product columns
+ * (each product has Target / Delivery / Achv.%). Used for the at-a-glance
+ * team report.
+ */
+function targetAchievementMatrix(data, scope, range, selMonth) {
+  const { deliveries } = scopedFacts(data, scope, range.from, range.to);
+  const products = territoryTargetService.productsList();
+
+  const targetByTerr = new Map();
+  for (const r of territoryTargetService.rowsForMonth(selMonth)) {
+    if (r.territory === 'National') continue;
+    targetByTerr.set(String(r.territory).toLowerCase(), r.targets || {});
+  }
+
+  const delByTerr = new Map();
+  for (const d of deliveries) {
+    const t = territoryName(d).toLowerCase();
+    const p = productName(d).toLowerCase();
+    if (!delByTerr.has(t)) delByTerr.set(t, new Map());
+    const m = delByTerr.get(t);
+    m.set(p, (m.get(p) || 0) + num(d.mt));
+  }
+
+  const meta = new Map();
+  for (const r of territoryMapping.territoriesDetailed()) meta.set(String(r.territory).toLowerCase(), r);
+
+  const terrList = territoryTargetService.territoryTargetsForScope(selMonth, scope).map((t) => t.territory);
+  const rows = [];
+  for (const t of terrList) {
+    const key = String(t).toLowerCase();
+    const m = meta.get(key);
+    const targets = targetByTerr.get(key) || {};
+    const del = delByTerr.get(key) || new Map();
+    const values = {};
+    for (const p of products) {
+      const tgt = num(targets[p]);
+      const dm = del.get(p.toLowerCase()) || 0;
+      values[p] = { targetMt: round1(tgt), deliveryMt: round1(dm), achvPct: tgt > 0 ? round1((dm / tgt) * 100) : 0 };
+    }
+    const totalTgt = products.reduce((s, p) => s + num(targets[p]), 0);
+    const totalDel = products.reduce((s, p) => s + (del.get(p.toLowerCase()) || 0), 0);
+    values['Total'] = { targetMt: round1(totalTgt), deliveryMt: round1(totalDel), achvPct: totalTgt > 0 ? round1((totalDel / totalTgt) * 100) : 0 };
+    rows.push({ region: (m && m.region) || 'Unassigned', area: (m && m.area) || 'Unassigned', territory: t, values });
+  }
+  return { products: [...products, 'Total'], rows };
 }
 
 function territoryPerformance(data, scope, range) {
