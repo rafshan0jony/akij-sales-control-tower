@@ -1,5 +1,5 @@
 import { api, qs } from '../api.js';
-import { el, money, compactMoney, pct, fmt, statusBadge, emptyState } from '../ui.js';
+import { el, money, compactMoney, pct, fmt, statusBadge, emptyState, errorState } from '../ui.js';
 import { kpiGrid, card, chartCard } from './common.js';
 import { lineChart, barChart } from '../charts.js';
 import { dataTable } from '../ui.js';
@@ -9,8 +9,79 @@ const fmtMt = (v) => {
   return Number.isInteger(n) ? n.toLocaleString('en-US') : n.toLocaleString('en-US', { minimumFractionDigits: 1, maximumFractionDigits: 1 });
 };
 
+const MONTH_NAMES = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
+const TARGET_MONTH_KEY = 'akij_target_month';
+
+function monthLabel(ym) {
+  const m = /^(\d{4})-(\d{2})$/.exec(ym || '');
+  if (!m) return ym;
+  return MONTH_NAMES[Number(m[2]) - 1] + ' ' + m[1];
+}
+
+async function fetchTargetMonths() {
+  try {
+    return ((await api.get('/target-achievement/months')).months) || [];
+  } catch (_) {
+    return [];
+  }
+}
+
+function resolveTargetMonth(months) {
+  let selected = localStorage.getItem(TARGET_MONTH_KEY);
+  if (!selected || !months.includes(selected)) selected = months.length ? months[months.length - 1] : '';
+  if (selected) localStorage.setItem(TARGET_MONTH_KEY, selected);
+  return selected;
+}
+
+function buildMonthSelect(months, selected) {
+  const sel = el('select', { class: 'select' });
+  for (const ym of months) sel.appendChild(el('option', { value: ym, text: monthLabel(ym) }));
+  sel.value = selected;
+  return sel;
+}
+
+
 export async function renderTarget(container, state) {
-  const data = await api.get('/target-achievement?' + qs(state.query()));
+  const months = await fetchTargetMonths();
+  const selected = resolveTargetMonth(months);
+  const monthSelect = buildMonthSelect(months, selected);
+
+  const header = el('div', { class: 'card', style: 'margin-bottom:14px;' }, [
+    el('div', { class: 'card-head' }, [el('div', { class: 'card-title', text: 'Target Month' })]),
+    el('div', { class: 'card-body' }, [
+      el('div', { style: 'display:flex;align-items:center;gap:10px;' }, [
+        el('span', { class: 'muted', text: 'Show target for:' }),
+        monthSelect,
+      ]),
+    ]),
+  ]);
+
+  const body = el('div');
+  container.appendChild(header);
+  container.appendChild(body);
+
+  const draw = async (ym) => {
+    if (!ym) { body.innerHTML = ''; body.appendChild(emptyState('No target data yet')); return; }
+    let data;
+    try {
+      data = await api.get('/target-achievement?' + qs({ ...state.query(), filter: 'month:' + ym }));
+    } catch (err) {
+      body.innerHTML = '';
+      body.appendChild(errorState(err.message));
+      return;
+    }
+    drawTargetBody(body, state, data);
+  };
+
+  monthSelect.addEventListener('change', () => {
+    localStorage.setItem(TARGET_MONTH_KEY, monthSelect.value);
+    draw(monthSelect.value);
+  });
+
+  await draw(selected);
+}
+
+function drawTargetBody(container, state, data) {
   const m = data.metrics || {};
 
   const achPct = m.achievementMtPct != null ? m.achievementMtPct : m.achievementPct;

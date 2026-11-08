@@ -121,6 +121,7 @@ function normalizeCredit(rows) {
       deliveryGap,
       paymentGap,
       daysBaseOverdue,
+      becomingOverdueTomorrow: Math.round(Math.min(num(r.becomingOverdueTomorrow), ledgerBalance) * 100) / 100,
     });
   }
   return out;

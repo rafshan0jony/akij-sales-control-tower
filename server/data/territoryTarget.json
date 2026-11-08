@@ -1,8 +1,9 @@
 {
-  "updatedAt": "2026-10-04T11:51:34.085Z",
+  "updatedAt": "2026-11-01T03:40:42.677Z",
   "months": [
     "2026-09",
-    "2026-10"
+    "2026-10",
+    "2026-11"
   ],
   "products": [
     "Chinigura",
@@ -1028,6 +1029,510 @@
         "Essential Atop Rice": 127,
         "By-Product": 0,
         "Total Target": 5488
+      }
+    },
+    {
+      "month": "2026-11",
+      "territory": "Mohammadpur",
+      "targets": {
+        "Chinigura": 42,
+        "Najirshail": 0,
+        "Katari Atop": 8,
+        "Katari Ghee Bhog": 144,
+        "Katari Najir": 26,
+        "Katari Shiddho": 0,
+        "Jirashail": 41,
+        "Miniket": 68,
+        "Bashmoti": 3,
+        "Paijam": 0,
+        "Atash": 0,
+        "Special Jirashail": 0,
+        "Essential Atop Rice": 0,
+        "By-Product": 0,
+        "Total Target": 332
+      }
+    },
+    {
+      "month": "2026-11",
+      "territory": "Mirpur",
+      "targets": {
+        "Chinigura": 28,
+        "Najirshail": 0,
+        "Katari Atop": 8,
+        "Katari Ghee Bhog": 101,
+        "Katari Najir": 65,
+        "Katari Shiddho": 0,
+        "Jirashail": 21,
+        "Miniket": 38,
+        "Bashmoti": 18,
+        "Paijam": 9,
+        "Atash": 0,
+        "Special Jirashail": 0,
+        "Essential Atop Rice": 0,
+        "By-Product": 0,
+        "Total Target": 287
+      }
+    },
+    {
+      "month": "2026-11",
+      "territory": "Keraniganj",
+      "targets": {
+        "Chinigura": 28,
+        "Najirshail": 0,
+        "Katari Atop": 8,
+        "Katari Ghee Bhog": 20,
+        "Katari Najir": 26,
+        "Katari Shiddho": 0,
+        "Jirashail": 41,
+        "Miniket": 29,
+        "Bashmoti": 1,
+        "Paijam": 18,
+        "Atash": 4,
+        "Special Jirashail": 0,
+        "Essential Atop Rice": 4,
+        "By-Product": 0,
+        "Total Target": 178
+      }
+    },
+    {
+      "month": "2026-11",
+      "territory": "Savar",
+      "targets": {
+        "Chinigura": 96,
+        "Najirshail": 0,
+        "Katari Atop": 28,
+        "Katari Ghee Bhog": 81,
+        "Katari Najir": 26,
+        "Katari Shiddho": 0,
+        "Jirashail": 21,
+        "Miniket": 48,
+        "Bashmoti": 1,
+        "Paijam": 9,
+        "Atash": 0,
+        "Special Jirashail": 0,
+        "Essential Atop Rice": 0,
+        "By-Product": 0,
+        "Total Target": 309
+      }
+    },
+    {
+      "month": "2026-11",
+      "territory": "Pabna",
+      "targets": {
+        "Chinigura": 14,
+        "Najirshail": 0,
+        "Katari Atop": 0,
+        "Katari Ghee Bhog": 3,
+        "Katari Najir": 5,
+        "Katari Shiddho": 0,
+        "Jirashail": 21,
+        "Miniket": 29,
+        "Bashmoti": 4,
+        "Paijam": 51,
+        "Atash": 8,
+        "Special Jirashail": 0,
+        "Essential Atop Rice": 0,
+        "By-Product": 0,
+        "Total Target": 134
+      }
+    },
+    {
+      "month": "2026-11",
+      "territory": "Rajshahi Metro",
+      "targets": {
+        "Chinigura": 14,
+        "Najirshail": 0,
+        "Katari Atop": 0,
+        "Katari Ghee Bhog": 3,
+        "Katari Najir": 5,
+        "Katari Shiddho": 0,
+        "Jirashail": 21,
+        "Miniket": 29,
+        "Bashmoti": 1,
+        "Paijam": 45,
+        "Atash": 4,
+        "Special Jirashail": 0,
+        "Essential Atop Rice": 0,
+        "By-Product": 0,
+        "Total Target": 120
+      }
+    },
+    {
+      "month": "2026-11",
+      "territory": "Rangpur Metro",
+      "targets": {
+        "Chinigura": 0,
+        "Najirshail": 0,
+        "Katari Atop": 0,
+        "Katari Ghee Bhog": 1,
+        "Katari Najir": 1,
+        "Katari Shiddho": 0,
+        "Jirashail": 7,
+        "Miniket": 10,
+        "Bashmoti": 0,
+        "Paijam": 27,
+        "Atash": 0,
+        "Special Jirashail": 0,
+        "Essential Atop Rice": 0,
+        "By-Product": 0,
+        "Total Target": 46
+      }
+    },
+    {
+      "month": "2026-11",
+      "territory": "Gazipur & Tongi",
+      "targets": {
+        "Chinigura": 14,
+        "Najirshail": 0,
+        "Katari Atop": 0,
+        "Katari Ghee Bhog": 81,
+        "Katari Najir": 39,
+        "Katari Shiddho": 0,
+        "Jirashail": 21,
+        "Miniket": 29,
+        "Bashmoti": 1,
+        "Paijam": 36,
+        "Atash": 4,
+        "Special Jirashail": 0,
+        "Essential Atop Rice": 0,
+        "By-Product": 0,
+        "Total Target": 223
+      }
+    },
+    {
+      "month": "2026-11",
+      "territory": "Badda & Jatrabari",
+      "targets": {
+        "Chinigura": 42,
+        "Najirshail": 0,
+        "Katari Atop": 0,
+        "Katari Ghee Bhog": 101,
+        "Katari Najir": 65,
+        "Katari Shiddho": 0,
+        "Jirashail": 0,
+        "Miniket": 54,
+        "Bashmoti": 3,
+        "Paijam": 18,
+        "Atash": 0,
+        "Special Jirashail": 0,
+        "Essential Atop Rice": 0,
+        "By-Product": 0,
+        "Total Target": 283
+      }
+    },
+    {
+      "month": "2026-11",
+      "territory": "Munshiganj & Araihazar",
+      "targets": {
+        "Chinigura": 42,
+        "Najirshail": 0,
+        "Katari Atop": 8,
+        "Katari Ghee Bhog": 40,
+        "Katari Najir": 39,
+        "Katari Shiddho": 0,
+        "Jirashail": 0,
+        "Miniket": 38,
+        "Bashmoti": 1,
+        "Paijam": 18,
+        "Atash": 0,
+        "Special Jirashail": 0,
+        "Essential Atop Rice": 0,
+        "By-Product": 0,
+        "Total Target": 186
+      }
+    },
+    {
+      "month": "2026-11",
+      "territory": "Narayanganj Metro",
+      "targets": {
+        "Chinigura": 100,
+        "Najirshail": 0,
+        "Katari Atop": 20,
+        "Katari Ghee Bhog": 27,
+        "Katari Najir": 66,
+        "Katari Shiddho": 0,
+        "Jirashail": 15,
+        "Miniket": 32,
+        "Bashmoti": 1,
+        "Paijam": 20,
+        "Atash": 0,
+        "Special Jirashail": 0,
+        "Essential Atop Rice": 0,
+        "By-Product": 0,
+        "Total Target": 281
+      }
+    },
+    {
+      "month": "2026-11",
+      "territory": "Narsingdi",
+      "targets": {
+        "Chinigura": 120,
+        "Najirshail": 0,
+        "Katari Atop": 40,
+        "Katari Ghee Bhog": 101,
+        "Katari Najir": 26,
+        "Katari Shiddho": 0,
+        "Jirashail": 0,
+        "Miniket": 10,
+        "Bashmoti": 0,
+        "Paijam": 0,
+        "Atash": 0,
+        "Special Jirashail": 0,
+        "Essential Atop Rice": 0,
+        "By-Product": 0,
+        "Total Target": 296
+      }
+    },
+    {
+      "month": "2026-11",
+      "territory": "Moulvibazar",
+      "targets": {
+        "Chinigura": 28,
+        "Najirshail": 0,
+        "Katari Atop": 60,
+        "Katari Ghee Bhog": 20,
+        "Katari Najir": 26,
+        "Katari Shiddho": 0,
+        "Jirashail": 0,
+        "Miniket": 10,
+        "Bashmoti": 0,
+        "Paijam": 9,
+        "Atash": 0,
+        "Special Jirashail": 0,
+        "Essential Atop Rice": 11,
+        "By-Product": 0,
+        "Total Target": 163
+      }
+    },
+    {
+      "month": "2026-11",
+      "territory": "Sylhet Metro",
+      "targets": {
+        "Chinigura": 28,
+        "Najirshail": 0,
+        "Katari Atop": 120,
+        "Katari Ghee Bhog": 20,
+        "Katari Najir": 52,
+        "Katari Shiddho": 0,
+        "Jirashail": 0,
+        "Miniket": 0,
+        "Bashmoti": 0,
+        "Paijam": 18,
+        "Atash": 0,
+        "Special Jirashail": 50,
+        "Essential Atop Rice": 28,
+        "By-Product": 0,
+        "Total Target": 315
+      }
+    },
+    {
+      "month": "2026-11",
+      "territory": "Chowmuhani",
+      "targets": {
+        "Chinigura": 14,
+        "Najirshail": 0,
+        "Katari Atop": 0,
+        "Katari Ghee Bhog": 20,
+        "Katari Najir": 39,
+        "Katari Shiddho": 0,
+        "Jirashail": 62,
+        "Miniket": 68,
+        "Bashmoti": 1,
+        "Paijam": 318,
+        "Atash": 42,
+        "Special Jirashail": 0,
+        "Essential Atop Rice": 0,
+        "By-Product": 0,
+        "Total Target": 564
+      }
+    },
+    {
+      "month": "2026-11",
+      "territory": "Laxmipur",
+      "targets": {
+        "Chinigura": 14,
+        "Najirshail": 0,
+        "Katari Atop": 0,
+        "Katari Ghee Bhog": 7,
+        "Katari Najir": 26,
+        "Katari Shiddho": 0,
+        "Jirashail": 41,
+        "Miniket": 54,
+        "Bashmoti": 1,
+        "Paijam": 127,
+        "Atash": 14,
+        "Special Jirashail": 0,
+        "Essential Atop Rice": 0,
+        "By-Product": 0,
+        "Total Target": 285
+      }
+    },
+    {
+      "month": "2026-11",
+      "territory": "Cumilla Metro",
+      "targets": {
+        "Chinigura": 14,
+        "Najirshail": 0,
+        "Katari Atop": 0,
+        "Katari Ghee Bhog": 7,
+        "Katari Najir": 13,
+        "Katari Shiddho": 0,
+        "Jirashail": 21,
+        "Miniket": 34,
+        "Bashmoti": 1,
+        "Paijam": 64,
+        "Atash": 8,
+        "Special Jirashail": 0,
+        "Essential Atop Rice": 0,
+        "By-Product": 0,
+        "Total Target": 161
+      }
+    },
+    {
+      "month": "2026-11",
+      "territory": "Hathazari",
+      "targets": {
+        "Chinigura": 14,
+        "Najirshail": 200,
+        "Katari Atop": 60,
+        "Katari Ghee Bhog": 101,
+        "Katari Najir": 0,
+        "Katari Shiddho": 0,
+        "Jirashail": 0,
+        "Miniket": 10,
+        "Bashmoti": 1,
+        "Paijam": 18,
+        "Atash": 0,
+        "Special Jirashail": 0,
+        "Essential Atop Rice": 28,
+        "By-Product": 0,
+        "Total Target": 431
+      }
+    },
+    {
+      "month": "2026-11",
+      "territory": "Khulna Metro",
+      "targets": {
+        "Chinigura": 100,
+        "Najirshail": 0,
+        "Katari Atop": 40,
+        "Katari Ghee Bhog": 20,
+        "Katari Najir": 74,
+        "Katari Shiddho": 0,
+        "Jirashail": 0,
+        "Miniket": 48,
+        "Bashmoti": 1,
+        "Paijam": 0,
+        "Atash": 4,
+        "Special Jirashail": 0,
+        "Essential Atop Rice": 0,
+        "By-Product": 0,
+        "Total Target": 286
+      }
+    },
+    {
+      "month": "2026-11",
+      "territory": "Kushtia",
+      "targets": {
+        "Chinigura": 14,
+        "Najirshail": 0,
+        "Katari Atop": 0,
+        "Katari Ghee Bhog": 7,
+        "Katari Najir": 13,
+        "Katari Shiddho": 0,
+        "Jirashail": 21,
+        "Miniket": 48,
+        "Bashmoti": 1,
+        "Paijam": 136,
+        "Atash": 4,
+        "Special Jirashail": 0,
+        "Essential Atop Rice": 0,
+        "By-Product": 0,
+        "Total Target": 243
+      }
+    },
+    {
+      "month": "2026-11",
+      "territory": "Madaripur",
+      "targets": {
+        "Chinigura": 28,
+        "Najirshail": 0,
+        "Katari Atop": 0,
+        "Katari Ghee Bhog": 0,
+        "Katari Najir": 13,
+        "Katari Shiddho": 0,
+        "Jirashail": 103,
+        "Miniket": 54,
+        "Bashmoti": 1,
+        "Paijam": 36,
+        "Atash": 4,
+        "Special Jirashail": 0,
+        "Essential Atop Rice": 0,
+        "By-Product": 0,
+        "Total Target": 238
+      }
+    },
+    {
+      "month": "2026-11",
+      "territory": "Faridpur Metro",
+      "targets": {
+        "Chinigura": 14,
+        "Najirshail": 0,
+        "Katari Atop": 0,
+        "Katari Ghee Bhog": 20,
+        "Katari Najir": 26,
+        "Katari Shiddho": 0,
+        "Jirashail": 62,
+        "Miniket": 68,
+        "Bashmoti": 13,
+        "Paijam": 45,
+        "Atash": 4,
+        "Special Jirashail": 0,
+        "Essential Atop Rice": 0,
+        "By-Product": 0,
+        "Total Target": 251
+      }
+    },
+    {
+      "month": "2026-11",
+      "territory": "Barishal Metro",
+      "targets": {
+        "Chinigura": 14,
+        "Najirshail": 0,
+        "Katari Atop": 0,
+        "Katari Ghee Bhog": 5,
+        "Katari Najir": 10,
+        "Katari Shiddho": 0,
+        "Jirashail": 30,
+        "Miniket": 80,
+        "Bashmoti": 1,
+        "Paijam": 110,
+        "Atash": 30,
+        "Special Jirashail": 0,
+        "Essential Atop Rice": 0,
+        "By-Product": 0,
+        "Total Target": 280
+      }
+    },
+    {
+      "month": "2026-11",
+      "territory": "National",
+      "targets": {
+        "Chinigura": 822,
+        "Najirshail": 200,
+        "Katari Atop": 400,
+        "Katari Ghee Bhog": 932,
+        "Katari Najir": 676,
+        "Katari Shiddho": 0,
+        "Jirashail": 545,
+        "Miniket": 883,
+        "Bashmoti": 52,
+        "Paijam": 1130,
+        "Atash": 130,
+        "Special Jirashail": 50,
+        "Essential Atop Rice": 70,
+        "By-Product": 0,
+        "Total Target": 5890
       }
     }
   ]

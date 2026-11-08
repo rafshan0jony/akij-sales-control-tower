@@ -75,20 +75,29 @@ function normalizeMonth(s) {
 function parse(vals) {
   if (!vals || vals.length < 2) return { updatedAt: new Date().toISOString(), months: [], products: [], rows: [] };
   const header = vals[0];
-  const products = [];
+  const columns = [];
+  const seen = new Set();
   for (let i = 2; i < header.length; i++) {
     const p = String(header[i] || '').trim();
-    const pl = p.toLowerCase();
-    if (p && pl !== 'by-product' && pl !== 'total target') products.push(p);
+    if (!p) continue;
+    const key = p.toLowerCase();
+    if (seen.has(key)) continue;
+    seen.add(key);
+    if (key !== 'by-product' && key !== 'total target') columns.push({ product: p, index: i });
   }
+  const products = columns.map((c) => c.product);
   const rows = [];
+  let currentMonth = '';
   for (let i = 1; i < vals.length; i++) {
     const row = vals[i] || [];
-    const month = normalizeMonth(row[0]);
+    const rawMonth = String(row[0] || '').trim();
+    const normalized = normalizeMonth(rawMonth);
+    if (normalized) currentMonth = normalized;
+    const month = normalized || (rawMonth ? '' : currentMonth);
     const territory = String(row[1] || '').trim();
     if (!month || !territory) continue;
     const targets = {};
-    for (let j = 0; j < products.length; j++) targets[products[j]] = num(row[2 + j]);
+    for (const { product, index } of columns) targets[product] = num(row[index]);
     rows.push({ month, territory, targets });
   }
   const months = [...new Set(rows.map((r) => r.month))].sort();

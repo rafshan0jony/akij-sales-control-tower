@@ -286,7 +286,8 @@ async function getCreditStatus(channelId = config.app.channelId) {
       terr.strTerritoryName AS territory,
       d.lastDeliveryDate,
       pc.lastPaymentDate,
-      dd.deliveryWithinCreditDays
+      dd.deliveryWithinCreditDays,
+      bo.becomingOverdueTomorrow
     FROM prt.tblBusinessPartnerSalesArc s
     INNER JOIN prt.tblBusinessPartnerArc p ON p.intBusinessPartnerId = s.intBusinessPartnerId
     LEFT JOIN (
@@ -351,6 +352,15 @@ async function getCreditStatus(channelId = config.app.channelId) {
         AND h.dteLastActionDateTime >= DATEADD(day, -ISNULL(sc.numRunningDayLimit, 0), CAST(GETDATE() AS date))
       GROUP BY h.intSoldToPartnerId
     ) dd ON dd.intSoldToPartnerId = p.intBusinessPartnerId
+    LEFT JOIN (
+      SELECT h.intSoldToPartnerId, SUM(h.numTotalNetValue) AS becomingOverdueTomorrow
+      FROM sms.tblDeliveryHeaderArc h
+      INNER JOIN prt.tblBusinessPartnerSalesArc sc ON sc.intBusinessPartnerId = h.intSoldToPartnerId
+      WHERE h.intDistributionChannelId = @channel AND h.isActive = 1 AND h.isShipmentPosted = 1
+        AND h.dteLastActionDateTime >= DATEADD(day, -ISNULL(sc.numRunningDayLimit, 0), CAST(GETDATE() AS date))
+        AND h.dteLastActionDateTime <  DATEADD(day, -ISNULL(sc.numRunningDayLimit, 0) + 1, CAST(GETDATE() AS date))
+      GROUP BY h.intSoldToPartnerId
+    ) bo ON bo.intSoldToPartnerId = p.intBusinessPartnerId
     LEFT JOIN (
       SELECT x.intSoldToPartnerId, x.intTerritoryId
       FROM (

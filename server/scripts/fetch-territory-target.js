@@ -51,22 +51,30 @@ async function main() {
   if (vals.length < 2) throw new Error('territory target tab is empty');
 
   const header = vals[0];
-  const products = [];
+  const columns = [];
+  const seen = new Set();
   for (let i = 2; i < header.length; i++) {
     const p = String(header[i] || '').trim();
-    if (p) products.push(p);
+    if (!p) continue;
+    const key = p.toLowerCase();
+    if (seen.has(key)) continue;
+    seen.add(key);
+    columns.push({ product: p, index: i });
   }
+  const products = columns.map((c) => c.product);
 
   const rows = [];
+  let currentMonth = '';
   for (let i = 1; i < vals.length; i++) {
     const row = vals[i] || [];
-    const month = normalizeMonth(row[0]);
+    const rawMonth = String(row[0] || '').trim();
+    const normalized = normalizeMonth(rawMonth);
+    if (normalized) currentMonth = normalized;
+    const month = normalized || (rawMonth ? '' : currentMonth);
     const territory = String(row[1] || '').trim();
     if (!month || !territory) continue;
     const targets = {};
-    for (let j = 0; j < products.length; j++) {
-      targets[products[j]] = num(row[2 + j]);
-    }
+    for (const { product, index } of columns) targets[product] = num(row[index]);
     rows.push({ month, territory, targets });
   }
 

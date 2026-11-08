@@ -7,6 +7,7 @@ const { asyncHandler } = require('../middleware/errorHandler');
 const { parseRange, freshness } = require('./helpers');
 const syncService = require('../services/syncService');
 const analytics = require('../services/analyticsService');
+const territoryTargetService = require('../services/territoryTargetService');
 
 const router = express.Router();
 router.use(authenticate);
@@ -45,6 +46,10 @@ router.get('/pending', requirePermission('VIEW_PENDING'), asyncHandler(async (re
   };
   const payload = analytics.pendingModule(data, scope, range, opts);
   res.json({ ...payload, ...freshness() });
+}));
+
+router.get('/target-achievement/months', requirePermission('VIEW_TARGET'), asyncHandler(async (req, res) => {
+  res.json({ months: territoryTargetService.months() });
 }));
 
 router.get('/target-achievement', requirePermission('VIEW_TARGET'), asyncHandler(async (req, res) => {

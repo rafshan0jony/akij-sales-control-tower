@@ -5,4 +5,5 @@ REM per-user Product-wise report. The script itself skips if already sent today.
 timeout /t 90 /nobreak >nul
 node report\daily-product-report.js >> data\daily-report.log 2>&1
 node report\daily-credit-report.js >> data\daily-credit-report.log 2>&1
+node report\daily-overdue-tomorrow-report.js >> data\overdue-tomorrow-report.log 2>&1
 node report\daily-territory-target-report.js >> data\territory-report.log 2>&1
