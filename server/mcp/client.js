@@ -200,7 +200,7 @@ async function getSalesOrdersRange(from, to, channelId = config.app.channelId) {
       GROUP BY dr.[${DR.orderId}], dr.[${DR.salesOrderRowId}]
     ) d ON d.salesOrderId = h.[${H.id}] AND d.salesOrderRowId = r.[${R.rowId}]
     WHERE h.[${H.channel}] = @channel
-      AND h.[${H.date}] >= @from AND h.[${H.date}] <= @to
+      AND h.[${H.date}] >= @from AND h.[${H.date}] < DATEADD(day, 1, @to)
       AND h.[${H.active}] = 1
     ORDER BY h.[${H.date}], h.[${H.orderNo}]
   `;
@@ -286,7 +286,7 @@ async function getDeliveryRowsRange(from, to, channelId = config.app.channelId) 
     FROM ${TABLES.deliveryHeader} h
     INNER JOIN ${TABLES.deliveryRow} r ON h.[${DH.id}] = r.[${DR.deliveryId}]
     WHERE h.[${DH.channel}] = @channel
-      AND h.[${DH.date}] >= @from AND h.[${DH.date}] <= @to
+      AND h.[${DH.date}] >= @from AND h.[${DH.date}] < DATEADD(day, 1, @to)
       AND h.[${DH.active}] = 1
       AND h.[${DH.shipmentPosted}] = 1
     ORDER BY h.[${DH.date}]
