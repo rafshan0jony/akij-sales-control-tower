@@ -115,6 +115,38 @@ function getLastError() {
   return lastError;
 }
 
+/** Add `days` to a YYYY-MM-DD date string, returning a YYYY-MM-DD string. */
+function addDays(dateStr, days) {
+  const d = new Date(dateStr + 'T00:00:00Z');
+  d.setUTCDate(d.getUTCDate() + days);
+  return d.toISOString().slice(0, 10);
+}
+
+/** Split an inclusive date range [from, to] into chunks of `days` days. */
+function dateChunks(from, to, days) {
+  const out = [];
+  let cur = from;
+  while (cur <= to) {
+    const end = addDays(cur, days - 1);
+    const chunkEnd = end < to ? end : to;
+    out.push([cur, chunkEnd]);
+    cur = addDays(chunkEnd, 1);
+  }
+  return out;
+}
+
+/** Retry a gateway fetch a few times (the gateway intermittently times out). */
+async function withRetry(fn, attempts = 4, delayMs = 6000) {
+  for (let i = 0; i < attempts; i++) {
+    try {
+      return await fn();
+    } catch (e) {
+      if (i === attempts - 1) throw e;
+      await new Promise((r) => setTimeout(r, delayMs));
+    }
+  }
+}
+
 // ---------------------------------------------------------------------------
 // Normalized fact queries
 // ---------------------------------------------------------------------------
@@ -127,6 +159,15 @@ function getLastError() {
  * not yet challan'd still shows as pending).
  */
 async function getSalesOrders(from, to, channelId = config.app.channelId) {
+  const all = [];
+  for (const [cf, ct] of dateChunks(from, to, 10)) {
+    const rows = await withRetry(() => getSalesOrdersRange(cf, ct, channelId));
+    all.push(...rows);
+  }
+  return all;
+}
+
+async function getSalesOrdersRange(from, to, channelId = config.app.channelId) {
   const q = `
     SELECT
       CONVERT(varchar(10), h.[${H.date}], 120) AS date,
@@ -176,31 +217,11 @@ async function getSalesOrders(from, to, channelId = config.app.channelId) {
  * Territory resolved via the delivery row -> sales order -> territory join.
  */
 async function getDeliveries(from, to, channelId = config.app.channelId) {
-  // Delivery header + row only (unambiguous: delivery row has no intBusinessUnitId).
-  const q = `
-    SELECT
-      CONVERT(varchar(10), h.[${DH.date}], 120) AS date,
-      h.[${DH.customer}] AS customer,
-      h.intSoldToPartnerId AS soldToPartnerId,
-      r.intSalesOrderId AS salesOrderId,
-      r.[${DR.orderNo}] AS orderNo,
-      r.[${DR.item}] AS item,
-      r.[${DR.uom}] AS uom,
-      r.[${DR.quantity}] AS quantity,
-      r.[${DR.value}] AS value
-    FROM ${TABLES.deliveryHeader} h
-    INNER JOIN ${TABLES.deliveryRow} r ON h.[${DH.id}] = r.[${DR.deliveryId}]
-    WHERE h.[${DH.channel}] = @channel
-      AND h.[${DH.date}] >= @from AND h.[${DH.date}] <= @to
-      AND h.[${DH.active}] = 1
-      AND h.[${DH.shipmentPosted}] = 1
-    ORDER BY h.[${DH.date}]
-  `;
-  const rows = await queryAll(q, [
-    { name: 'channel', type: sql.BigInt, value: channelId },
-    { name: 'from', type: sql.NVarChar, value: from },
-    { name: 'to', type: sql.NVarChar, value: to },
-  ]);
+  const rows = [];
+  for (const [cf, ct] of dateChunks(from, to, 10)) {
+    const chunkRows = await withRetry(() => getDeliveryRowsRange(cf, ct, channelId));
+    rows.push(...chunkRows);
+  }
   if (!rows.length) return [];
 
   const soIds = [...new Set(rows.map((r) => r.salesOrderId).filter((x) => x != null && x !== ''))];
@@ -247,6 +268,34 @@ async function getDeliveries(from, to, channelId = config.app.channelId) {
     quantity: r.quantity,
     value: r.value,
   }));
+}
+
+async function getDeliveryRowsRange(from, to, channelId = config.app.channelId) {
+  // Delivery header + row only (unambiguous: delivery row has no intBusinessUnitId).
+  const q = `
+    SELECT
+      CONVERT(varchar(10), h.[${DH.date}], 120) AS date,
+      h.[${DH.customer}] AS customer,
+      h.intSoldToPartnerId AS soldToPartnerId,
+      r.intSalesOrderId AS salesOrderId,
+      r.[${DR.orderNo}] AS orderNo,
+      r.[${DR.item}] AS item,
+      r.[${DR.uom}] AS uom,
+      r.[${DR.quantity}] AS quantity,
+      r.[${DR.value}] AS value
+    FROM ${TABLES.deliveryHeader} h
+    INNER JOIN ${TABLES.deliveryRow} r ON h.[${DH.id}] = r.[${DR.deliveryId}]
+    WHERE h.[${DH.channel}] = @channel
+      AND h.[${DH.date}] >= @from AND h.[${DH.date}] <= @to
+      AND h.[${DH.active}] = 1
+      AND h.[${DH.shipmentPosted}] = 1
+    ORDER BY h.[${DH.date}]
+  `;
+  return queryAll(q, [
+    { name: 'channel', type: sql.BigInt, value: channelId },
+    { name: 'from', type: sql.NVarChar, value: from },
+    { name: 'to', type: sql.NVarChar, value: to },
+  ]);
 }
 
 /**
