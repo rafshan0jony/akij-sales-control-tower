@@ -9,6 +9,8 @@ const OVERRIDES = {
   '22216504': 30, // M/S Nur-A-Nobobi Trading: ERP numRunningDayLimit=7, should be 30
   '222125277': 30, // Nokul Trader's: ERP numRunningDayLimit=7, should be 30
   '222115814': 30, // M/S Hazi Alauddin Rice Agnency: ERP numRunningDayLimit=0, should be 30
+  '222110817': 30, // M/S Niloy Rice Agency: ERP numRunningDayLimit=0, should be 30
+  '4398911': 7, // M/S Bhagabati Bhander COD: ERP numRunningDayLimit=0, should be 7
 };
 
 function creditDaysFor(customerCode) {
