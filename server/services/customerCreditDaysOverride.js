@@ -11,6 +11,7 @@ const OVERRIDES = {
   '222115814': 30, // M/S Hazi Alauddin Rice Agnency: ERP numRunningDayLimit=0, should be 30
   '222110817': 30, // M/S Niloy Rice Agency: ERP numRunningDayLimit=0, should be 30
   '4398911': 7, // M/S Bhagabati Bhander COD: ERP numRunningDayLimit=0, should be 7
+  '396217': 30, // M/S Ruposhi Bangla Traders COD: ERP facility=Cash/intCollectionDays=7, should be 30
 };
 
 function creditDaysFor(customerCode) {
