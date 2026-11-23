@@ -327,7 +327,9 @@ async function getCreditStatus(channelId = config.app.channelId) {
     SELECT
       p.strBusinessPartnerCode AS partnerCode,
       p.strBusinessPartnerName AS partnerName,
-      s.numRunningDayLimit AS creditDays,
+      CASE WHEN p.strBusinessPartnerCode IN ('22216504','222125277') THEN 30
+           WHEN ISNULL(s.numRunningDayLimit, 0) > 0 THEN s.numRunningDayLimit
+           ELSE ISNULL(s.intCollectionDays, 0) END AS creditDays,
       gl.ledgerBalance AS ledgerBalance,
       CASE WHEN gl.ledgerBalance > ISNULL(rd.recentDebits, 0)
            THEN gl.ledgerBalance - ISNULL(rd.recentDebits, 0)
@@ -368,7 +370,7 @@ async function getCreditStatus(channelId = config.app.channelId) {
           ORDER BY intGeneralLedgerId
         )
         AND aj.numAmount > 0
-        AND aj.dteTransactionDate > DATEADD(day, -ISNULL(sc.numRunningDayLimit, 0), CAST(GETDATE() AS date))
+        AND aj.dteTransactionDate > DATEADD(day, -CASE WHEN bp.strBusinessPartnerCode IN ('22216504','222125277') THEN 30 WHEN ISNULL(sc.numRunningDayLimit, 0) > 0 THEN sc.numRunningDayLimit ELSE ISNULL(sc.intCollectionDays, 0) END, CAST(GETDATE() AS date))
       GROUP BY aj.intSubGLId
     ) rd ON rd.intSubGLId = p.intBusinessPartnerId
     LEFT JOIN (
@@ -397,17 +399,19 @@ async function getCreditStatus(channelId = config.app.channelId) {
              SUM(h.numTotalNetValue) AS deliveryWithinCreditDays
       FROM sms.tblDeliveryHeaderArc h
       INNER JOIN prt.tblBusinessPartnerSalesArc sc ON sc.intBusinessPartnerId = h.intSoldToPartnerId
+      INNER JOIN prt.tblBusinessPartnerArc bp ON bp.intBusinessPartnerId = h.intSoldToPartnerId
       WHERE h.intDistributionChannelId = @channel AND h.isActive = 1 AND h.isShipmentPosted = 1
-        AND h.dteLastActionDateTime >= DATEADD(day, -ISNULL(sc.numRunningDayLimit, 0), CAST(GETDATE() AS date))
+        AND h.dteLastActionDateTime >= DATEADD(day, -CASE WHEN bp.strBusinessPartnerCode IN ('22216504','222125277') THEN 30 WHEN ISNULL(sc.numRunningDayLimit, 0) > 0 THEN sc.numRunningDayLimit ELSE ISNULL(sc.intCollectionDays, 0) END, CAST(GETDATE() AS date))
       GROUP BY h.intSoldToPartnerId
     ) dd ON dd.intSoldToPartnerId = p.intBusinessPartnerId
     LEFT JOIN (
       SELECT h.intSoldToPartnerId, SUM(h.numTotalNetValue) AS becomingOverdueTomorrow
       FROM sms.tblDeliveryHeaderArc h
       INNER JOIN prt.tblBusinessPartnerSalesArc sc ON sc.intBusinessPartnerId = h.intSoldToPartnerId
+      INNER JOIN prt.tblBusinessPartnerArc bp ON bp.intBusinessPartnerId = h.intSoldToPartnerId
       WHERE h.intDistributionChannelId = @channel AND h.isActive = 1 AND h.isShipmentPosted = 1
-        AND h.dteLastActionDateTime >= DATEADD(day, -ISNULL(sc.numRunningDayLimit, 0), CAST(GETDATE() AS date))
-        AND h.dteLastActionDateTime <  DATEADD(day, -ISNULL(sc.numRunningDayLimit, 0) + 1, CAST(GETDATE() AS date))
+        AND h.dteLastActionDateTime >= DATEADD(day, -CASE WHEN bp.strBusinessPartnerCode IN ('22216504','222125277') THEN 30 WHEN ISNULL(sc.numRunningDayLimit, 0) > 0 THEN sc.numRunningDayLimit ELSE ISNULL(sc.intCollectionDays, 0) END, CAST(GETDATE() AS date))
+        AND h.dteLastActionDateTime <  DATEADD(day, -CASE WHEN bp.strBusinessPartnerCode IN ('22216504','222125277') THEN 30 WHEN ISNULL(sc.numRunningDayLimit, 0) > 0 THEN sc.numRunningDayLimit ELSE ISNULL(sc.intCollectionDays, 0) END + 1, CAST(GETDATE() AS date))
       GROUP BY h.intSoldToPartnerId
     ) bo ON bo.intSoldToPartnerId = p.intBusinessPartnerId
     LEFT JOIN (
