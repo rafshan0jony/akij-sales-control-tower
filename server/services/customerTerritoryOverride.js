@@ -13,6 +13,7 @@ const OVERRIDES = {
   '222133965': 'Moulvibazar',
   '222134164': 'Moulvibazar',
   '22215832': 'Munshiganj',
+  '1400306': 'Munshiganj', // M/S Alam Rice Agency: ERP assigns Narsingdi, should be Munshiganj
 };
 
 function territoryFor(customerCode) {
